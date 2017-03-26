@@ -31,12 +31,11 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.manager.RequirementManager
 
 interface CommandProcessor {
 
     /**
-     * Comand manager.
+     * Command manager.
      */
     val commandManager: CommandManager
 
@@ -44,11 +43,6 @@ interface CommandProcessor {
      * Information manager.
      */
     val informationManager: InformationManager
-
-    /**
-     * Requirement manager.
-     */
-    val requirementManager: RequirementManager
 
     /**
      * Register a [command interceptor][CommandInterceptor].

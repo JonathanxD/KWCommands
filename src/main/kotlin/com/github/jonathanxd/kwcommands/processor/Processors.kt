@@ -35,7 +35,7 @@ import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.manager.RequirementManager
+import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.escape
 import java.util.*
 
@@ -53,7 +53,6 @@ object Processors {
 
         override val commandManager: CommandManager = CommandManager()
         override val informationManager: InformationManager = InformationManager()
-        override val requirementManager: RequirementManager = RequirementManager()
 
         override fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
                 this.interceptors.add(commandInterceptor)
@@ -175,7 +174,9 @@ object Processors {
                 }
 
                 container?.let {
-                    val result = Result(it.handler?.handle(it, this.informationManager, this.requirementManager), it)
+                    command.command.requirements.checkRequirements(this.informationManager)
+
+                    val result = Result(it.handler?.handle(it, this.informationManager), it)
                     results += result
 
                     interceptors.forEach { interceptor ->

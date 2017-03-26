@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.requirement.Requirement
 import java.util.*
 
 /**
@@ -39,6 +40,7 @@ import java.util.*
  * @property description Command description.
  * @property handler Command handler.
  * @property arguments Arguments that this command can receive.
+ * @property requirements Command requirements.
  * @property alias Aliases to this command.
  */
 data class Command(val parent: Command?,
@@ -47,13 +49,14 @@ data class Command(val parent: Command?,
                    val description: String,
                    val handler: Handler?,
                    val arguments: List<Argument<*>>,
+                   val requirements: List<Requirement<*, *>>,
                    val alias: List<CommandName>) : Comparable<Command> {
 
     /**
      * Sub commands
      */
     private val subCommands_ = mutableSetOf<Command>()
-    val subCommands = Collections.unmodifiableSet(this.subCommands_)
+    val subCommands: Set<Command> = Collections.unmodifiableSet(this.subCommands_)
 
     /**
      * Path/name of this command. The [fullname] of a command is a combination

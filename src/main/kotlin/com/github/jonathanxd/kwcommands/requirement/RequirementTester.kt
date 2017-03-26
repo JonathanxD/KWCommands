@@ -27,16 +27,16 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 
 /**
- * Requirement of a information.
+ * A [RequirementTester] tests a subject against a [Requirement].
  */
-data class Requirement<T, R>(val required: R, val subject: Information.Id, val infoType: TypeInfo<in T>, val type: TypeInfo<out R>, val tester: RequirementTester<T, R>) {
+interface RequirementTester<T, R> {
 
     /**
-     * Calls the [RequirementTester.test] method.
+     * Test [Requirement.subject] against the [Requirement.required] value.
      */
-    fun test(information: Information<T>) = this.tester.test(this, information)
+    fun test(requirement: Requirement<T, R>, information: Information<T>)
+
 }

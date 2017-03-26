@@ -25,9 +25,15 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.requirement
+package com.github.jonathanxd.kwcommands.reflect.element
 
-/**
- * Occurs if a requirement is not satisfied.
- */
-class RequirementNotSatisfiedException(message: String) : Exception(message)
+import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.information.Information
+
+sealed class Parameter<T>(val type: TypeInfo<T>) {
+
+    class ArgumentParameter<T>(val argument: Argument<T>, type: TypeInfo<T>): Parameter<T>(type)
+    class InformationParameter<T>(val id: Information.Id, val isOptional: Boolean, type: TypeInfo<T>): Parameter<T>(type)
+
+}

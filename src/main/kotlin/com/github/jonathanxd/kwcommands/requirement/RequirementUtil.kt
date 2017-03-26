@@ -25,43 +25,55 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.command
+package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.exception.InformationMissingException
+import com.github.jonathanxd.kwcommands.exception.RequirementNotSatisfiedException
+import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 
 /**
- * Command handler. Handles the [command][Command] and [arguments][Argument] passed to the command.
+ * Check if all [Information] matches the [requirements][Requirement].
+ *
+ * @throws RequirementNotSatisfiedException If an information does not satisfies the requirements.
+ * @throws InformationMissingException If an information required by a [Requirement] is not present.
  */
-@FunctionalInterface
-interface Handler {
+fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager) {
+    var exception: Exception? = null
 
-    /**
-     * Handles the [command][commandContainer] and [arguments][Argument] passed to it.
-     *
-     * @param commandContainer Parsed command.
-     * @param informationManager Information manager.
-     */
-    fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any
+    this.forEach {
+        val find = manager.find(it.subject, it.infoType)
 
-    companion object {
-        /**
-         * Create handler from a function.
-         */
-        inline fun create(crossinline function: (commandContainer: CommandContainer, informationManager: InformationManager) -> Any) = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(commandContainer, informationManager)
+        if (find == null) {
+            InformationMissingException("Information id '${it.subject}' requested by Requirement '$it' is not present!").let {
+                if (exception == null)
+                    exception = it
+                else
+                    exception!!.addSuppressed(it)
             }
         }
 
-        /**
-         * Create handler from a function.
-         */
-        inline fun create(crossinline function: (commandContainer: CommandContainer) -> Any) = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(commandContainer)
-            }
+        try {
+
+            @Suppress("UNCHECKED_CAST")
+            it as Requirement<Any, *>
+            @Suppress("UNCHECKED_CAST")
+            find as Information<Any>
+
+            it.test(find)
+
+        } catch (ex: RequirementNotSatisfiedException) {
+            if (exception == null)
+                exception = ex
+            else
+                exception!!.addSuppressed(ex)
         }
+
+    }
+
+    exception?.let {
+        throw it
     }
 
 }
+

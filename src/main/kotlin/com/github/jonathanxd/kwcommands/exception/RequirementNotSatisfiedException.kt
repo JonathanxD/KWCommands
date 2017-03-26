@@ -25,18 +25,9 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.requirement
-
-import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.information.Information
+package com.github.jonathanxd.kwcommands.exception
 
 /**
- * Requirement of a information.
+ * Occurs if a requirement is not satisfied.
  */
-data class Requirement<T, R>(val required: R, val subject: Information.Id, val infoType: TypeInfo<in T>, val type: TypeInfo<out R>, val tester: RequirementTester<T, R>) {
-
-    /**
-     * Calls the [RequirementTester.test] method.
-     */
-    fun test(information: Information<T>) = this.tester.test(this, information)
-}
+class RequirementNotSatisfiedException(message: String) : Exception(message)

@@ -25,18 +25,9 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.requirement
+package com.github.jonathanxd.kwcommands.reflect.element
 
-import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.iutils.reflection.Link
+import com.github.jonathanxd.kwcommands.requirement.Requirement
 
-/**
- * Requirement of a information.
- */
-data class Requirement<T, R>(val required: R, val subject: Information.Id, val infoType: TypeInfo<in T>, val type: TypeInfo<out R>, val tester: RequirementTester<T, R>) {
-
-    /**
-     * Calls the [RequirementTester.test] method.
-     */
-    fun test(information: Information<T>) = this.tester.test(this, information)
-}
+data class Element(val elementLink: Link<Any>, val parameters: List<Parameter<*>>)

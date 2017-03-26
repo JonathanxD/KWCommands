@@ -32,7 +32,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.manager.RequirementManager
+import com.github.jonathanxd.kwcommands.manager.RequirementUtil
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.Result
 import com.github.jonathanxd.kwcommands.util.Argument
@@ -44,7 +44,7 @@ class CommandTest {
     @Test
     fun test() {
         val fnmHandler = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager, requirementManager: RequirementManager): Any {
+            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
                 val sb = StringBuilder()
 
                 sb.append(commandContainer.command.fullname)

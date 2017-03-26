@@ -25,43 +25,37 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.command
+package com.github.jonathanxd.kwcommands.reflect
 
-import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.Handler
+import com.github.jonathanxd.kwcommands.exception.InformationMissingException
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.reflect.element.Element
+import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 
-/**
- * Command handler. Handles the [command][Command] and [arguments][Argument] passed to the command.
- */
-@FunctionalInterface
-interface Handler {
+class ReflectionHandler(val element: Element) : Handler {
 
-    /**
-     * Handles the [command][commandContainer] and [arguments][Argument] passed to it.
-     *
-     * @param commandContainer Parsed command.
-     * @param informationManager Information manager.
-     */
-    fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any
+    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
+        val link = element.elementLink
+        val args = mutableListOf<Any?>()
 
-    companion object {
-        /**
-         * Create handler from a function.
-         */
-        inline fun create(crossinline function: (commandContainer: CommandContainer, informationManager: InformationManager) -> Any) = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(commandContainer, informationManager)
+        element.parameters.forEach { parameter ->
+            when(parameter) {
+                is Parameter.ArgumentParameter<*> -> {
+                    args += commandContainer.arguments.find { parameter.argument.id == it.argument.id }?.value
+                }
+                is Parameter.InformationParameter<*> -> {
+                    val information = informationManager.find(parameter.id, parameter.type)
+
+                    if(!parameter.isOptional && information == null)
+                        throw InformationMissingException("Required information with id ${parameter.id} and of type ${parameter.type} is missing!")
+                    args += information?.value
+                }
             }
         }
 
-        /**
-         * Create handler from a function.
-         */
-        inline fun create(crossinline function: (commandContainer: CommandContainer) -> Any) = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(commandContainer)
-            }
-        }
+        return link(*args.toTypedArray())
     }
 
 }
