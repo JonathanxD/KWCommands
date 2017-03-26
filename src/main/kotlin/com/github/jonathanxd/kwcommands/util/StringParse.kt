@@ -27,25 +27,23 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.type.ConcreteTypeInfo
-import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationManager
-
-inline fun <reified T> InformationManager.registerInformation(id: Information.Id, value: T, description: String? = null)
-        = this.registerInformation(id, value, object : ConcreteTypeInfo<T>() {}, description)
-
-inline fun <reified T> Information(id: Information.Id, value: T, description: String?): Information<T> =
-        Information<T>(id, value, object : ConcreteTypeInfo<T>(){}, description)
-
 /**
- * Reified function to create argument with a implicit [TypeInfo] of type [T].
+ * Escape character
  */
-inline fun <reified T> Argument(id: Any,
-                                isOptional: Boolean,
-                                defaultValue: T?,
-                                noinline validator: (String) -> Boolean,
-                                noinline transformer: (String) -> T,
-                                possibilities: List<String>): Argument<T> =
-        Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities)
+fun String.escape(escape: Char): String {
+    val strBuilder = StringBuilder()
+    var lastIsEscape = false
+
+    this.forEach {
+        if(lastIsEscape) {
+            lastIsEscape = false
+            strBuilder.append(it)
+        } else if(it == escape) {
+            lastIsEscape = true
+        } else {
+            strBuilder.append(it)
+        }
+    }
+
+    return strBuilder.toString()
+}

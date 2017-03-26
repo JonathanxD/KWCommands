@@ -36,6 +36,7 @@ import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.RequirementManager
+import com.github.jonathanxd.kwcommands.util.escape
 import java.util.*
 
 object Processors {
@@ -63,21 +64,28 @@ object Processors {
         override fun process(stringList: List<String>, owner: Any?): List<CommandContainer> {
             val commands = mutableListOf<CommandContainer>()
             val deque: Deque<Command> = LinkedList()
+            val getStr: (Int) -> String = { stringList[it].escape('\\') }
 
             var index = 0
 
             while (index < stringList.size) {
                 var command: Command? = null
 
+                if(stringList[index].isAndOp()) {
+                    deque.clear()
+                    ++index
+                    continue
+                }
+
                 while (command == null) {
 
                     if (deque.isEmpty()) {
-                        command = commandManager.getCommand(stringList[index], owner)
+                        command = commandManager.getCommand(getStr(index), owner)
 
                         if(command == null)
-                            throw CommandNotFoundException("Command ${stringList[index]} (index $index in $stringList) was not found.")
+                            throw CommandNotFoundException("Command ${getStr(index)} (index $index in $stringList) was not found.")
                     } else {
-                        command = deque.last.getSubCommand(stringList[index])
+                        command = deque.last.getSubCommand(getStr(index))
 
                         if (command == null) {
                             val rm = deque.removeLast()
@@ -88,7 +96,9 @@ object Processors {
                     }
                 }
 
-                if(index + 1 == stringList.size || index + 1 < stringList.size && command.getSubCommand(stringList[index + 1]) == null) {
+                if(index + 1 == stringList.size ||
+                        (index + 1 < stringList.size
+                                && (stringList[index + 1].isAndOp() || command.getSubCommand(getStr(index + 1)) == null))) {
 
                     val arguments = command.arguments.toMutableList()
                     val args = mutableListOf<ArgumentContainer<*>>()
@@ -108,14 +118,22 @@ object Processors {
 
                         var requiredCount = 0
 
-                        ((index + 1)..(index + arguments.size)).forEach {
-                            val argStr = stringList[it]
+                        val size = (index + arguments.size).let {
+                            if(it >= stringList.size)
+                                stringList.size - 1
+                            else
+                                it
+                        }
+
+                        ((index + 1)..size).forEach {
+                            val argStr = getStr(it)
 
                             val arg = arguments.find { it.validator(argStr) }
 
-                            if (arg != null && !arg.isOptional) {
-                                requiredCount++
-                                args.add(ArgumentContainer(arg, argStr))
+                            if (arg != null) {
+                                if(!arg.isOptional)
+                                    requiredCount++
+                                args.add(ArgumentContainer(arg, argStr, arg.transformer(argStr)))
                                 arguments.remove(arg)
                                 ++index
                             }
@@ -125,6 +143,8 @@ object Processors {
                             val missing = arguments.filter { !it.isOptional }.map { it.id.toString() }.joinToString()
                             throw ArgumentsMissingException("Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
                         }
+
+                        arguments.map { ArgumentContainer(it, null, it.defaultValue) }
                     }
 
                     commands += CommandContainer(
@@ -137,12 +157,6 @@ object Processors {
 
                 ++index
             }
-
-            /*if(!deque.isEmpty())
-                commands.add(CommandContainer(
-                        command = deque.last!!,
-                        handler = deque.last!!.handler,
-                        arguments = emptyList()))*/
 
             return commands
         }
@@ -173,6 +187,8 @@ object Processors {
             return results
         }
 
+        @Suppress("NOTHING_TO_INLINE")
+        inline private fun String.isAndOp() = this == "&"
     }
 
 }

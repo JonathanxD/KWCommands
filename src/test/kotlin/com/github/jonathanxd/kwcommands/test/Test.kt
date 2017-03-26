@@ -34,7 +34,9 @@ import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.RequirementManager
 import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.processor.Result
 import com.github.jonathanxd.kwcommands.util.Argument
+import org.junit.Assert
 import org.junit.Test
 
 class CommandTest {
@@ -48,17 +50,17 @@ class CommandTest {
                 sb.append(commandContainer.command.fullname)
 
                 if (commandContainer.arguments.isNotEmpty()) {
-                    sb.append(commandContainer.arguments.map { it.argument.transformer(it.input).toString() }.joinToString(prefix = "(", postfix = ")"))
+                    sb.append(commandContainer.arguments.filter {it.isDefined}.map { it.value!!.toString() }.joinToString(prefix = "(", postfix = ")"))
                 }
 
                 println(sb.toString())
-                return Unit
+                return sb.toString()
             }
         }
 
         val command = Command(
                 parent = null,
-                name = CommandName.StringName("beat"),
+                name = CommandName.StringName("open"),
                 description = "",
                 handler = fnmHandler,
                 order = 0,
@@ -66,6 +68,7 @@ class CommandTest {
                 arguments = listOf(
                         Argument(id = "name",
                                 isOptional = false,
+                                defaultValue = null,
                                 validator = { true },
                                 transformer = { it },
                                 possibilities = emptyList())
@@ -74,7 +77,7 @@ class CommandTest {
 
         command.addSubCommand(Command(
                 parent = command,
-                name = CommandName.StringName("it"),
+                name = CommandName.StringName("door"),
                 description = "",
                 handler = fnmHandler,
                 order = 0,
@@ -84,7 +87,7 @@ class CommandTest {
 
         command.addSubCommand(Command(
                 parent = command,
-                name = CommandName.StringName("that"),
+                name = CommandName.StringName("window"),
                 description = "",
                 handler = fnmHandler,
                 order = 0,
@@ -92,8 +95,21 @@ class CommandTest {
                 arguments = listOf(
                         Argument(id = "name",
                                 isOptional = false,
+                                defaultValue = null,
                                 validator = { true },
                                 transformer = { it },
+                                possibilities = emptyList()),
+                        Argument(id = "amount",
+                                isOptional = true,
+                                defaultValue = null,
+                                validator = { it.toIntOrNull() != null },
+                                transformer = String::toInt,
+                                possibilities = emptyList()),
+                        Argument(id = "double",
+                                isOptional = false,
+                                defaultValue = null,
+                                validator = { it.toDoubleOrNull() != null },
+                                transformer = String::toDouble,
                                 possibilities = emptyList())
                 )
         ))
@@ -102,9 +118,31 @@ class CommandTest {
 
         processor.commandManager.registerCommand(command, this)
 
-        processor.handle(processor.process(listOf("beat", "arg"), this))
-        processor.handle(processor.process(listOf("beat", "it", "that", "dsa"), this))
-        processor.handle(processor.process(listOf("beat", "it", "that", "9"), this))
+
+        processor.handle(processor.process(listOf("open", "house"), this))
+                .assertAll(listOf("open(house)"))
+
+        processor.handle(processor.process(listOf("open", "door", "window", "of house", "5.0"), this))
+                .assertAll(listOf("open door", "open window(of house, 5.0)"))
+
+        processor.handle(processor.process(listOf("open", "door", "window", "of house", "1", "7.0"), this))
+                .assertAll(listOf("open door", "open window(of house, 1, 7.0)"))
+
+        processor.handle(processor.process(listOf("open", "door", "&", "open", "window", "of house", "5", "19.0"), this))
+                .assertAll(listOf("open door", "open window(of house, 5, 19.0)"))
+    }
+
+}
+
+fun Result.assert(expected: Any?) {
+    Assert.assertEquals(expected, this.value)
+}
+
+fun List<Result>.assertAll(expected: List<Any?>) {
+    Assert.assertEquals(this.size, expected.size)
+
+    this.forEachIndexed { index, result ->
+        result.assert(expected[index])
     }
 
 }

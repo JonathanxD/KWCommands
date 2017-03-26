@@ -32,5 +32,13 @@ package com.github.jonathanxd.kwcommands.argument
  *
  * @property argument Argument.
  * @property input Input argument value(s).
+ * @property value Value of argument.
  */
-data class ArgumentContainer<out T>(val argument: Argument<T>, val input: String)
+data class ArgumentContainer<out T>(val argument: Argument<T>, val input: String?, val value: T?) {
+
+    /**
+     * Returns true if this argument is defined.
+     */
+    val isDefined get() = this.input != null
+
+}

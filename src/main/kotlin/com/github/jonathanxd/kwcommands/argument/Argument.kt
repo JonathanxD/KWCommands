@@ -44,8 +44,7 @@ import com.github.jonathanxd.kwcommands.util.ALOList
 data class Argument<out T>(val id: Any,
                            val isOptional: Boolean,
                            val type: TypeInfo<out T>,
-                           //val isSequence: Boolean, @property isSequence Whether the argument is a sequence of values (more than one value).
-
+                           val defaultValue: T?,
                            val validator: (String) -> Boolean,
                            val transformer: (String) -> T,
                            val possibilities: List<String>)
