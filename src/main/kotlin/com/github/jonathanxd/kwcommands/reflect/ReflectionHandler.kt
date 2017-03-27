@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.reflect
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.exception.InformationMissingException
+import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
@@ -50,7 +51,7 @@ class ReflectionHandler(val element: Element) : Handler {
 
                     if(!parameter.isOptional && information == null)
                         throw InformationMissingException("Required information with id ${parameter.id} and of type ${parameter.type} is missing!")
-                    args += information?.value
+                    args += information ?: Information.EMPTY
                 }
             }
         }

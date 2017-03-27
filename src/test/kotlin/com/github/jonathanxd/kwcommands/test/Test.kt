@@ -32,7 +32,6 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.manager.RequirementUtil
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.Result
 import com.github.jonathanxd.kwcommands.util.Argument
@@ -73,7 +72,8 @@ class CommandTest {
                                 transformer = { it },
                                 possibilities = emptyList())
 
-                ))
+                ),
+                requirements = emptyList())
 
         command.addSubCommand(Command(
                 parent = command,
@@ -82,7 +82,8 @@ class CommandTest {
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
-                arguments = emptyList()
+                arguments = emptyList(),
+                requirements = emptyList()
         ))
 
         command.addSubCommand(Command(
@@ -111,7 +112,8 @@ class CommandTest {
                                 validator = { it.toDoubleOrNull() != null },
                                 transformer = String::toDouble,
                                 possibilities = emptyList())
-                )
+                ),
+                requirements = emptyList()
         ))
 
         val processor = Processors.createCommonProcessor()
