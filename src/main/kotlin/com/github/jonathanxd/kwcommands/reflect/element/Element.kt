@@ -30,4 +30,4 @@ package com.github.jonathanxd.kwcommands.reflect.element
 import com.github.jonathanxd.iutils.reflection.Link
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
-data class Element(val elementLink: Link<Any>, val parameters: List<Parameter<*>>)
+data class Element(val elementLink: Link<Any?>, val parameters: List<Parameter<*>>)

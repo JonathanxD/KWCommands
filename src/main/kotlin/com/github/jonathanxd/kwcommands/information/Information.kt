@@ -64,7 +64,7 @@ data class Information<out T>(val id: Information.Id, val value: T, val type: Ty
      * @property id String Identification of information
      * @property
      */
-    data class Id(val id: Class<*>, val tags: Array<String>) {
+    data class Id(val id: Class<*>, val tags: Array<out String>) {
         override fun hashCode(): Int {
             var result = 1
 

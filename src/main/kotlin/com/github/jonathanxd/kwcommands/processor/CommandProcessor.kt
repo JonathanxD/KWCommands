@@ -64,5 +64,13 @@ interface CommandProcessor {
      */
     fun process(stringList: List<String>, owner: Any?): List<CommandContainer>
 
+    /**
+     * Handle [commands] and returns [results][Result] of executions.
+     *
+     * This function will first check requirements, and then handle arguments and the command.
+     *
+     * @param commands Command to handle.
+     * @return [Result] of command execution.
+     */
     fun handle(commands: List<CommandContainer>): List<Result>
 }

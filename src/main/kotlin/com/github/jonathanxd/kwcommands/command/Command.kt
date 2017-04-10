@@ -104,7 +104,7 @@ data class Command(val parent: Command?,
     }
 
     override fun toString(): String {
-        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: $arguments, subCommands: {${subCommands.map { it.name.toString() }.joinToString()}})"
+        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: ${arguments.map{ "${it.id}: ${it.type}" }.joinToString()}, subCommands: {${subCommands.map { it.name.toString() }.joinToString()}})"
     }
 
     override fun compareTo(other: Command): Int {

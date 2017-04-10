@@ -27,5 +27,4 @@
  */
 package com.github.jonathanxd.kwcommands.exception
 
-class InformationMissingException(message: String) : Exception(message) {
-}
+class InformationMissingException(message: String) : Exception(message)

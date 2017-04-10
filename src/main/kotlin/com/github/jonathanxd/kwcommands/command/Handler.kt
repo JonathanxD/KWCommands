@@ -41,6 +41,7 @@ interface Handler {
      *
      * @param commandContainer Parsed command.
      * @param informationManager Information manager.
+     * @return Value result of command handling ([Unit] if none)
      */
     fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any
 

@@ -28,18 +28,8 @@
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
 /**
- * @property order Command order.
- * @property name Command name.
- * @property description Command description.
- * @property alias Aliases to command.
- * @property parentCommands Parent commands (only if this command is a sub-command).
- * @property requirements Command requirements.
+ * Exclude annotated field/property from argument creation.
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.TYPE, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
-annotation class Command(val order: Int = 0,
-                         val name: String,
-                         val description: String,
-                         val alias: Array<String> = arrayOf(),
-                         val parentCommands: Array<String> = arrayOf(),
-                         val requirements: Array<Requirement> = arrayOf())
+@Target(AnnotationTarget.PROPERTY)
+annotation class Exclude

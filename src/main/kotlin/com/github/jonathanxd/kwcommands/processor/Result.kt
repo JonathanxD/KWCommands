@@ -27,9 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
-import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.Container
 
 /**
  * Result of command handling.
  */
-data class Result(val value: Any?, val commandContainer: CommandContainer)
+data class Result(val value: Any?, val container: Container)

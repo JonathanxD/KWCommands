@@ -27,23 +27,36 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
-import com.github.jonathanxd.kwcommands.command.Container
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.manager.InformationManager
 
 /**
- * Container to hold parsed [argument][Argument].
- *
- * @property argument Argument.
- * @property input Input argument value(s).
- * @property value Value of argument.
+ * Argument handler. Handles the [argument][Argument] passed to a [commandContainer][CommandContainer].
  */
-data class ArgumentContainer<T>(val argument: Argument<T>,
-                                val input: String?,
-                                val value: T?,
-                                var handler: ArgumentHandler<T>?): Container {
+@Suppress("AddVarianceModifier") // Argument class
+@FunctionalInterface
+interface ArgumentHandler<T> {
 
     /**
-     * Returns true if this argument is defined.
+     * Handles the argument passed to a [command][commandContainer].
+     *
+     * @param argumentContainer parsed argument.
+     * @param commandContainer Parsed command.
+     * @param informationManager Information manager.
+     * @return Value result of argument handling ([Unit] if none)
      */
-    val isDefined get() = this.input != null
+    fun handle(argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager): Any
+
+    companion object {
+        /**
+         * Create argument handler from a function.
+         */
+        inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager) -> Any) = object : ArgumentHandler<T> {
+            override fun handle(argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager): Any {
+                return function(argumentContainer, commandContainer, informationManager)
+            }
+        }
+
+    }
 
 }

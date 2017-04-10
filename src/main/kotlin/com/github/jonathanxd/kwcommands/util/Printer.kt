@@ -25,25 +25,18 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.command
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.printer.Printer
 
-/**
- * Container to hold parsed [command][Command].
- *
- * @property command Parsed command.
- * @property arguments Parsed arguments passed to command.
- * @property handler Handler of command. This handler is always the same as [Command.handler] for original containers, but
- * for modified containers this handler may or may not be the same as [Command.handler] (see [CommandInterceptor]).
- */
-data class CommandContainer(val command: Command,
-                            val arguments: List<ArgumentContainer<*>>,
-                            val handler: Handler?): Container {
-
-    override fun toString(): String {
-        return "CommandContainer(command = $command, arguments = ${this.arguments.map { "argument = Argument(${it.argument.id}: ${it.argument.type}), value = ${it.value}" }.joinToString()}, handler = ${handler?.javaClass})"
+fun Printer.printAll(manager: CommandManager) {
+    manager.createListWithCommands().forEach {
+        this.printCommand(it, 0)
+        it.consumeAllSubCommands { command, level ->
+            this.printCommand(command, level)
+        }
     }
 
+    this.flush()
 }

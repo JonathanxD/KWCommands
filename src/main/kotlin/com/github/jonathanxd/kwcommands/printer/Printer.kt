@@ -25,23 +25,25 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.annotation
+package com.github.jonathanxd.kwcommands.printer
 
-import com.github.jonathanxd.kwcommands.reflect.NonePossibilities
-import com.github.jonathanxd.kwcommands.reflect.NoneTransformer
-import com.github.jonathanxd.kwcommands.reflect.NoneValidator
-import kotlin.reflect.KClass
+import com.github.jonathanxd.kwcommands.command.Command
 
 /**
- * Argument.
- *
- * @property optional Whether this argument is optional.
- * @property value Id of argument.
+ * Command printer
  */
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class Argument(val optional: Boolean = false,
-                          val value: String,
-                          val validator: KClass<out (String) -> Boolean> = NoneValidator::class,
-                          val transformer: KClass<out (String) -> Any> = NoneTransformer::class,
-                          val possibilities: KClass<out () -> List<String>> = NonePossibilities::class)
+interface Printer {
+
+    /**
+     * Prints command
+     *
+     * @param command Command to print.
+     * @param level   Command inheritance level (0 for main commands).
+     */
+    fun printCommand(command: Command, level: Int)
+
+    /**
+     * Flush texts to stream.
+     */
+    fun flush()
+}

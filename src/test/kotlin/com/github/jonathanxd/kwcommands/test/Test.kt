@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandName
@@ -36,6 +37,7 @@ import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.Result
 import com.github.jonathanxd.kwcommands.util.Argument
 import org.junit.Assert
+import org.junit.ComparisonFailure
 import org.junit.Test
 
 class CommandTest {
@@ -105,7 +107,10 @@ class CommandTest {
                                 defaultValue = null,
                                 validator = { it.toIntOrNull() != null },
                                 transformer = String::toInt,
-                                possibilities = emptyList()),
+                                possibilities = emptyList(),
+                                handler = ArgumentHandler.create { arg, _, _ ->
+                                    return@create arg.value!!
+                                }),
                         Argument(id = "double",
                                 isOptional = false,
                                 defaultValue = null,
@@ -128,10 +133,10 @@ class CommandTest {
                 .assertAll(listOf("open door", "open window(of house, 5.0)"))
 
         processor.handle(processor.process(listOf("open", "door", "window", "of house", "1", "7.0"), this))
-                .assertAll(listOf("open door", "open window(of house, 1, 7.0)"))
+                .assertAll(listOf("open door", 1, "open window(of house, 1, 7.0)"))
 
         processor.handle(processor.process(listOf("open", "door", "&", "open", "window", "of house", "5", "19.0"), this))
-                .assertAll(listOf("open door", "open window(of house, 5, 19.0)"))
+                .assertAll(listOf("open door", 5, "open window(of house, 5, 19.0)"))
     }
 
 }
@@ -141,7 +146,9 @@ fun Result.assert(expected: Any?) {
 }
 
 fun List<Result>.assertAll(expected: List<Any?>) {
-    Assert.assertEquals(this.size, expected.size)
+
+    if(this.size != expected.size)
+        throw ComparisonFailure("List is not equal.", expected.toString(), this.map { it.value }.toString())
 
     this.forEachIndexed { index, result ->
         result.assert(expected[index])

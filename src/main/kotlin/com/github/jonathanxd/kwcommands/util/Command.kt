@@ -25,25 +25,30 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.command
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.command.Command
 
-/**
- * Container to hold parsed [command][Command].
- *
- * @property command Parsed command.
- * @property arguments Parsed arguments passed to command.
- * @property handler Handler of command. This handler is always the same as [Command.handler] for original containers, but
- * for modified containers this handler may or may not be the same as [Command.handler] (see [CommandInterceptor]).
- */
-data class CommandContainer(val command: Command,
-                            val arguments: List<ArgumentContainer<*>>,
-                            val handler: Handler?): Container {
-
-    override fun toString(): String {
-        return "CommandContainer(command = $command, arguments = ${this.arguments.map { "argument = Argument(${it.argument.id}: ${it.argument.type}), value = ${it.value}" }.joinToString()}, handler = ${handler?.javaClass})"
+val Command.allSubCommands: List<Command>
+    get() {
+        return mutableListOf<Command>().also { this.allSubCommandsTo(it) }
     }
 
+fun Command.allSubCommandsTo(list: MutableList<Command>) {
+    this.subCommands.forEach {
+        list.add(it)
+        it.allSubCommandsTo(list)
+    }
+}
+
+fun Command.consumeAllSubCommands(consumer: (command: Command, level: Int) -> Unit) =
+    this.consumeAllSubCommands(consumer, 1)
+
+private fun Command.consumeAllSubCommands(consumer: (command: Command, level: Int) -> Unit, level: Int) {
+    //consumer(this, level)
+
+    this.subCommands.forEach {
+        consumer(it, level)
+        it.consumeAllSubCommands(consumer, level + 1)
+    }
 }

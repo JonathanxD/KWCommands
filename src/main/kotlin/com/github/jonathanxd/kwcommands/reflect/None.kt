@@ -27,20 +27,41 @@
  */
 package com.github.jonathanxd.kwcommands.reflect
 
-object NoneValidator : (String) -> Boolean {
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.Handler
+import com.github.jonathanxd.kwcommands.manager.InformationManager
+
+
+sealed class None
+
+object NoneValidator : None(), (String) -> Boolean {
     override fun invoke(p1: String): Boolean {
         throw IllegalStateException("NONE")
     }
 }
 
-object NoneTransformer : (String) -> Any {
+object NoneTransformer : None(), (String) -> Any {
     override fun invoke(p1: String): Any {
         throw IllegalStateException("NONE")
     }
 }
 
-object NonePossibilities : () -> List<String> {
+object NonePossibilities : None(), () -> List<String> {
     override fun invoke(): List<String> {
         return emptyList()
+    }
+}
+
+object NoneHandler : None(), Handler {
+    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
+        return Unit
+    }
+}
+
+object NoneArgumentHandler : None(), ArgumentHandler<Any?> {
+    override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer, informationManager: InformationManager): Any {
+        return Unit
     }
 }

@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.util
 import com.github.jonathanxd.iutils.type.ConcreteTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 
@@ -47,5 +48,6 @@ inline fun <reified T> Argument(id: Any,
                                 defaultValue: T?,
                                 noinline validator: (String) -> Boolean,
                                 noinline transformer: (String) -> T,
-                                possibilities: List<String>): Argument<T> =
-        Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities)
+                                possibilities: List<String>,
+                                handler: ArgumentHandler<T>? = null): Argument<T> =
+        Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, handler)

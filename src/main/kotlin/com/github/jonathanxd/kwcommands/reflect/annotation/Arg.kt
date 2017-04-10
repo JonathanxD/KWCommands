@@ -25,25 +25,28 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.command
+package com.github.jonathanxd.kwcommands.reflect.annotation
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.reflect.NoneArgumentHandler
+import com.github.jonathanxd.kwcommands.reflect.NonePossibilities
+import com.github.jonathanxd.kwcommands.reflect.NoneTransformer
+import com.github.jonathanxd.kwcommands.reflect.NoneValidator
+import kotlin.reflect.KClass
 
 /**
- * Container to hold parsed [command][Command].
+ * Argument.
  *
- * @property command Parsed command.
- * @property arguments Parsed arguments passed to command.
- * @property handler Handler of command. This handler is always the same as [Command.handler] for original containers, but
- * for modified containers this handler may or may not be the same as [Command.handler] (see [CommandInterceptor]).
+ * @property optional Whether this argument is optional.
+ * @property value Id of argument.
+ * @property handler Argument handler (if this annotated element is a field, an field setter handler will
+ * be used as default handler instead of [NoneArgumentHandler]) (**this property overrides default handler**).
  */
-data class CommandContainer(val command: Command,
-                            val arguments: List<ArgumentContainer<*>>,
-                            val handler: Handler?): Container {
-
-    override fun toString(): String {
-        return "CommandContainer(command = $command, arguments = ${this.arguments.map { "argument = Argument(${it.argument.id}: ${it.argument.type}), value = ${it.value}" }.joinToString()}, handler = ${handler?.javaClass})"
-    }
-
-}
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+annotation class Arg(val value: String,
+                     val optional: Boolean = false,
+                     val validator: KClass<out (String) -> Boolean> = NoneValidator::class,
+                     val transformer: KClass<out (String) -> Any> = NoneTransformer::class,
+                     val possibilities: KClass<out () -> List<String>> = NonePossibilities::class,
+                     val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class)

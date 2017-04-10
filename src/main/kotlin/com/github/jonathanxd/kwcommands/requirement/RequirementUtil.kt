@@ -45,28 +45,29 @@ fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager) {
         val find = manager.find(it.subject, it.infoType)
 
         if (find == null) {
-            InformationMissingException("Information id '${it.subject}' requested by Requirement '$it' is not present!").let {
+            InformationMissingException("Information id '${it.subject}' requested by Requirement '$it' is missing!").let {
                 if (exception == null)
                     exception = it
                 else
                     exception!!.addSuppressed(it)
             }
-        }
+        } else {
 
-        try {
+            try {
 
-            @Suppress("UNCHECKED_CAST")
-            it as Requirement<Any, *>
-            @Suppress("UNCHECKED_CAST")
-            find as Information<Any>
+                @Suppress("UNCHECKED_CAST")
+                it as Requirement<Any, *>
+                @Suppress("UNCHECKED_CAST")
+                find as Information<Any>
 
-            it.test(find)
+                it.test(find)
 
-        } catch (ex: RequirementNotSatisfiedException) {
-            if (exception == null)
-                exception = ex
-            else
-                exception!!.addSuppressed(ex)
+            } catch (ex: RequirementNotSatisfiedException) {
+                if (exception == null)
+                    exception = ex
+                else
+                    exception!!.addSuppressed(ex)
+            }
         }
 
     }

@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.reflect
 
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.exception.InformationMissingException
@@ -35,28 +37,56 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 
-class ReflectionHandler(val element: Element) : Handler {
+class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
 
+    @Suppress("UNCHECKED_CAST")
     override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
+
+        /*element.requirements.forEach {
+            informationManager.find(it.subject, it.infoType)?.also { info ->
+                it.test(info as Information<Nothing>)
+            } ?: throw InformationMissingException("Information ${it.subject} of type ${it.infoType} is missing!")
+
+        }*/
+
         val link = element.elementLink
         val args = mutableListOf<Any?>()
 
         element.parameters.forEach { parameter ->
-            when(parameter) {
+            when (parameter) {
                 is Parameter.ArgumentParameter<*> -> {
                     args += commandContainer.arguments.find { parameter.argument.id == it.argument.id }?.value
                 }
                 is Parameter.InformationParameter<*> -> {
                     val information = informationManager.find(parameter.id, parameter.type)
 
-                    if(!parameter.isOptional && information == null)
+                    if (!parameter.isOptional && information == null)
                         throw InformationMissingException("Required information with id ${parameter.id} and of type ${parameter.type} is missing!")
                     args += information ?: Information.EMPTY
                 }
             }
         }
 
-        return link(*args.toTypedArray())
+        return link(*args.toTypedArray()) ?: Unit
+    }
+
+    override fun handle(argumentContainer: ArgumentContainer<Any>, commandContainer: CommandContainer, informationManager: InformationManager): Any {
+        val link = element.elementLink
+
+        val parameter = element.parameters.first()
+
+        when (parameter) {
+            is Parameter.ArgumentParameter<*> -> {
+                return link.invoke(argumentContainer.value) ?: Unit
+            }
+            is Parameter.InformationParameter<*> -> {
+                val information = informationManager.find(parameter.id, parameter.type)
+
+                if (!parameter.isOptional && information == null)
+                    throw InformationMissingException("Required information with id ${parameter.id} and of type ${parameter.type} is missing!")
+                return link.invoke(information ?: Information.EMPTY) ?: Unit
+            }
+        }
     }
 
 }

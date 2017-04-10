@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.processor
 
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.exception.ArgumentsMissingException
@@ -41,18 +42,22 @@ import java.util.*
 
 object Processors {
 
-
     @JvmStatic
     fun createCommonProcessor(): CommandProcessor =
             CommonCommandProcessor()
 
+    @JvmStatic
+    fun createCommonProcessor(manager: CommandManager): CommandProcessor =
+            CommonCommandProcessor(manager)
 
-    private class CommonCommandProcessor : CommandProcessor {
+    @JvmStatic
+    fun createCommonProcessor(manager: CommandManager, informationManager: InformationManager): CommandProcessor =
+            CommonCommandProcessor(manager, informationManager)
+
+    private class CommonCommandProcessor(override val commandManager: CommandManager = CommandManager(),
+                                         override val informationManager: InformationManager = InformationManager()) : CommandProcessor {
 
         private val interceptors = mutableSetOf<CommandInterceptor>()
-
-        override val commandManager: CommandManager = CommandManager()
-        override val informationManager: InformationManager = InformationManager()
 
         override fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
                 this.interceptors.add(commandInterceptor)
@@ -70,7 +75,7 @@ object Processors {
             while (index < stringList.size) {
                 var command: Command? = null
 
-                if(stringList[index].isAndOp()) {
+                if (stringList[index].isAndOp()) {
                     deque.clear()
                     ++index
                     continue
@@ -81,7 +86,7 @@ object Processors {
                     if (deque.isEmpty()) {
                         command = commandManager.getCommand(getStr(index), owner)
 
-                        if(command == null)
+                        if (command == null)
                             throw CommandNotFoundException("Command ${getStr(index)} (index $index in $stringList) was not found.")
                     } else {
                         command = deque.last.getSubCommand(getStr(index))
@@ -89,20 +94,20 @@ object Processors {
                         if (command == null) {
                             val rm = deque.removeLast()
 
-                            if(rm.parent != null)
+                            if (rm.parent != null)
                                 deque.offerLast(rm.parent)
                         }
                     }
                 }
 
-                if(index + 1 == stringList.size ||
+                if (index + 1 == stringList.size ||
                         (index + 1 < stringList.size
                                 && (stringList[index + 1].isAndOp() || command.getSubCommand(getStr(index + 1)) == null))) {
 
                     val arguments = command.arguments.toMutableList()
                     val args = mutableListOf<ArgumentContainer<*>>()
 
-                    if(!arguments.isEmpty()) {
+                    if (!arguments.isEmpty()) {
                         val requiredArgsCount = arguments.count { !it.isOptional }
 
                         if (index + requiredArgsCount >= stringList.size) {
@@ -118,7 +123,7 @@ object Processors {
                         var requiredCount = 0
 
                         val size = (index + arguments.size).let {
-                            if(it >= stringList.size)
+                            if (it >= stringList.size)
                                 stringList.size - 1
                             else
                                 it
@@ -130,9 +135,10 @@ object Processors {
                             val arg = arguments.find { it.validator(argStr) }
 
                             if (arg != null) {
-                                if(!arg.isOptional)
+                                if (!arg.isOptional)
                                     requiredCount++
-                                args.add(ArgumentContainer(arg, argStr, arg.transformer(argStr)))
+                                @Suppress("UNCHECKED_CAST")
+                                args.add(ArgumentContainer(arg, argStr, arg.transformer(argStr), arg.handler as? ArgumentHandler<Any?>))
                                 arguments.remove(arg)
                                 ++index
                             }
@@ -143,7 +149,7 @@ object Processors {
                             throw ArgumentsMissingException("Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
                         }
 
-                        arguments.map { ArgumentContainer(it, null, it.defaultValue) }
+                        arguments.map { ArgumentContainer(it, null, it.defaultValue, null) }
                     }
 
                     commands += CommandContainer(
@@ -160,6 +166,7 @@ object Processors {
             return commands
         }
 
+        @Suppress("UNCHECKED_CAST")
         override fun handle(commands: List<CommandContainer>): List<Result> {
             val results = mutableListOf<Result>()
 
@@ -176,7 +183,15 @@ object Processors {
                 container?.let {
                     command.command.requirements.checkRequirements(this.informationManager)
 
+                    // Process arguments first because arguments must be resolved before command handling
+                    it.arguments.forEach { arg ->
+                        (arg as ArgumentContainer<Any?>).handler?.let { handler ->
+                            results += Result(handler.handle(arg, it, this.informationManager), arg)
+                        }
+                    }
+
                     val result = Result(it.handler?.handle(it, this.informationManager), it)
+
                     results += result
 
                     interceptors.forEach { interceptor ->

@@ -27,5 +27,4 @@
  */
 package com.github.jonathanxd.kwcommands.exception
 
-class CommandNotFoundException(message: String) : RuntimeException(message) {
-}
+class CommandNotFoundException(message: String) : RuntimeException(message)

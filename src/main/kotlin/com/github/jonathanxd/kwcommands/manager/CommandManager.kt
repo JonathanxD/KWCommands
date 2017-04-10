@@ -28,7 +28,8 @@
 package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.kwcommands.command.Command
-import java.util.*
+import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
 
 /**
  * Manages and register commands. Only top-level commands can be registered.
@@ -94,6 +95,38 @@ class CommandManager {
     }?.command
 
     /**
+     * Gets the command in specified [path].
+     */
+    @JvmOverloads
+    fun getCommand(path: Array<String>, owner: Any? = null): Command = path.let {
+
+        var cmd = this.getCommand(it.first(), owner) ?: throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")
+
+        if (it.size > 1) {
+            for (x in it.copyOfRange(1, it.size)) {
+                cmd = cmd.getSubCommand(x) ?: throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")
+            }
+        }
+
+        cmd
+    }
+
+    /**
+     * Gets the command in specified [path].
+     */
+    @JvmOverloads
+    fun getOptionalCommand(path: Array<String>, owner: Any? = null): Command? = path.let {
+        if (it.isEmpty()) null else
+            try {
+                getCommand(path, owner)
+            } catch (c: CommandNotFoundException) {
+                null
+            }
+
+    }
+
+
+    /**
      * Creates a pair of command and the command owner.
      *
      * Modifications made in this list is not reflected in the original list.
@@ -101,6 +134,26 @@ class CommandManager {
     fun createCommandsPair(): List<Pair<Command, Any>> =
             this.commands.map { it.command to it.owner }
 
+    /**
+     * Creates a list with registered commands.
+     *
+     * Modifications in this class is not reflected in original class.
+     */
+    fun createListWithCommands(): List<Command> = this.commands.map { (command, _) -> command }
+
+    /**
+     * Creates a list with all commands including sub commands.
+     */
+    fun createListWithAllCommands(): List<Command> {
+        val list = mutableListOf<Command>()
+
+        this.commands.forEach {
+            list.add(it.command)
+            it.command.allSubCommandsTo(list)
+        }
+
+        return list
+    }
 
     private fun Command.getCommand(name: String): Command? {
 
@@ -116,18 +169,5 @@ class CommandManager {
         return null
     }
 
-    private class RegisteredCommand(val command: Command, val owner: Any) {
-
-        override fun equals(other: Any?): Boolean {
-            return if (other is RegisteredCommand) this.command == other.command && this.owner == other.owner else super.equals(other)
-        }
-
-        override fun hashCode(): Int {
-            return Objects.hash(command, owner)
-        }
-
-        override fun toString(): String {
-            return "RegisteredCommand(command: $command, owner: $owner)"
-        }
-    }
+    internal data class RegisteredCommand(val command: Command, val owner: Any)
 }

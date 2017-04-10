@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
+import com.github.jonathanxd.iutils.type.ConcreteTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 
@@ -39,4 +40,9 @@ data class Requirement<T, R>(val required: R, val subject: Information.Id, val i
      * Calls the [RequirementTester.test] method.
      */
     fun test(information: Information<T>) = this.tester.test(this, information)
+
+    companion object {
+        inline fun <reified T, reified R> create(required: R, subject: Information.Id, tester: RequirementTester<T, R>) =
+                Requirement(required, subject, object : ConcreteTypeInfo<T>() {}, object : ConcreteTypeInfo<R>() {}, tester)
+    }
 }

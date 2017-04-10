@@ -47,4 +47,5 @@ data class Argument<out T>(val id: Any,
                            val defaultValue: T?,
                            val validator: (String) -> Boolean,
                            val transformer: (String) -> T,
-                           val possibilities: List<String>)
+                           val possibilities: List<String>,
+                           val handler: ArgumentHandler<out T>? = null)

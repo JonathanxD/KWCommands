@@ -27,5 +27,4 @@
  */
 package com.github.jonathanxd.kwcommands.exception
 
-class ArgumentsMissingException(message: String) : RuntimeException(message) {
-}
+class ArgumentsMissingException(message: String) : RuntimeException(message)

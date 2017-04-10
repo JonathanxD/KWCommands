@@ -32,7 +32,14 @@ import kotlin.reflect.KClass
 
 /**
  * @property subject Subject information id.
+ * @property infoType Type of information value
  * @property testerType Type of the [RequirementTester] (must be a singleton class).
  * @property data Requirement data, annotation requirements only supports String type.
  */
-annotation class Requirement(val subject: Id, val testerType: KClass<out RequirementTester<*, String>>, val data: String)
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.PROPERTY)
+@Repeatable
+annotation class Require(val subject: Id,
+                         val infoType: KClass<out Any>,
+                         val testerType: KClass<out RequirementTester<*, String>>,
+                         val data: String)
