@@ -44,7 +44,7 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class Cmd(val order: Int = 0,
-                     val name: String,
+                     val name: String = "",
                      val description: String,
                      val alias: Array<String> = arrayOf(),
                      val parents: Array<String> = arrayOf(),

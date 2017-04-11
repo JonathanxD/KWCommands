@@ -31,9 +31,27 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.information.Information
 
+/**
+ * Parameter specification.
+ *
+ * @property type Type of parameter value.
+ */
 sealed class Parameter<T>(val type: TypeInfo<T>) {
 
+    /**
+     * Argument parameter. An parameter that receives a [command argument][Argument] value.
+     *
+     * @property argument Backing command argument.
+     */
     class ArgumentParameter<T>(val argument: Argument<T>, type: TypeInfo<T>): Parameter<T>(type)
+
+    /**
+     * Information parameter. An parameter that receives a [Information] value.
+     *
+     * @property id Id of information to receive.
+     * @property isOptional If the [Information] is optional, if true, a [Information.EMPTY] will be passed if the
+     * information is not present.
+     */
     class InformationParameter<T>(val id: Information.Id, val isOptional: Boolean, type: TypeInfo<T>): Parameter<T>(type)
 
 }

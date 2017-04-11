@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.util.ALOList
+import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
  * A command argument.
@@ -38,6 +38,7 @@ import com.github.jonathanxd.kwcommands.util.ALOList
  * @property type Type of argument value.
  * @property validator Argument value validator.
  * @property transformer Transformer of argument to a object of type [T].
+ * @property requirements Requirements of this argument.
  * @property possibilities Possibilities of argument values.
  */
 
@@ -48,4 +49,5 @@ data class Argument<out T>(val id: Any,
                            val validator: (String) -> Boolean,
                            val transformer: (String) -> T,
                            val possibilities: List<String>,
+                           val requirements: List<Requirement<*, *>>,
                            val handler: ArgumentHandler<out T>? = null)

@@ -33,6 +33,7 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 inline fun <reified T> InformationManager.registerInformation(id: Information.Id, value: T, description: String? = null)
         = this.registerInformation(id, value, object : ConcreteTypeInfo<T>() {}, description)
@@ -49,5 +50,6 @@ inline fun <reified T> Argument(id: Any,
                                 noinline validator: (String) -> Boolean,
                                 noinline transformer: (String) -> T,
                                 possibilities: List<String>,
+                                requirements: List<Requirement<*, *>>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
-        Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, handler)
+        Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, requirements, handler)

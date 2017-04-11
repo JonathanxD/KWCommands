@@ -70,6 +70,14 @@ class CommandManager {
     }
 
     /**
+     * Returns true if command is registered.
+     *
+     * @param command Command to check.
+     * @param owner Owner of command.
+     */
+    fun isRegistered(command: Command, owner: Any? = null) = this.commands.any { (owner == null || it.owner == owner) && it.command == command }
+
+    /**
      * Searches for a command with name [name], this method recursively searches for this command.
      */
     @JvmOverloads

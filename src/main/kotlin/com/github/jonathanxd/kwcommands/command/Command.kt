@@ -59,6 +59,22 @@ data class Command(val parent: Command?,
     val subCommands: Set<Command> = Collections.unmodifiableSet(this.subCommands_)
 
     /**
+     * Super command. The super command is the highest [parent] command in command hierarchy.
+     *
+     * Super command of commands that are not sub-commands is `null`.
+     */
+    val superCommand: Command? = parent.let {
+        var superCommand = parent ?: return@let null
+
+        while(superCommand.parent != null) {
+            superCommand = superCommand.parent!!
+        }
+
+        return@let superCommand
+    }
+
+
+    /**
      * Path/name of this command. The [fullname] of a command is a combination
      * of the [fullname] of [parent] command and the [name] of this command.
      */

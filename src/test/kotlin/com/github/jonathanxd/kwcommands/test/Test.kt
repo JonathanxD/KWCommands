@@ -72,6 +72,7 @@ class CommandTest {
                                 defaultValue = null,
                                 validator = { true },
                                 transformer = { it },
+                                requirements = emptyList(),
                                 possibilities = emptyList())
 
                 ),
@@ -101,6 +102,7 @@ class CommandTest {
                                 defaultValue = null,
                                 validator = { true },
                                 transformer = { it },
+                                requirements = emptyList(),
                                 possibilities = emptyList()),
                         Argument(id = "amount",
                                 isOptional = true,
@@ -108,6 +110,7 @@ class CommandTest {
                                 validator = { it.toIntOrNull() != null },
                                 transformer = String::toInt,
                                 possibilities = emptyList(),
+                                requirements = emptyList(),
                                 handler = ArgumentHandler.create { arg, _, _ ->
                                     return@create arg.value!!
                                 }),
@@ -116,6 +119,7 @@ class CommandTest {
                                 defaultValue = null,
                                 validator = { it.toDoubleOrNull() != null },
                                 transformer = String::toDouble,
+                                requirements = emptyList(),
                                 possibilities = emptyList())
                 ),
                 requirements = emptyList()

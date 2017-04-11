@@ -28,6 +28,12 @@
 package com.github.jonathanxd.kwcommands.reflect.env
 
 /**
- * An argument type.
+ * Specification of a argument type.
+ *
+ * When the [ReflectionEnvironment] find an argument, it will lookup for a common argument specification that provides [validator],
+ * [transformer], [possibilities] and [defaultValue]. This class is intended to provide these values.
+ *
+ * An instance of argument type can be registered globally using [ReflectionEnvironment.setGlobal] or per instance using
+ * [ReflectionEnvironment.set].
  */
 data class ArgumentType<out T>(val validator: (String) -> Boolean, val transformer: (String) -> T, val possibilities: List<String>, val defaultValue: T?)

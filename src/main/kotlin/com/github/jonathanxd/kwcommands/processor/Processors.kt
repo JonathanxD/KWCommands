@@ -181,6 +181,10 @@ object Processors {
                 }
 
                 container?.let {
+                    it.arguments.forEach {
+                        it.argument.requirements.checkRequirements(this.informationManager)
+                    }
+
                     command.command.requirements.checkRequirements(this.informationManager)
 
                     // Process arguments first because arguments must be resolved before command handling

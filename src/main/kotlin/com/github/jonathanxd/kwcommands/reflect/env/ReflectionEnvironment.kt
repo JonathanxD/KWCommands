@@ -32,21 +32,21 @@ import com.github.jonathanxd.iutils.reflection.Links
 import com.github.jonathanxd.iutils.type.Primitive
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.command.CommandName
-import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
-import com.github.jonathanxd.kwcommands.reflect.None
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import com.github.jonathanxd.kwcommands.reflect.annotation.*
+import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
+import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
+import com.github.jonathanxd.kwcommands.reflect.annotation.Exclude
+import com.github.jonathanxd.kwcommands.reflect.annotation.Info
+import com.github.jonathanxd.kwcommands.reflect.annotation.Require
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
-import com.github.jonathanxd.kwcommands.reflect.util.getPath
-import com.github.jonathanxd.kwcommands.reflect.util.sort
-import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.reflect.util.*
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
@@ -54,14 +54,23 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.*
 import kotlin.reflect.KClass
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
  * Reflection helper environment.
  *
  * Dependency resolution is made via [CommandFactoryQueue].
+ *
+ * This helper creates commands from Java elements. For classes, it will create a super-command and register
+ * all methods as child commands (only if them does not specify parent command) and fields as arguments of class command.
+ * In KWCommands Fields can be only arguments, in WCommands arguments are commands that have a single argument of the same type of field,
+ * this was changed to make more sense (because fields are not runnable, only functions are runnable). For functions, their arguments
+ * must be annotated with [Arg] or [Info].
+ *
+ * In KWCommands you still can annotate fields with [Require] like in WCommands, but in KWCommands, arguments can have
+ * your own handler (that is called before command handler), you can also annotate parameters with [Require], but it does not
+ * means that you don't need to annotate parameter with [Arg] or [Info].
+ *
+ * In KWCommands, command description is mandatory (I prefer that way).
  *
  * @property manager Manager used to resolve parent commands.
  */
@@ -69,7 +78,12 @@ class ReflectionEnvironment(val manager: CommandManager) {
 
     private val argumentTypes = mutableMapOf<TypeInfo<*>, ArgumentType<*>>()
 
-
+    /**
+     * Sets [argument specification][ArgumentType] of arguments of type [type].
+     *
+     * @param type Type of argument value.
+     * @param argumentType Argument specification (if null, remove the specification).
+     */
     fun <T> set(type: TypeInfo<T>, argumentType: ArgumentType<T>?) {
         if (argumentType == null)
             this.argumentTypes.remove(type)
@@ -80,6 +94,11 @@ class ReflectionEnvironment(val manager: CommandManager) {
         }
     }
 
+    /**
+     * Gets required argument specification.
+     *
+     * @param type Type of argument value.
+     */
     @Suppress("UNCHECKED_CAST")
     fun <T> get(type: TypeInfo<T>): ArgumentType<T> =
             (this.argumentTypes.getArgumentType(type)) ?: getGlobalArgumentType(type)
@@ -87,19 +106,73 @@ class ReflectionEnvironment(val manager: CommandManager) {
 
     private val LOOKUP = MethodHandles.lookup()
 
+    /**
+     * Register commands returned by [ReflectionEnvironment] in this manager.
+     *
+     * Note: Command list returned by [ReflectionEnvironment] requires a special treatment (because it includes sub-commands),
+     * this method will not register sub-commands in current manager, example:
+     *
+     * If command `B` is a sub-command of command `A`, and [list] contains command `B` but does not contains command `A` and the
+     * command `A` is not registered in [manager], the command `B` will appear in all [CommandManager]
+     * that command `A` is registered, but will not appear in [manager] because `A` is not registered and is
+     * not present in [list], to accomplish this task use [registerCommandsAndSuper].
+     *
+     * @param list Command list
+     * @param owner Owner of command.
+     */
     fun registerCommands(list: List<Command>, owner: Any) {
         list.prepareCommands().forEach { this.manager.registerCommand(it, owner) }
     }
 
-    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any, owner: Any?): List<Command> {
+    /**
+     * Register all commands in [list] including super commands (of sub-commands) that are not in [list] and are not registered.
+     *
+     * If you don't want super commands (that are not present in [list]) to be registered, use [registerCommands].
+     *
+     * @param list Command list
+     * @param owner Owner of command.
+     */
+    fun registerCommandsAndSuper(list: List<Command>, owner: Any) {
+        list.prepareCommands()
+
+        list.forEach {
+
+            if (it.superCommand != null) {
+                it.superCommand.let {
+                    if (!this.manager.isRegistered(it, owner))
+                        this.manager.registerCommand(it, owner)
+                }
+            } else {
+                this.manager.registerCommand(it, owner)
+            }
+
+        }
+    }
+
+    /**
+     * Create command list from commands of class [klass]
+     *
+     * @see fromClass
+     */
+    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?): List<Command> {
         return this.fromClass(klass.java, instanceProvider, owner)
     }
 
-    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any, owner: Any?, queue: CommandFactoryQueue): List<Command> {
+    /**
+     * Create command list from commands of class [klass]
+     *
+     * @see fromClass
+     */
+    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, queue: CommandFactoryQueue): List<Command> {
         return this.fromClass(klass.java, instanceProvider, owner, queue)
     }
 
-    fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any, owner: Any?): List<Command> {
+    /**
+     * Create command list from commands of class [klass]
+     *
+     * @see fromClass
+     */
+    fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?): List<Command> {
         val queue = CommandFactoryQueue()
 
         fromClass(klass, instanceProvider, owner, queue)
@@ -107,6 +180,15 @@ class ReflectionEnvironment(val manager: CommandManager) {
         return queue.commands
     }
 
+    /**
+     * Create command list from commands of class [klass]
+     *
+     * @param instanceProvider Provider of class instances (null for static elements).
+     * @param owner Owner of commands.
+     * @param queue Command Factory Queue.
+     * @see CommandFactoryQueue
+     * @see ReflectionEnvironment
+     */
     fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, queue: CommandFactoryQueue): List<Command> {
 
         val instance = klass.cast(instanceProvider(klass))
@@ -116,11 +198,11 @@ class ReflectionEnvironment(val manager: CommandManager) {
         val kCommand = command.toKCommand(manager, command.getHandlerOrNull(), null, klass.declaredFields.filter {
             !it.isAnnotationPresent(Exclude::class.java)
                     && ((Modifier.isStatic(it.modifiers) && instance == null) || (!Modifier.isStatic(it.modifiers) && instance != null))
-        }.map { fromField(instance, it) }, owner)
+        }.map { fromField(instance, it) }, owner, klass)
 
-        queue.queueCommand(klass, command.name, {
+        queue.queueCommand(klass, command.getName(klass), {
             kCommand
-        }, Checker(this.manager, owner, command), { command.getPath().joinToString(separator = " ") })
+        }, Checker(this.manager, owner, command, klass), { command.getPath(klass).joinToString(separator = " ") })
 
         fromMethodsOfClass(klass, instance, kCommand, owner, queue)
 
@@ -132,23 +214,45 @@ class ReflectionEnvironment(val manager: CommandManager) {
         return queue.commands
     }
 
+    /**
+     * Create list of commands from methods of [klass].
+     *
+     * @param instance Instance of class (null for static methods).
+     * @param superCommand Super command of all commands that does not specify a parent command.
+     * @param owner Owner of commands.
+     */
     fun <T> fromMethodsOfClass(klass: Class<T>, instance: T?, superCommand: Command?, owner: Any?): List<Command> =
             CommandFactoryQueue().apply {
                 fromMethodsOfClass(klass, instance, superCommand, owner, this)
             }.commands
 
+    /**
+     * Create list of commands from methods of [klass].
+     *
+     * @param instance Instance of class (null for static methods).
+     * @param superCommand Super command of all commands that does not specify a parent command.
+     * @param owner Owner of commands.
+     * @param queue Command Factory Queue.
+     * @see CommandFactoryQueue
+     * @see ReflectionEnvironment
+     */
     fun <T> fromMethodsOfClass(klass: Class<T>, instance: T?, superCommand: Command?, owner: Any?, queue: CommandFactoryQueue) {
         klass.declaredMethods
                 .filter {
                     it.isAnnotationPresent(Cmd::class.java)
                             && ((Modifier.isStatic(it.modifiers) && instance == null) || (!Modifier.isStatic(it.modifiers) && instance != null))
                 }
-                .sort()
                 .map { fromMethod(instance, it, superCommand, owner, queue) }
     }
 
 
-    // Fields are only translated to arguments
+    /**
+     * Creates a list of arguments from a [field].
+     *
+     * @param instance Instance of field declaring class (null for static).
+     * @param field Field to create argument.
+     * @see ReflectionEnvironment
+     */
     fun fromField(instance: Any?, field: Field): Argument<*> {
         val type = TypeUtil.toTypeInfo(field.genericType)
 
@@ -200,6 +304,7 @@ class ReflectionEnvironment(val manager: CommandManager) {
                     validator = validator,
                     defaultValue = defaultValue,
                     type = type,
+                    requirements = annotated!!.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(),
                     handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
             )
 
@@ -221,12 +326,21 @@ class ReflectionEnvironment(val manager: CommandManager) {
         }
 
         return karg!!.let {
-            if(it.handler == null)
+            if (it.handler == null)
                 it.copy(handler = ReflectionHandler(Element(link, listOf(parameters))))
             else it
         }
     }
 
+    /**
+     * Create a [Command] instance from a [method].
+     *
+     * @param instance Instance of method declaring class (null for static).
+     * @param method Method to create [Command].
+     * @param superCommand Super command of this [Command] if no one parent is specified.
+     * @param owner Owner of command
+     * @see ReflectionEnvironment
+     */
     fun fromMethod(instance: Any?, method: Method, superCommand: Command?, owner: Any?): Command {
         val queue = CommandFactoryQueue()
 
@@ -235,6 +349,17 @@ class ReflectionEnvironment(val manager: CommandManager) {
         return queue.commands.first()
     }
 
+    /**
+     * Create a [Command] instance from a [method].
+     *
+     * @param instance Instance of method declaring class (null for static).
+     * @param method Method to create [Command].
+     * @param superCommand Super command of this [Command] if no one parent is specified.
+     * @param owner Owner of command
+     * @param queue Command Factory queue.
+     * @see CommandFactoryQueue
+     * @see ReflectionEnvironment
+     */
     fun fromMethod(instance: Any?, method: Method, superCommand: Command?, owner: Any?, queue: CommandFactoryQueue) {
         val command = method.getDeclaredAnnotation(Cmd::class.java)
 
@@ -282,6 +407,7 @@ class ReflectionEnvironment(val manager: CommandManager) {
                         transformer = transformer,
                         validator = validator,
                         defaultValue = defaultValue,
+                        requirements = it.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(),
                         type = type)
 
                 arguments += argument
@@ -293,14 +419,19 @@ class ReflectionEnvironment(val manager: CommandManager) {
             }
         }
 
-        queue.queueCommand(method, command.name, { cmds ->
-            val superCmd = command.resolveParents(this.manager, owner, cmds) ?: superCommand
+        queue.queueCommand(method, command.getName(method), { cmds ->
+            val superCmd = command.resolveParents(this.manager, owner, method, cmds) ?: superCommand
 
-            command.toKCommand(manager, command.getHandler(Element(link, parameters)), superCmd, arguments, owner)
-        }, Checker(this.manager, owner, command), { command.getPath().joinToString(separator = " ") })
+            command.toKCommand(manager, command.getHandler(Element(link, parameters)), superCmd, arguments, owner, method)
+        }, Checker(this.manager, owner, command, method), { command.getPath(method).joinToString(separator = " ") })
 
     }
 
+    /**
+     * Creates a copy of this [ReflectionEnvironment].
+     *
+     * @param manager New manager.
+     */
     fun copy(manager: CommandManager = this.manager) = ReflectionEnvironment(manager).also {
         it.argumentTypes.putAll(this.argumentTypes)
     }
@@ -308,6 +439,9 @@ class ReflectionEnvironment(val manager: CommandManager) {
     companion object {
         private val GLOBAL = mutableMapOf<TypeInfo<*>, ArgumentType<*>>()
 
+        /**
+         * Helper method of [type] to [argumentType] registration.
+         */
         fun <T> MutableMap<TypeInfo<*>, ArgumentType<*>>.set(type: TypeInfo<T>, argumentType: ArgumentType<T>?) =
                 if (argumentType == null)
                     this.remove(type)
@@ -318,6 +452,9 @@ class ReflectionEnvironment(val manager: CommandManager) {
                     put
                 }
 
+        /**
+         * Helper method of [ArgumentType] fetching from a [type] key.
+         */
         @Suppress("UNCHECKED_CAST")
         fun <T> MutableMap<TypeInfo<*>, ArgumentType<*>>.getArgumentType(type: TypeInfo<T>): ArgumentType<T>? =
                 (if (this.containsKey(type))
@@ -330,7 +467,19 @@ class ReflectionEnvironment(val manager: CommandManager) {
                     null
                 })
 
+        /**
+         * Sets [argument specification][ArgumentType] of arguments of type [type] in global specification map.
+         *
+         * @param type Type of argument value.
+         * @param argumentType Argument specification (if null, remove the specification).
+         */
         fun <T> setGlobal(type: TypeInfo<T>, argumentType: ArgumentType<T>?) = GLOBAL.set(type, argumentType)
+
+        /**
+         * Gets optional global argument specification.
+         *
+         * @param type Type of argument value.
+         */
         fun <T> getGlobalArgumentType(type: TypeInfo<T>) = GLOBAL.getArgumentType(type)
 
         init {
@@ -347,121 +496,9 @@ class ReflectionEnvironment(val manager: CommandManager) {
             GLOBAL.set(TypeInfo.of(String::class.java), ArgumentType({ true }, { it }, emptyList(), ""))
         }
     }
-
 }
 
-
-@Suppress("UNCHECKED_CAST")
-fun <T : Any> KClass<T>.get(): T? =
-        if (None::class.java.isAssignableFrom(this.java)) null
-        else this.objectInstance ?: try {
-            this.java.getDeclaredField("INSTANCE").get(null) as T
-        } catch (e: Throwable) {
-            throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.", e)
-        }
-
-
-fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
-        this.parents.let {
-            if (it.isEmpty()) null else {
-                var cmd = manager.getCommand(it.first(), owner) ?: throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")
-
-                if (it.size > 1) {
-                    for (x in it.copyOfRange(1, it.size)) {
-                        cmd = cmd.getSubCommand(x) ?: throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")
-                    }
-                }
-
-                cmd
-            }
-        }
-
-fun Cmd.resolveParents(manager: CommandManager, owner: Any?, other: List<Command>) =
-        this.parents.let {
-            if (it.isEmpty()) null else {
-                var cmd = manager.getCommand(it.first(), owner)
-                        ?: other.find { (_, _, cmdName) -> cmdName.compareTo(name) == 0 }
-                        ?: return null/*throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")*/
-
-                if (it.size > 1) {
-                    for (x in it.copyOfRange(1, it.size)) {
-                        cmd = cmd.getSubCommand(x)
-                                ?: return null/*throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")*/
-                    }
-                }
-
-                cmd
-            }
-        }
-
-fun Cmd.toKCommand(manager: CommandManager, handler: Handler?, superCommand: Command?, arguments: List<Argument<*>>, owner: Any?): Command {
-    val order = this.order
-    val name = this.name
-    val alias = this.alias
-    val description = this.description
-    val parent = this.resolveParents(manager, owner)
-
-    return Command(parent = parent ?: superCommand,
-            order = order,
-            name = CommandName.StringName(name),
-            description = description,
-            handler = handler,
-            arguments = arguments,
-            requirements = this.getRequirements(),
-            alias = alias.map { CommandName.StringName(it) }.toList())
-
-}
-
-class Checker(val manager: CommandManager, val owner: Any?, val command: Cmd) : (List<Command>) -> Boolean {
+class Checker(val manager: CommandManager, val owner: Any?, val command: Cmd, val annotatedElement: AnnotatedElement) : (List<Command>) -> Boolean {
     override fun invoke(p1: List<Command>): Boolean =
-            if(command.parents.isEmpty()) true else command.resolveParents(manager, owner, p1) != null
+            if (command.parents.isEmpty()) true else command.resolveParents(manager, owner, annotatedElement, p1) != null
 }
-
-fun Array<Require>.toSpecs(): List<Requirement<*, *>> =
-        this.map {
-            @Suppress("UNCHECKED_CAST")
-            Requirement(it.data,
-                    it.subject.let { Information.Id(it.value.java, it.tags) },
-                    TypeInfo.of(it.infoType.java) as TypeInfo<Any>,
-                    TypeInfo.of(String::class.java), it.testerType.get() as RequirementTester<Any, String>)
-        }
-
-fun Cmd.getRequirements(): List<Requirement<*, *>> = this.requirements.toSpecs()
-
-fun Cmd.getHandlerOrNull(): Handler? =
-        this.handler.get()
-
-fun Cmd.getHandler(element: Element): Handler =
-        this.handler.get() ?: ReflectionHandler(element)
-
-fun Arg.getHandlerOrNull(): ArgumentHandler<*>? =
-        this.handler.get()
-
-fun Arg.getHandler(element: Element): ArgumentHandler<*> =
-        this.handler.get() ?: ReflectionHandler(element)
-
-/**
- * Prepare commands to registration.
- *
- * This function fixes missing sub-commands (only if the sub-command is in the list).
- *
- * If the super command of a [KCommand] is already registered (not the copy of the command)
- * the `sub-command fix` will affect the registered command and the sub-command will be available
- * in all [CommandManager] that the super command is registered.
- *
- * `Sub-commands fix` is the term that we use to say that all sub-commands that are not registered
- * in their [parent command][com.github.jonathanxd.kwcommands.command.Command.parent] will be registered
- * using [com.github.jonathanxd.kwcommands.command.Command.addSubCommand] function of [parent command][com.github.jonathanxd.kwcommands.command.Command.parent].
- *
- * @return A list with main commands only.
- */
-fun List<Command>.prepareCommands(): List<Command> =
-        this.filter {
-            // We can split it in a onEach operation, but I want to avoid the overhead.
-            // if this code becomes bigger and complex, move it to onEach operation (before filter operation).
-            val parent = it.parent
-            if (parent != null && !parent.subCommands.contains(it))
-                parent.addSubCommand(it)
-            // /onEach
-            it.parent == null
-        }

@@ -37,17 +37,13 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 
+/**
+ * Adapt command invocation to a element invocation.
+ */
 class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
 
     @Suppress("UNCHECKED_CAST")
     override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-
-        /*element.requirements.forEach {
-            informationManager.find(it.subject, it.infoType)?.also { info ->
-                it.test(info as Information<Nothing>)
-            } ?: throw InformationMissingException("Information ${it.subject} of type ${it.infoType} is missing!")
-
-        }*/
 
         val link = element.elementLink
         val args = mutableListOf<Any?>()

@@ -28,6 +28,12 @@
 package com.github.jonathanxd.kwcommands.reflect.element
 
 import com.github.jonathanxd.iutils.reflection.Link
-import com.github.jonathanxd.kwcommands.requirement.Requirement
+import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 
+/**
+ * Element information to [ReflectionHandler] handle the command correctly and invoke [elementLink].
+ *
+ * @property elementLink Link to element to invoke.
+ * @property parameters Parameter specification (parameters required to be passed to [elementLink]).
+ */
 data class Element(val elementLink: Link<Any?>, val parameters: List<Parameter<*>>)
