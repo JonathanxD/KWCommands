@@ -57,6 +57,9 @@ class ReflectionTest {
 
         printer.printAll(manager)
 
+        val processor = Processors.createCommonProcessor(manager)
+
+        processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this))// ?
     }
 
     @Test
@@ -83,6 +86,7 @@ class ReflectionTest {
 @Cmd(name = "download", description = "Download settings")
 class Download {
 
+    @Require(subject = Id(Player::class, "player"), data = "remote.download", infoType = Player::class, testerType = PermissionRequirementTest::class)
     lateinit var url: String
     var connetions: Int = 0
 
