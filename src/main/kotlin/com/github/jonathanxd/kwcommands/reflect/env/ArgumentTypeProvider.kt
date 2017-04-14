@@ -30,12 +30,45 @@ package com.github.jonathanxd.kwcommands.reflect.env
 import com.github.jonathanxd.iutils.type.TypeInfo
 
 /**
- * Specification of a argument type.
- *
- * When the [ReflectionEnvironment] find an argument, it will lookup for a common argument specification that provides [validator],
- * [transformer], [possibilities] and [defaultValue]. This class is intended to provide these values.
- *
- * An instance of argument type can be registered globally using [ReflectionEnvironment.registerGlobal] or per instance using
- * [ReflectionEnvironment.register].
+ * Provides arguments.
  */
-data class ArgumentType<out T>(val type: TypeInfo<out T>, val validator: (String) -> Boolean, val transformer: (String) -> T, val possibilities: List<String>, val defaultValue: T?)
+@FunctionalInterface
+interface ArgumentTypeProvider {
+
+    fun <T> provide(type: TypeInfo<T>): ArgumentType<T>?
+
+}
+
+class ConcreteProviders : ArgumentTypeProvider {
+
+    private val list = mutableListOf<ArgumentType<*>>()
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+
+        return (this.list.find { it.type == type } ?: this.list.find {
+            it.type.related.isEmpty() && it.type.classLiteral == type.classLiteral
+        }) as? ArgumentType<T>
+
+    }
+
+}
+
+class ConcreteProvider(val argumentType: ArgumentType<*>) : ArgumentTypeProvider {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? =
+            if (this.argumentType.type == type)
+                this.argumentType as? ArgumentType<T>
+            else null
+
+}
+
+/**
+ * Cast [ArgumentType] to [ArgumentType] of [type] [T].
+ */
+@Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+inline fun <T> ArgumentType<*>.cast(type: TypeInfo<T>): ArgumentType<T> {
+    require(type.isAssignableFrom(this.type), { "Expression 'type.isAssignableFrom(this.type)' (type = $type, this.type = ${this.type}) returns false!" })
+    return this as ArgumentType<T>
+}

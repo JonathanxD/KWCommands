@@ -27,8 +27,4 @@
  */
 package com.github.jonathanxd.kwcommands
 
-class KWCommands {
-
-
-
-}
+object KWCommands

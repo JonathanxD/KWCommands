@@ -28,18 +28,15 @@
 package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
-import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
 
 /**
  * Manages and register commands. Only top-level commands can be registered.
+ *
+ * Command managers should link commands to an owner.
+ *
+ * Obs: There is no restriction to register same command instance with different owners.
  */
-class CommandManager {
-
-    /**
-     * Command set.
-     */
-    private val commands = mutableSetOf<RegisteredCommand>()
+interface CommandManager {
 
     /**
      * Register [command].
@@ -47,13 +44,7 @@ class CommandManager {
      * @param command Command to register.
      * @param owner Command owner.
      */
-    fun registerCommand(command: Command, owner: Any): Boolean {
-
-        if (command.parent != null)
-            throw IllegalArgumentException("Command $command must be a top level command.")
-
-        return this.commands.add(RegisteredCommand(command, owner))
-    }
+    fun registerCommand(command: Command, owner: Any): Boolean
 
     /**
      * Unregister [command].
@@ -61,13 +52,15 @@ class CommandManager {
      * @param command Command to unregister.
      * @param owner Owner of the command.
      */
-    @JvmOverloads
-    fun unregisterCommand(command: Command, owner: Any? = null): Boolean {
-        if (command.parent != null)
-            throw IllegalArgumentException("Command $command must be a top level command.")
+    fun unregisterCommand(command: Command, owner: Any?): Boolean
 
-        return this.commands.removeIf { (owner == null || it.owner == owner) && it.command == command }
-    }
+    /**
+     * Unregister all [Command] instances linked to [owner].
+     *
+     * @param owner Owner of the command.
+     * @return True if the list was changed as result of this operation.
+     */
+    fun unregisterAllCommandsOfOwner(owner: Any): Boolean
 
     /**
      * Returns true if command is registered.
@@ -75,107 +68,52 @@ class CommandManager {
      * @param command Command to check.
      * @param owner Owner of command.
      */
-    fun isRegistered(command: Command, owner: Any? = null) = this.commands.any { (owner == null || it.owner == owner) && it.command == command }
+    fun isRegistered(command: Command, owner: Any? = null): Boolean
 
     /**
      * Searches for a command with name [name], this method recursively searches for this command.
      */
-    @JvmOverloads
-    fun findCommand(name: String, owner: Any? = null): Command? {
-        this.commands.forEach {
-
-            if (owner == null || it.owner == owner) {
-                it.command.getCommand(name)?.let {
-                    return it
-                }
-            }
-        }
-
-        return null
-    }
+    fun findCommand(name: String, owner: Any? = null): Command?
 
     /**
      * Gets the command with specified [name].
      */
-    @JvmOverloads
-    fun getCommand(name: String, owner: Any? = null): Command? = this.commands.find {
-        (owner == null || it.owner == owner) && it.command.name.compareTo(name) == 0
-    }?.command
+    fun getCommand(name: String, owner: Any? = null): Command?
 
     /**
      * Gets the command in specified [path].
      */
-    @JvmOverloads
-    fun getCommand(path: Array<String>, owner: Any? = null): Command = path.let {
-
-        var cmd = this.getCommand(it.first(), owner) ?: throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")
-
-        if (it.size > 1) {
-            for (x in it.copyOfRange(1, it.size)) {
-                cmd = cmd.getSubCommand(x) ?: throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")
-            }
-        }
-
-        cmd
-    }
+    fun getCommand(path: Array<String>, owner: Any? = null): Command
 
     /**
      * Gets the command in specified [path].
      */
-    @JvmOverloads
-    fun getOptionalCommand(path: Array<String>, owner: Any? = null): Command? = path.let {
-        if (it.isEmpty()) null else
-            try {
-                getCommand(path, owner)
-            } catch (c: CommandNotFoundException) {
-                null
-            }
+    fun getOptionalCommand(path: Array<String>, owner: Any? = null): Command?
 
-    }
-
+    /**
+     * Gets the owner set of a command (empty if not registered),
+     * in KWCommands, the same command instance can be registered with
+     * different owners.
+     */
+    fun getOwners(command: Command): Set<Any>
 
     /**
      * Creates a pair of command and the command owner.
      *
      * Modifications made in this list is not reflected in the original list.
      */
-    fun createCommandsPair(): List<Pair<Command, Any>> =
-            this.commands.map { it.command to it.owner }
+    fun createCommandsPair(): List<Pair<Command, Any>>
 
     /**
      * Creates a list with registered commands.
      *
      * Modifications in this class is not reflected in original class.
      */
-    fun createListWithCommands(): List<Command> = this.commands.map { (command, _) -> command }
+    fun createListWithCommands(): List<Command>
 
     /**
      * Creates a list with all commands including sub commands.
      */
-    fun createListWithAllCommands(): List<Command> {
-        val list = mutableListOf<Command>()
+    fun createListWithAllCommands(): List<Command>
 
-        this.commands.forEach {
-            list.add(it.command)
-            it.command.allSubCommandsTo(list)
-        }
-
-        return list
-    }
-
-    private fun Command.getCommand(name: String): Command? {
-
-        if (this.name.compareTo(name) == 0)
-            return this
-
-        this.subCommands.forEach {
-            it.getCommand(name)?.let {
-                return it
-            }
-        }
-
-        return null
-    }
-
-    internal data class RegisteredCommand(val command: Command, val owner: Any)
 }

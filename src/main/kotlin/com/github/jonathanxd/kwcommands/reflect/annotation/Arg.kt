@@ -43,9 +43,10 @@ import kotlin.reflect.KClass
  * be used as default handler instead of [NoneArgumentHandler]) (**this property overrides default handler**).
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
-annotation class Arg(val value: String,
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
+annotation class Arg(val value: String = "",
                      val optional: Boolean = false,
+                     val requirements: Array<Require> = arrayOf(),
                      val validator: KClass<out (String) -> Boolean> = NoneValidator::class,
                      val transformer: KClass<out (String) -> Any> = NoneTransformer::class,
                      val possibilities: KClass<out () -> List<String>> = NonePossibilities::class,

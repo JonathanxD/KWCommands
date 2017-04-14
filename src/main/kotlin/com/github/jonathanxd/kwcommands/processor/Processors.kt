@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
@@ -35,6 +36,7 @@ import com.github.jonathanxd.kwcommands.exception.ArgumentsMissingException
 import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.escape
@@ -50,12 +52,7 @@ object Processors {
     fun createCommonProcessor(manager: CommandManager): CommandProcessor =
             CommonCommandProcessor(manager)
 
-    @JvmStatic
-    fun createCommonProcessor(manager: CommandManager, informationManager: InformationManager): CommandProcessor =
-            CommonCommandProcessor(manager, informationManager)
-
-    private class CommonCommandProcessor(override val commandManager: CommandManager = CommandManager(),
-                                         override val informationManager: InformationManager = InformationManager()) : CommandProcessor {
+    private class CommonCommandProcessor(override val commandManager: CommandManager = CommandManagerImpl()) : CommandProcessor {
 
         private val interceptors = mutableSetOf<CommandInterceptor>()
 
@@ -145,7 +142,10 @@ object Processors {
                         }
 
                         if (requiredCount != requiredArgsCount) {
-                            val missing = arguments.filter { !it.isOptional }.map { it.id.toString() }.joinToString()
+                            val missing = arguments.filter { !it.isOptional }.map {
+                                if(it.possibilities.isNotEmpty()) "${it.id}{possibilities=${it.possibilities}}"
+                                else it.id.toString()
+                            }.joinToString()
                             throw ArgumentsMissingException("Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
                         }
 
@@ -167,7 +167,7 @@ object Processors {
         }
 
         @Suppress("UNCHECKED_CAST")
-        override fun handle(commands: List<CommandContainer>): List<Result> {
+        override fun handle(commands: List<CommandContainer>, informationManager: InformationManager): List<Result> {
             val results = mutableListOf<Result>()
 
             commands.forEach { command ->
@@ -182,19 +182,19 @@ object Processors {
 
                 container?.let {
                     it.arguments.forEach {
-                        it.argument.requirements.checkRequirements(this.informationManager)
+                        it.argument.requirements.checkRequirements(informationManager)
                     }
 
-                    command.command.requirements.checkRequirements(this.informationManager)
+                    command.command.requirements.checkRequirements(informationManager)
 
                     // Process arguments first because arguments must be resolved before command handling
                     it.arguments.forEach { arg ->
                         (arg as ArgumentContainer<Any?>).handler?.let { handler ->
-                            results += Result(handler.handle(arg, it, this.informationManager), arg)
+                            results += Result(handler.handle(arg, it, informationManager), arg)
                         }
                     }
 
-                    val result = Result(it.handler?.handle(it, this.informationManager), it)
+                    val result = Result(it.handler?.handle(it, informationManager), it)
 
                     results += result
 

@@ -31,6 +31,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.printer.Printer
 
 fun Printer.printAll(manager: CommandManager) {
+
     manager.createListWithCommands().forEach {
         this.printCommand(it, 0)
         it.consumeAllSubCommands { command, level ->
@@ -39,4 +40,5 @@ fun Printer.printAll(manager: CommandManager) {
     }
 
     this.flush()
+
 }

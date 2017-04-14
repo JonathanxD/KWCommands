@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.printer
 
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.requirement.Requirement
+import com.github.jonathanxd.kwcommands.util.append
 
 /**
  * Common implementation of command printer backing to a print function
@@ -65,25 +67,6 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
                 this.append(if (it.isOptional) ">" else "]")
             }
 
-            command.requirements.let {
-                if (it.isNotEmpty()) {
-                    builder.append("  ** ")
-
-                    it.iterator().let { iterator ->
-                        while (iterator.hasNext()) {
-                            @Suppress("NAME_SHADOWING")
-                            val it = iterator.next()
-                            builder.append("[Requires value ${it.required} of subject ${it.subject.id.simpleName} (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})]")
-
-                            if (iterator.hasNext())
-                                builder.append(", ")
-                        }
-                    }
-
-
-                    builder.append(" **")
-                }
-            }
         }
 
         buffer += builder.toString()
@@ -101,20 +84,70 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
 
             require(commands.size == buffer.size) { "Command size and buffer size is not equal. Commands: <$commands>. Buffer: <$buffer>" }
 
-            commands.forEachIndexed { index, (_, _, _, description) ->
+            commands.forEachIndexed { index, command ->
                 val buff = buffer[index]
 
                 val remaining = maxSize - buff.length
 
                 val builder = StringBuilder(buff)
 
-                for (i in 0..remaining)
-                    builder.append(' ')
+                builder.append(' ', remaining)
 
-                builder.append(" - $description")
+                builder.append(" - ${command.description}")
 
                 this.out(builder.toString())
+
+                val anyReq = command.requirements.isNotEmpty() || command.arguments.any { it.requirements.isNotEmpty() }
+
+                if (anyReq) {
+                    builder.setLength(0)
+
+                    val to = buff.indexOf(">")
+
+                    builder.append(' ', to + 1)
+
+                    builder.append("Requirements:")
+
+                    this.out(builder.toString())
+
+                    builder.setLength(0)
+
+                    val requirementPrinter: (Requirement<*, *>) -> Unit = {
+                        builder.setLength(0)
+
+                        builder.append(' ', to + 3)
+
+                        builder.append("Requires value '${it.required}' of subject '${it.subject.id.simpleName}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
+                        this.out(builder.toString())
+                        builder.setLength(0)
+
+                    }
+
+                    command.arguments.forEach { arg ->
+
+                        if(arg.requirements.isNotEmpty()) {
+                            builder.append(' ', to + 2)
+                            builder.append("Argument(${arg.id}):")
+                            this.out(builder.toString())
+                            builder.setLength(0)
+
+                            arg.requirements.forEach(requirementPrinter)
+                        }
+                    }
+
+                    if (command.requirements.isNotEmpty()) {
+                        builder.append(' ', to + 2)
+                        builder.append("Command:")
+                        this.out(builder.toString())
+                        builder.setLength(0)
+
+                        command.requirements.forEach(requirementPrinter)
+                    }
+
+                }
+
             }
+
 
         } else {
             this.out("No commands")

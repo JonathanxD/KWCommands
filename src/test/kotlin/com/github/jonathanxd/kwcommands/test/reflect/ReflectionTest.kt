@@ -27,29 +27,50 @@
  */
 package com.github.jonathanxd.kwcommands.test.reflect
 
-import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.exception.RequirementNotSatisfiedException
+import com.github.jonathanxd.kwcommands.exception.InformationMissingException
+import com.github.jonathanxd.kwcommands.exception.UnsatisfiedRequirementException
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
+import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
-import com.github.jonathanxd.kwcommands.processor.CommandProcessor
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
 import com.github.jonathanxd.kwcommands.reflect.annotation.Id
 import com.github.jonathanxd.kwcommands.reflect.annotation.Require
-import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.test.assertAll
 import com.github.jonathanxd.kwcommands.util.printAll
+import com.github.jonathanxd.kwcommands.util.registerInformation
 import org.junit.Test
 
 class ReflectionTest {
 
-    @Test
+    @Test(expected = UnsatisfiedRequirementException::class)
     fun test() {
-        val manager = CommandManager()
+        val information = InformationManagerImpl()
+
+        information.registerInformation(Information.Id(Player::class.java, arrayOf("player")), Player)
+
+        val manager = CommandManagerImpl()
+        val env = ReflectionEnvironment(manager)
+        env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
+
+        val printer = CommonPrinter(::println)
+
+        printer.printAll(manager)
+
+        val processor = Processors.createCommonProcessor(manager)
+
+        processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this), information)// ?
+    }
+
+    @Test(expected = InformationMissingException::class)
+    fun testMissReq() {
+
+        val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
         env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
 
@@ -64,9 +85,11 @@ class ReflectionTest {
 
     @Test
     fun game() {
-        ReflectionEnvironment.setGlobal(TypeInfo.of(Block::class.java), ArgumentType({true}, {Block}, emptyList(), Block))
+        val information = InformationManagerImpl()
 
-        val manager = CommandManager()
+        information.registerInformation(Information.Id(Player::class.java, arrayOf("player")), Player)
+
+        val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
 
         env.registerCommands(env.fromClass(World::class, { it.newInstance() }, this), this)
@@ -77,7 +100,8 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process(listOf("world", "setblock", "10", "10", "0", "stone"), this))
+        processor.handle(processor.process(listOf("world", "setblock", "10", "10", "0", "stone"), this), information)
+                .assertAll(listOf("setted block STONE at 10, 10, 0"))
     }
 
 }
@@ -86,8 +110,11 @@ class ReflectionTest {
 @Cmd(name = "download", description = "Download settings")
 class Download {
 
-    @Require(subject = Id(Player::class, "player"), data = "remote.download", infoType = Player::class, testerType = PermissionRequirementTest::class)
+    @Arg(value = "url", requirements = arrayOf(
+            Require(subject = Id(Player::class, "player"), data = "remote.download", infoType = Player::class, testerType = PermissionRequirementTest::class)
+    ))
     lateinit var url: String
+
     var connetions: Int = 0
 
 }
@@ -102,17 +129,22 @@ class World {
     fun setBlock(@Arg("x") x: Int,
                  @Arg("y") y: Int,
                  @Arg("z") z: Int,
-                 @Arg("block") block: Block): Any {
+                 @Arg(value = "block", requirements = arrayOf(
+                         Require(subject = Id(Player::class, "player"), data = "world.modify.block", infoType = Player::class, testerType = PermissionRequirementTest::class)
+                 )) block: Block): Any {
         return "setted block $block at $x, $y, $z"
     }
 }
 
 
 object Player {
-    fun hasPermission(perm: String) = perm == "world.modify"
+    fun hasPermission(perm: String) = perm == "world.modify" || perm == "world.modify.block"
 }
 
-object Block
+enum class Block {
+    STONE,
+    DIRT
+}
 
 
 val permissionRequirement = Requirement.create("world.modify", Information.Id(Player::class.java, arrayOf("player")), PermissionRequirementTest)
@@ -121,7 +153,7 @@ val permissionRequirement = Requirement.create("world.modify", Information.Id(Pl
 object PermissionRequirementTest : RequirementTester<Player, String> {
     override fun test(requirement: Requirement<Player, String>, information: Information<Player>) {
         if (!information.value.hasPermission(requirement.required))
-            throw RequirementNotSatisfiedException("Player ${information.value} does not have permission ${requirement.required}")
+            throw UnsatisfiedRequirementException("Player ${information.value} does not have permission ${requirement.required}")
     }
 
 }

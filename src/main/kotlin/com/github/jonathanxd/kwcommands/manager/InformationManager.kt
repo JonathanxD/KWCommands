@@ -32,59 +32,48 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
 
 /**
- * Manages and register information.
+ * Register and provide information.
  */
-class InformationManager {
+interface InformationManager {
 
     /**
      * Static information set
      */
-    private val informationSet = mutableSetOf<Information<*>>()
+    val informationSet: Set<Information<*>>
 
     /**
      * Information providers.
      */
-    private val informationProviders = mutableSetOf<InformationProvider>()
+    val informationProviders: Set<InformationProvider>
 
     /**
      * Register a [static information][Information] with [id] and [description] with [value].
      */
-    @JvmOverloads
-    fun <T> registerInformation(id: Information.Id, value: T, valueType: TypeInfo<T>, description: String? = null): Boolean {
-        return this.informationSet.add(Information(id, value, valueType, description))
-    }
+    fun <T> registerInformation(id: Information.Id, value: T, valueType: TypeInfo<T>, description: String? = null): Boolean
 
     /**
      * Register a [static information][information].
      */
-    fun registerInformation(information: Information<*>): Boolean {
-        return this.informationSet.add(information)
-    }
+    fun registerInformation(information: Information<*>): Boolean
 
     /**
      * Unregister information with id [id].
      */
-    fun unregisterInformation(id: Information.Id): Boolean {
-        return this.informationSet.removeIf { it.id == id }
-    }
+    fun unregisterInformation(id: Information.Id): Boolean
 
     /**
      * Register [informationProvider].
      *
      * @see InformationProvider
      */
-    fun registerInformationProvider(informationProvider: InformationProvider): Boolean {
-        return this.informationProviders.add(informationProvider)
-    }
+    fun registerInformationProvider(informationProvider: InformationProvider): Boolean
 
     /**
      * Unregister [informationProvider].
      *
      * @see InformationProvider
      */
-    fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean {
-        return this.informationProviders.remove(informationProvider)
-    }
+    fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean
 
     /**
      * Find a information by [id] and [type], this method will first lookup for `static information`, if no
@@ -93,9 +82,7 @@ class InformationManager {
      *
      * @return Found information or null if information cannot be found.
      */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>? =
-        find(id, type, true)
+    fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>?
 
     /**
      * Find a information by [id] and [type], this method will first lookup for `static information`, if no
@@ -104,31 +91,6 @@ class InformationManager {
      *
      * @return Found information or null if information cannot be found.
      */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean = true): Information<T>? =
-            informationSet.find f@ {
-                if (it.type == type) {
-                    val itId = it.id
-
-                    if (id.id == itId.id
-                            && (id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) })) {
-                        return@f true
-                    }
-
-                }
-
-                false
-            } as? Information<T> ?: this.informationProviders.let {
-                if(!useProviders)
-                    return@let null
-
-                it.forEach { p ->
-                    val get = p.provide(id, type)
-                    if(get != null)
-                        return@let get
-                }
-
-                return@let null
-            }
+    fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean = true): Information<T>?
 
 }

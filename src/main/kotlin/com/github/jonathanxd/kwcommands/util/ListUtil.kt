@@ -25,9 +25,14 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.util
 
-/**
- * Occurs if a requirement is not satisfied.
- */
-class RequirementNotSatisfiedException(message: String) : Exception(message)
+inline fun <T, R> Collection<T>.getFirstOrNull(mapper: (T) -> R, predicate: (R) -> Boolean): R? {
+    for(i in this)
+        mapper(i).let {
+            if(predicate(it))
+                return it
+        }
+
+    return null
+}

@@ -31,6 +31,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationManagerEmpty
 
 interface CommandProcessor {
 
@@ -38,11 +39,6 @@ interface CommandProcessor {
      * Command manager.
      */
     val commandManager: CommandManager
-
-    /**
-     * Information manager.
-     */
-    val informationManager: InformationManager
 
     /**
      * Register a [command interceptor][CommandInterceptor].
@@ -61,6 +57,7 @@ interface CommandProcessor {
      * command or a argument to pass to command.
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
+     * @param informationManager Information provide manager.
      */
     fun process(stringList: List<String>, owner: Any?): List<CommandContainer>
 
@@ -70,7 +67,9 @@ interface CommandProcessor {
      * This function will first check requirements, and then handle arguments and the command.
      *
      * @param commands Command to handle.
+     * @param informationManager Information provide manager.
      * @return [Result] of command execution.
      */
-    fun handle(commands: List<CommandContainer>): List<Result>
+    fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerEmpty): List<Result>
+
 }

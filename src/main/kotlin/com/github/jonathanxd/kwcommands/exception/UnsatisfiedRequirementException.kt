@@ -25,17 +25,9 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.env
-
-import com.github.jonathanxd.iutils.type.TypeInfo
+package com.github.jonathanxd.kwcommands.exception
 
 /**
- * Specification of a argument type.
- *
- * When the [ReflectionEnvironment] find an argument, it will lookup for a common argument specification that provides [validator],
- * [transformer], [possibilities] and [defaultValue]. This class is intended to provide these values.
- *
- * An instance of argument type can be registered globally using [ReflectionEnvironment.registerGlobal] or per instance using
- * [ReflectionEnvironment.register].
+ * Occurs if a requirement is not satisfied.
  */
-data class ArgumentType<out T>(val type: TypeInfo<out T>, val validator: (String) -> Boolean, val transformer: (String) -> T, val possibilities: List<String>, val defaultValue: T?)
+class UnsatisfiedRequirementException(message: String) : Exception(message)

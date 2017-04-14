@@ -29,7 +29,6 @@ package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.reflection.Invokables
 import com.github.jonathanxd.iutils.reflection.Links
-import com.github.jonathanxd.iutils.type.Primitive
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
@@ -39,14 +38,12 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
-import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
-import com.github.jonathanxd.kwcommands.reflect.annotation.Exclude
-import com.github.jonathanxd.kwcommands.reflect.annotation.Info
-import com.github.jonathanxd.kwcommands.reflect.annotation.Require
+import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 import com.github.jonathanxd.kwcommands.reflect.util.*
+import com.github.jonathanxd.kwcommands.util.ArgumentType
+import com.github.jonathanxd.kwcommands.util.getFirstOrNull
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
@@ -76,23 +73,20 @@ import kotlin.reflect.KClass
  */
 class ReflectionEnvironment(val manager: CommandManager) {
 
-    private val argumentTypes = mutableMapOf<TypeInfo<*>, ArgumentType<*>>()
+    private val argumentTypeProviders = mutableSetOf<ArgumentTypeProvider>()
 
     /**
-     * Sets [argument specification][ArgumentType] of arguments of type [type].
-     *
-     * @param type Type of argument value.
-     * @param argumentType Argument specification (if null, remove the specification).
+     * Registers [provider].
      */
-    fun <T> set(type: TypeInfo<T>, argumentType: ArgumentType<T>?) {
-        if (argumentType == null)
-            this.argumentTypes.remove(type)
-        else {
-            this.argumentTypes.put(type, argumentType)
-            Primitive.unbox(type.typeClass)?.let { this.argumentTypes.put(TypeInfo.of(it), argumentType) }
-            Primitive.box(type.typeClass)?.let { this.argumentTypes.put(TypeInfo.of(it), argumentType) }
-        }
-    }
+    fun registerProvider(provider: ArgumentTypeProvider) =
+            this.argumentTypeProviders.add(provider)
+
+
+    /**
+     * Unregister [provider]
+     */
+    fun unregisterProvider(provider: ArgumentTypeProvider): Boolean =
+            this.argumentTypeProviders.remove(provider)
 
     /**
      * Gets required argument specification.
@@ -101,8 +95,24 @@ class ReflectionEnvironment(val manager: CommandManager) {
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> get(type: TypeInfo<T>): ArgumentType<T> =
-            (this.argumentTypes.getArgumentType(type)) ?: getGlobalArgumentType(type)
-                    ?: throw IllegalArgumentException("Not registered argument type: $type.")
+            this.getOrNull(type) ?: throw IllegalArgumentException("No argument type provider for type: $type.")
+
+    /**
+     * Gets optional argument specification.
+     *
+     * @param type Type of argument value.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getOrNull(type: TypeInfo<T>): ArgumentType<T>? =
+            this.argumentTypeProviders.getArgumentType(type) ?: getGlobalArgumentType(type)
+
+
+    /**
+     * Throw exception if argument type is null.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> ArgumentType<T>?.require(type: TypeInfo<*>): ArgumentType<T> =
+            this ?: throw IllegalArgumentException("No argument type provider for type: $type.")
 
     private val LOOKUP = MethodHandles.lookup()
 
@@ -256,17 +266,14 @@ class ReflectionEnvironment(val manager: CommandManager) {
     fun fromField(instance: Any?, field: Field): Argument<*> {
         val type = TypeUtil.toTypeInfo(field.genericType)
 
-        var annotated: AnnotatedElement? = null
 
         val link = if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
-            annotated = field
             Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflectSetter(field)))
         } else {
             field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type).let {
                 if (it == null || (!Modifier.isPublic(it.modifiers) && !it.isAccessible))
                     throw IllegalArgumentException("Accessible setter of field $field was not found!")
                 else {
-                    annotated = it
                     Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(it)))
                 }
             }
@@ -280,20 +287,30 @@ class ReflectionEnvironment(val manager: CommandManager) {
             val argumentAnnotation: Arg? = field.getDeclaredAnnotation(Arg::class.java)
             val infoAnnotation = it.getDeclaredAnnotation(Info::class.java)
 
-            val id = argumentAnnotation?.value ?: it.name
-            val typeIsOpt = type.classLiteral == TypeInfo.of(Optional::class.java).classLiteral
-            val isOptional = argumentAnnotation?.optional ?: typeIsOpt
-
-            val argumentType by lazy {
-                this.get(type)
+            val id = argumentAnnotation?.value.let { arg ->
+                if (arg == null || arg.isEmpty())
+                    it.name
+                else arg
             }
 
-            val possibilities = argumentAnnotation?.possibilities?.get()?.invoke() ?: if (this.argumentTypes.containsKey(type)) argumentType.possibilities else emptyList()
-            val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.transformer
-            val validator = argumentAnnotation?.validator?.get() ?: argumentType.validator
-            val defaultValue: Any? = if (this.argumentTypes.containsKey(type))
+            val typeIsOpt = type.classLiteral == TypeInfo.of(Optional::class.java).classLiteral
+            val typeIsOptInt = type.classLiteral == TypeInfo.of(OptionalInt::class.java).classLiteral
+            val typeIsOptDouble = type.classLiteral == TypeInfo.of(OptionalDouble::class.java).classLiteral
+            val typeIsOptLong = type.classLiteral == TypeInfo.of(OptionalLong::class.java).classLiteral
+            val isOptional = argumentAnnotation?.optional ?: typeIsOpt || typeIsOptInt || typeIsOptDouble || typeIsOptLong
+
+            val argumentType = this.getOrNull(type)
+
+            val possibilities = argumentAnnotation?.possibilities?.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
+            val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.require(type).transformer
+            val validator = argumentAnnotation?.validator?.get() ?: argumentType.require(type).validator
+            val defaultValue: Any? = if (argumentType != null)
                 argumentType.defaultValue
-            else if (typeIsOpt) Optional.empty<Any>() else null
+            else if (typeIsOpt) Optional.empty<Any>()
+            else if (typeIsOptInt) OptionalInt.empty()
+            else if (typeIsOptDouble) OptionalDouble.empty()
+            else if (typeIsOptLong) OptionalLong.empty()
+            else null
 
             @Suppress("UNCHECKED_CAST")
             karg = Argument(
@@ -304,7 +321,7 @@ class ReflectionEnvironment(val manager: CommandManager) {
                     validator = validator,
                     defaultValue = defaultValue,
                     type = type,
-                    requirements = annotated!!.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(),
+                    requirements = argumentAnnotation?.requirements.orEmpty().toSpecs(),
                     handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
             )
 
@@ -388,17 +405,21 @@ class ReflectionEnvironment(val manager: CommandManager) {
                 )
             } else if (argumentAnnotation != null) {
 
-                val id = argumentAnnotation.value
-                val isOptional = argumentAnnotation.optional
-
-                val argumentType by lazy {
-                    this.get(type)
+                val id = argumentAnnotation.value.let { arg ->
+                    if (arg.isEmpty())
+                        it.name
+                    else arg
                 }
 
-                val possibilities = argumentAnnotation.possibilities.get()?.invoke() ?: if (this.argumentTypes.containsKey(type)) argumentType.possibilities else emptyList()
-                val transformer = argumentAnnotation.transformer.get() ?: argumentType.transformer
-                val validator = argumentAnnotation.validator.get() ?: argumentType.validator
-                val defaultValue = if (this.argumentTypes.containsKey(type)) argumentType.defaultValue else null
+                val isOptional = argumentAnnotation.optional
+
+                val argumentType = this.getOrNull(type)
+
+                val possibilities = argumentAnnotation.possibilities.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
+                val transformer = argumentAnnotation.transformer.get() ?: argumentType.require(type).transformer
+                val validator = argumentAnnotation.validator.get() ?: argumentType.require(type).validator
+                val defaultValue = argumentType?.defaultValue
+                val requirements = argumentAnnotation.requirements.toSpecs()
 
                 val argument = Argument(
                         id = id,
@@ -407,7 +428,7 @@ class ReflectionEnvironment(val manager: CommandManager) {
                         transformer = transformer,
                         validator = validator,
                         defaultValue = defaultValue,
-                        requirements = it.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(),
+                        requirements = requirements,
                         type = type)
 
                 arguments += argument
@@ -433,47 +454,27 @@ class ReflectionEnvironment(val manager: CommandManager) {
      * @param manager New manager.
      */
     fun copy(manager: CommandManager = this.manager) = ReflectionEnvironment(manager).also {
-        it.argumentTypes.putAll(this.argumentTypes)
+        it.argumentTypeProviders.addAll(this.argumentTypeProviders)
     }
 
     companion object {
-        private val GLOBAL = mutableMapOf<TypeInfo<*>, ArgumentType<*>>()
+        private val GLOBAL = mutableSetOf<ArgumentTypeProvider>()
 
-        /**
-         * Helper method of [type] to [argumentType] registration.
-         */
-        fun <T> MutableMap<TypeInfo<*>, ArgumentType<*>>.set(type: TypeInfo<T>, argumentType: ArgumentType<T>?) =
-                if (argumentType == null)
-                    this.remove(type)
-                else {
-                    val put = this.put(type, argumentType)
-                    Primitive.unbox(type.typeClass)?.let { this.put(TypeInfo.of(it), argumentType) }
-                    Primitive.box(type.typeClass)?.let { this.put(TypeInfo.of(it), argumentType) }
-                    put
-                }
-
-        /**
-         * Helper method of [ArgumentType] fetching from a [type] key.
-         */
         @Suppress("UNCHECKED_CAST")
-        fun <T> MutableMap<TypeInfo<*>, ArgumentType<*>>.getArgumentType(type: TypeInfo<T>): ArgumentType<T>? =
-                (if (this.containsKey(type))
-                    this[type] as? ArgumentType<T>
-                else this.let {
-                    it.entries.forEach { (k, v) ->
-                        if (k.related.isEmpty() && k.classLiteral == type.classLiteral)
-                            return@let v as? ArgumentType<T>
+        fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>): ArgumentType<T>? =
+                (this.getFirstOrNull({ it.provide(type) }, { it != null }) ?: this.let {
+                    it.filterIsInstance<ConcreteProvider>().forEach {
+                        if (it.argumentType.type.related.isEmpty() && it.argumentType.type.classLiteral == type.classLiteral)
+                            return@let it.argumentType as? ArgumentType<T>
                     }
                     null
                 })
 
+
         /**
-         * Sets [argument specification][ArgumentType] of arguments of type [type] in global specification map.
-         *
-         * @param type Type of argument value.
-         * @param argumentType Argument specification (if null, remove the specification).
+         * Registers global [ArgumentTypeProvider].
          */
-        fun <T> setGlobal(type: TypeInfo<T>, argumentType: ArgumentType<T>?) = GLOBAL.set(type, argumentType)
+        fun registerGlobal(argumentTypeProvider: ArgumentTypeProvider) = GLOBAL.add(argumentTypeProvider)
 
         /**
          * Gets optional global argument specification.
@@ -484,16 +485,66 @@ class ReflectionEnvironment(val manager: CommandManager) {
 
         init {
             // Data types
-            GLOBAL.set(TypeInfo.of(Short::class.java), ArgumentType({ it.toShortOrNull() != null }, String::toShort, emptyList(), 0))
-            GLOBAL.set(TypeInfo.of(Char::class.java), ArgumentType({ it.length == 1 }, { it[0] }, emptyList(), 0.toChar()))
-            GLOBAL.set(TypeInfo.of(Byte::class.java), ArgumentType({ it.toByteOrNull() != null }, String::toByte, emptyList(), 0))
-            GLOBAL.set(TypeInfo.of(Int::class.java), ArgumentType({ it.toIntOrNull() != null }, String::toInt, emptyList(), 0))
-            GLOBAL.set(TypeInfo.of(Float::class.java), ArgumentType({ it.toFloatOrNull() != null }, String::toFloat, emptyList(), 0.0F))
-            GLOBAL.set(TypeInfo.of(Double::class.java), ArgumentType({ it.toDoubleOrNull() != null }, String::toDouble, emptyList(), 0.0))
-            GLOBAL.set(TypeInfo.of(Long::class.java), ArgumentType({ it.toLongOrNull() != null }, String::toLong, emptyList(), 0L))
-            GLOBAL.set(TypeInfo.of(Boolean::class.java), ArgumentType({ it == "true" || it == "false" }, String::toBoolean, emptyList(), false))
-            // String literal
-            GLOBAL.set(TypeInfo.of(String::class.java), ArgumentType({ true }, { it }, emptyList(), ""))
+            registerGlobal(DefaultProvider)
+        }
+
+        object DefaultProvider : ArgumentTypeProvider {
+
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+
+                if (type.isResolved || type.canResolve()) {
+                    val typeClass = type.typeClass
+                    if (typeClass.isEnum) {
+                        @Suppress("UNCHECKED_CAST")
+                        val constants: Array<Enum<*>> = typeClass.enumConstants as Array<Enum<*>>
+
+                        return ArgumentType(type, { name ->
+                            constants.any { it.name.toLowerCase() == name }
+                        }, { name ->
+                            constants.first { it.name.toLowerCase() == name }
+                        }, constants.map { it.name.toLowerCase() }, null).cast(type)
+                    }
+                }
+
+                return when (type) {
+                    TypeInfo.of(Short::class.java),
+                    TypeInfo.of(Short::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.toShortOrNull() != null }, String::toShort, emptyList(), 0)
+
+                    TypeInfo.of(Char::class.java),
+                    TypeInfo.of(Char::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.length == 1 }, { it[0] }, emptyList(), 0.toChar())
+
+                    TypeInfo.of(Byte::class.java),
+                    TypeInfo.of(Byte::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.toByteOrNull() != null }, String::toByte, emptyList(), 0)
+
+                    TypeInfo.of(Int::class.java),
+                    TypeInfo.of(Int::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.toIntOrNull() != null }, String::toInt, emptyList(), 0)
+
+                    TypeInfo.of(Float::class.java),
+                    TypeInfo.of(Float::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.toFloatOrNull() != null }, String::toFloat, emptyList(), 0.0F)
+
+                    TypeInfo.of(Double::class.java),
+                    TypeInfo.of(Double::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.toDoubleOrNull() != null }, String::toDouble, emptyList(), 0.0)
+
+                    TypeInfo.of(Long::class.java),
+                    TypeInfo.of(Long::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it.toLongOrNull() != null }, String::toLong, emptyList(), 0L)
+
+                    TypeInfo.of(Boolean::class.java),
+                    TypeInfo.of(Boolean::class.javaPrimitiveType)
+                    -> ArgumentType(type, { it == "true" || it == "false" }, String::toBoolean, emptyList(), false)
+
+                    TypeInfo.of(String::class.java) -> ArgumentType({ true }, { it }, emptyList(), "")
+                    else -> null
+                }?.cast(type)
+
+            }
+
         }
     }
 }

@@ -31,5 +31,5 @@ package com.github.jonathanxd.kwcommands.reflect.annotation
  * Exclude annotated field/property from argument creation.
  */
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.PROPERTY)
+@Target(AnnotationTarget.FIELD)
 annotation class Exclude

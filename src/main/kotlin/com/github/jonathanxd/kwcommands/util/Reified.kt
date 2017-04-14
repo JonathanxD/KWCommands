@@ -33,6 +33,7 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 inline fun <reified T> InformationManager.registerInformation(id: Information.Id, value: T, description: String? = null)
@@ -53,3 +54,21 @@ inline fun <reified T> Argument(id: Any,
                                 requirements: List<Requirement<*, *>>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
         Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, requirements, handler)
+
+inline fun <reified T> ArgumentType(noinline validator: (String) -> Boolean,
+                                    noinline transformer: (String) -> T,
+                                    possibilities: List<String>,
+                                    defaultValue: T?): ArgumentType<T> =
+        ArgumentType(object : ConcreteTypeInfo<T>() {}, validator, transformer, possibilities, defaultValue)
+
+
+/**
+ * Return `this` for chaining call.
+ */
+@Suppress("UNCHECKED_CAST")
+inline fun <reified T> TypeInfo<*>.whenIs(type: TypeInfo<T>, exec: (TypeInfo<T>) -> Unit): TypeInfo<*> {
+    if (this == type)
+        exec(this as TypeInfo<T>)
+
+    return this
+}

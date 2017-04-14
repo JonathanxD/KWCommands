@@ -51,4 +51,5 @@ private fun Command.consumeAllSubCommands(consumer: (command: Command, level: In
         consumer(it, level)
         it.consumeAllSubCommands(consumer, level + 1)
     }
+    
 }

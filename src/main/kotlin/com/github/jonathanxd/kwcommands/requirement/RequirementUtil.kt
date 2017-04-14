@@ -28,14 +28,14 @@
 package com.github.jonathanxd.kwcommands.requirement
 
 import com.github.jonathanxd.kwcommands.exception.InformationMissingException
-import com.github.jonathanxd.kwcommands.exception.RequirementNotSatisfiedException
+import com.github.jonathanxd.kwcommands.exception.UnsatisfiedRequirementException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 
 /**
  * Check if all [Information] matches the [requirements][Requirement].
  *
- * @throws RequirementNotSatisfiedException If an information does not satisfies the requirements.
+ * @throws UnsatisfiedRequirementException If an information does not satisfies the requirements.
  * @throws InformationMissingException If an information required by a [Requirement] is not present.
  */
 fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager) {
@@ -62,7 +62,7 @@ fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager) {
 
                 it.test(find)
 
-            } catch (ex: RequirementNotSatisfiedException) {
+            } catch (ex: UnsatisfiedRequirementException) {
                 if (exception == null)
                     exception = ex
                 else
