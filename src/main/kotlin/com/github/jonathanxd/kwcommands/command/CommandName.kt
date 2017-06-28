@@ -34,7 +34,7 @@ package com.github.jonathanxd.kwcommands.command
 sealed class CommandName : Comparable<String> {
 
     override fun equals(other: Any?): Boolean {
-        return if(other != null && other is CommandName) this.toString() == other.toString() else super.equals(other)
+        return if (other != null && other is CommandName) this.toString() == other.toString() else super.equals(other)
     }
 
     override fun hashCode(): Int {
@@ -48,12 +48,13 @@ sealed class CommandName : Comparable<String> {
      */
     class RegexName(val regex: Regex) : CommandName() {
         override fun compareTo(other: String): Int {
-            return if (other.matches(regex)) 0 else -1
+            return if (other.matches(this.regex)) 0 else -1
         }
 
         override fun hashCode(): Int = this.regex.hashCode()
         override fun equals(other: Any?): Boolean =
-                if (other != null && other is RegexName) this.regex == other.regex else super.equals(other)
+                if (other != null && other is RegexName) this.regex == other.regex
+                else (other as? String)?.matches(this.regex) ?: super.equals(other)
 
         override fun toString(): String = this.regex.toString()
 
@@ -73,6 +74,17 @@ sealed class CommandName : Comparable<String> {
                 if (other != null && other is StringName) this.string == other.string else super.equals(other)
 
         override fun toString(): String = this.string
+    }
+
+    companion object {
+        @JvmStatic
+        fun name(name: String) = StringName(name)
+
+        @JvmStatic
+        fun regex(regex: String) = RegexName(regex.toRegex())
+
+        @JvmStatic
+        fun regex(regex: Regex) = RegexName(regex)
     }
 
 }
