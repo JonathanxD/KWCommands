@@ -33,6 +33,7 @@ import com.github.jonathanxd.kwcommands.exception.UnsatisfiedRequirementExceptio
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
+import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
@@ -123,6 +124,18 @@ class ReflectionTest {
                 .assertAll(listOf("teleported A, B, C to Adm!"))
     }
 
+    @Test
+    fun testManager() {
+        val manager = ReflectCommandManagerImpl()
+
+        manager.registerClass(TpCommand::class.java, TpCommand(), this)
+
+        val processor = Processors.createCommonProcessor(manager)
+
+        processor.handle(processor.process(listOf("tp", "a", "c"), this))
+                .assertAll(listOf("Teleported a to c!"))
+    }
+
 }
 
 
@@ -170,6 +183,15 @@ data class SimplePlayer(val name: String)
 enum class Block {
     STONE,
     DIRT
+}
+
+class TpCommand {
+
+    @Cmd(name = "tp", description = "Teleport a player to another")
+    fun execute(@Arg("player") player: String, @Arg("target") target: String): Any {
+        return "Teleported $player to $target!"
+    }
+
 }
 
 

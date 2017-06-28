@@ -41,7 +41,6 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * @property requirements Requirements of this argument.
  * @property possibilities Possibilities of argument values.
  */
-
 data class Argument<out T>(val id: Any,
                            val isOptional: Boolean,
                            val type: TypeInfo<out T>,
@@ -50,4 +49,10 @@ data class Argument<out T>(val id: Any,
                            val transformer: (String) -> T,
                            val possibilities: List<String>,
                            val requirements: List<Requirement<*, *>>,
-                           val handler: ArgumentHandler<out T>? = null)
+                           val handler: ArgumentHandler<out T>? = null) {
+    companion object {
+        @JvmStatic
+        fun <T> builder() = ArgumentBuilder<T>()
+    }
+
+}

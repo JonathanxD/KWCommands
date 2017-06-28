@@ -76,10 +76,10 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     private val argumentTypeProviders = mutableSetOf<ArgumentTypeProvider>()
 
     /**
-     * Registers [provider].
+     * Registers [argumentTypeProvider].
      */
-    override fun registerProvider(provider: ArgumentTypeProvider) =
-            this.argumentTypeProviders.add(provider)
+    override fun registerProvider(argumentTypeProvider: ArgumentTypeProvider) =
+            this.argumentTypeProviders.add(argumentTypeProvider)
 
 
     /**
@@ -132,9 +132,10 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      *
      * @param list Command list
      * @param owner Owner of command.
+     * @return True if all command was registered with success.
      */
-    fun registerCommands(list: List<Command>, owner: Any) {
-        list.prepareCommands().forEach { this.manager.registerCommand(it, owner) }
+    fun registerCommands(list: List<Command>, owner: Any): Boolean {
+        return list.prepareCommands().all { this.manager.registerCommand(it, owner) }
     }
 
     /**
@@ -144,22 +145,29 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      *
      * @param list Command list
      * @param owner Owner of command.
+     * @return True if all command was registered with success.
      */
-    fun registerCommandsAndSuper(list: List<Command>, owner: Any) {
+    fun registerCommandsAndSuper(list: List<Command>, owner: Any): Boolean {
         list.prepareCommands()
+
+        var success = true
 
         list.forEach {
 
             if (it.superCommand != null) {
                 it.superCommand.let {
                     if (!this.manager.isRegistered(it, owner))
-                        this.manager.registerCommand(it, owner)
+                        if(!this.manager.registerCommand(it, owner))
+                            success = false
                 }
             } else {
-                this.manager.registerCommand(it, owner)
+                if(!this.manager.registerCommand(it, owner))
+                    success = false
             }
 
         }
+
+        return success
     }
 
     /**
@@ -177,7 +185,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @see fromClass
      */
     fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, queue: CommandFactoryQueue): List<Command> {
-        return this.fromClass(klass.java, instanceProvider, owner, queue)
+        return this.fromClass(klass.java, instanceProvider, owner, queue, true)
     }
 
     /**
@@ -188,7 +196,20 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?): List<Command> {
         val queue = CommandFactoryQueue()
 
-        fromClass(klass, instanceProvider, owner, queue)
+        fromClass(klass, instanceProvider, owner, queue, true)
+
+        return queue.commands
+    }
+
+    /**
+     * Create command list from commands of class [klass].
+     *
+     * @see fromClass
+     */
+    fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, includeInner: Boolean): List<Command> {
+        val queue = CommandFactoryQueue()
+
+        fromClass(klass, instanceProvider, owner, queue, includeInner)
 
         return queue.commands
     }
@@ -199,29 +220,38 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @param instanceProvider Provider of class instances (null for static elements).
      * @param owner Owner of commands.
      * @param queue Command Factory Queue.
+     * @param includeInner Include inner class commands.
      * @see CommandFactoryQueue
      * @see ReflectionEnvironment
      */
-    fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, queue: CommandFactoryQueue): List<Command> {
+    fun <T> fromClass(klass: Class<T>,
+                      instanceProvider: (Class<*>) -> Any?,
+                      owner: Any?,
+                      queue: CommandFactoryQueue,
+                      includeInner: Boolean): List<Command> {
 
         val instance = klass.cast(instanceProvider(klass))
 
-        val command = klass.getDeclaredAnnotation(Cmd::class.java)!!
+        val command = klass.getDeclaredAnnotation(Cmd::class.java)
 
-        val kCommand = command.toKCommand(manager, command.getHandlerOrNull(), null, klass.declaredFields.filter {
+        val kCommand = command?.toKCommand(manager, command.getHandlerOrNull(), null, klass.declaredFields.filter {
             !it.isAnnotationPresent(Exclude::class.java)
                     && ((Modifier.isStatic(it.modifiers) && instance == null) || (!Modifier.isStatic(it.modifiers) && instance != null))
         }.map { fromField(instance, it) }, owner, klass)
 
-        queue.queueCommand(klass, command.getName(klass), {
-            kCommand
-        }, Checker(this.manager, owner, command, klass), { command.getPath(klass).joinToString(separator = " ") })
+        kCommand?.let { k ->
+            queue.queueCommand(klass, command.getName(klass), {
+                k
+            }, Checker(this.manager, owner, command, klass), { command.getPath(klass).joinToString(separator = " ") })
+        }
 
         fromMethodsOfClass(klass, instance, kCommand, owner, queue)
 
-        klass.declaredClasses.forEach {
-            if (it.isAnnotationPresent(Cmd::class.java))
-                fromClass(it, instanceProvider, owner, queue)
+        if (includeInner) {
+            klass.declaredClasses.forEach {
+                if (it.isAnnotationPresent(Cmd::class.java))
+                    fromClass(it, instanceProvider, owner, queue, includeInner)
+            }
         }
 
         return queue.commands
@@ -473,7 +503,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             }
 
             override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T> {
-                return this.set.getArgumentType(type)  ?: throw IllegalArgumentException("No argument type provider for type: $type.")
+                return this.set.getArgumentType(type) ?: throw IllegalArgumentException("No argument type provider for type: $type.")
             }
 
         }
@@ -571,7 +601,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
                 val component = type.related.singleOrNull() ?: TypeInfo.of(String::class.java)
 
-                if(type.typeClass == List::class.java)
+                if (type.typeClass == List::class.java)
                     return ArgumentType(type,
                             ListValidator(storage, component),
                             ListTransform(storage, component),

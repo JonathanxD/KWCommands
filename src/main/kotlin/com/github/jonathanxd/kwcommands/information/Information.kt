@@ -83,6 +83,9 @@ data class Information<out T>(val id: Information.Id, val value: T, val type: Ty
     companion object {
         @JvmField
         val EMPTY = Information(Id(Unit::class.java, emptyArray()), Unit, TypeInfo.of(Unit::class.java), null)
+
+        @JvmStatic
+        fun <T> builder() = InformationBuilder<T>()
     }
 
 }

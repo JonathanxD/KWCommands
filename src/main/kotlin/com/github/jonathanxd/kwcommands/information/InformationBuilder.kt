@@ -25,31 +25,66 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.requirement
+package com.github.jonathanxd.kwcommands.information
 
-import com.github.jonathanxd.iutils.type.AbstractTypeInfo
+import com.github.jonathanxd.iutils.opt.Opt
+import com.github.jonathanxd.iutils.opt.specialized.OptObject
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.information.Information
 
 /**
- * Requirement of a information.
+ * Builder of [Information]
  */
-data class Requirement<T, R>(val required: R,
-                             val subject: Information.Id,
-                             val infoType: TypeInfo<in T>,
-                             val type: TypeInfo<out R>,
-                             val tester: RequirementTester<T, R>) {
+class InformationBuilder<T> {
+
+    private lateinit var id: Information.Id
+    private var value: OptObject<T> = Opt.none()
+    private lateinit var type: TypeInfo<out T>
+    private var description: String? = null
 
     /**
-     * Calls the [RequirementTester.test] method.
+     * Sets [Information.id]
      */
-    fun test(information: Information<T>) = this.tester.test(this, information)
+    fun id(id: Information.Id): InformationBuilder<T> {
+        this.id = id
+        return this
+    }
 
-    companion object {
-        inline fun <reified T, reified R> create(required: R, subject: Information.Id, tester: RequirementTester<T, R>) =
-                Requirement(required, subject, object : AbstractTypeInfo<T>() {}, object : AbstractTypeInfo<R>() {}, tester)
+    /**
+     * Sets [Information.value]
+     */
+    fun value(value: T): InformationBuilder<T> {
+        this.value = Opt.some(value)
+        return this
+    }
 
-        @JvmStatic
-        fun <T, R> builder() = RequirementBuilder<T, R>()
+    /**
+     * Sets [Information.type]
+     */
+    fun type(type: TypeInfo<out T>): InformationBuilder<T> {
+        this.type = type
+        return this
+    }
+
+    /**
+     * Sets [Information.description]
+     */
+    fun description(description: String?): InformationBuilder<T> {
+        this.description = description
+        return this
+    }
+
+    /**
+     * Build [Information]
+     */
+    fun build(): Information<T> {
+        if(value.isPresent)
+            throw IllegalStateException("Property 'value' was not initialized")
+
+        return Information(
+                id = this.id,
+                value = this.value.value,
+                type = this.type,
+                description = this.description
+        )
     }
 }

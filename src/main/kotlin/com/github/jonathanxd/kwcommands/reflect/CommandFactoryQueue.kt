@@ -62,10 +62,11 @@ class CommandFactoryQueue {
         }
 
     /**
-     *
+     * Adds a command to resolved command list.
      */
     fun add(command: Command) {
-        this.created_.add(command)
+        if(!this.created_.contains(command))
+            this.created_.add(command)
     }
 
     /**

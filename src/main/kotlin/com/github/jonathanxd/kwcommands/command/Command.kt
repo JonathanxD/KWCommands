@@ -127,4 +127,9 @@ data class Command(val parent: Command?,
         return if (this.parent == other.parent) this.name.compareTo(other.name.toString()) else -1
     }
 
+    companion object {
+        @JvmStatic
+        fun builder() = CommandBuilder()
+    }
+
 }
