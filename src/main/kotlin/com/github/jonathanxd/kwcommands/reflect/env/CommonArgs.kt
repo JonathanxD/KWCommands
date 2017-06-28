@@ -29,17 +29,30 @@ package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 
-/**
- * Specification of a argument type.
- *
- * When the [ReflectionEnvironment] find an argument, it will lookup for a common argument specification that provides [validator],
- * [transformer], [possibilities] and [defaultValue]. This class is intended to provide these values.
- *
- * An instance of argument type can be registered globally using [ReflectionEnvironment.registerGlobal] or per instance using
- * [ReflectionEnvironment.register].
- */
-data class ArgumentType<out T>(val type: TypeInfo<out T>,
-                               val validator: (String) -> Boolean,
-                               val transformer: (String) -> T,
-                               val possibilities: List<String>,
-                               val defaultValue: T?)
+class ListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : (String) -> Boolean {
+    override fun invoke(p1: String): Boolean {
+        val list = if(p1.contains(','))
+            p1.split(',').toList()
+        else listOf(p1)
+
+        val get = storage.getArgumentType(subType)
+
+        return list.all { get.validator(it) }
+    }
+
+}
+
+class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>) : (String) -> List<E> {
+    override fun invoke(p1: String): List<E> {
+        val list = if(p1.contains(','))
+            p1.split(',').toList()
+        else listOf(p1)
+
+        val mut = mutableListOf<E>()
+
+        val get = storage.getArgumentType(subType)
+
+        return list.mapTo(mut) { get.transformer(it) }
+    }
+
+}

@@ -71,14 +71,14 @@ import kotlin.reflect.KClass
  *
  * @property manager Manager used to resolve parent commands.
  */
-class ReflectionEnvironment(val manager: CommandManager) {
+class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
     private val argumentTypeProviders = mutableSetOf<ArgumentTypeProvider>()
 
     /**
      * Registers [provider].
      */
-    fun registerProvider(provider: ArgumentTypeProvider) =
+    override fun registerProvider(provider: ArgumentTypeProvider) =
             this.argumentTypeProviders.add(provider)
 
 
@@ -96,6 +96,9 @@ class ReflectionEnvironment(val manager: CommandManager) {
     @Suppress("UNCHECKED_CAST")
     fun <T> get(type: TypeInfo<T>): ArgumentType<T> =
             this.getOrNull(type) ?: throw IllegalArgumentException("No argument type provider for type: $type.")
+
+    override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>? = this.getOrNull(type)
+    override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T> = this.get(type)
 
     /**
      * Gets optional argument specification.
@@ -458,7 +461,23 @@ class ReflectionEnvironment(val manager: CommandManager) {
     }
 
     companion object {
-        private val GLOBAL = mutableSetOf<ArgumentTypeProvider>()
+        private val GLOBAL = object : ArgumentTypeStorage {
+            private val set = mutableSetOf<ArgumentTypeProvider>()
+
+            override fun registerProvider(argumentTypeProvider: ArgumentTypeProvider): Boolean {
+                return this.set.add(argumentTypeProvider)
+            }
+
+            override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>? {
+                return this.set.getArgumentType(type)
+            }
+
+            override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T> {
+                return this.set.getArgumentType(type)  ?: throw IllegalArgumentException("No argument type provider for type: $type.")
+            }
+
+        }
+
 
         @Suppress("UNCHECKED_CAST")
         fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>): ArgumentType<T>? =
@@ -474,7 +493,7 @@ class ReflectionEnvironment(val manager: CommandManager) {
         /**
          * Registers global [ArgumentTypeProvider].
          */
-        fun registerGlobal(argumentTypeProvider: ArgumentTypeProvider) = GLOBAL.add(argumentTypeProvider)
+        fun registerGlobal(argumentTypeProvider: ArgumentTypeProvider) = GLOBAL.registerProvider(argumentTypeProvider)
 
         /**
          * Gets optional global argument specification.
@@ -486,6 +505,7 @@ class ReflectionEnvironment(val manager: CommandManager) {
         init {
             // Data types
             registerGlobal(DefaultProvider)
+            registerGlobal(CollectionProvider(GLOBAL))
         }
 
         object DefaultProvider : ArgumentTypeProvider {
@@ -546,10 +566,47 @@ class ReflectionEnvironment(val manager: CommandManager) {
             }
 
         }
+
+        class CollectionProvider(val storage: ArgumentTypeStorage) : ArgumentTypeProvider {
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+                val component = type.related.singleOrNull() ?: TypeInfo.of(String::class.java)
+
+                if(type.typeClass == List::class.java)
+                    return ArgumentType(type,
+                            ListValidator(storage, component),
+                            ListTransform(storage, component),
+                            emptyList(),
+                            mutableListOf<Any?>()).cast(type)
+
+                return null
+            }
+
+        }
     }
 }
 
 class Checker(val manager: CommandManager, val owner: Any?, val command: Cmd, val annotatedElement: AnnotatedElement) : (List<Command>) -> Boolean {
     override fun invoke(p1: List<Command>): Boolean =
             if (command.parents.isEmpty()) true else command.resolveParents(manager, owner, annotatedElement, p1) != null
+}
+
+interface ArgumentTypeStorage {
+    /**
+     * Registers global [ArgumentTypeProvider].
+     */
+    fun registerProvider(argumentTypeProvider: ArgumentTypeProvider): Boolean
+
+    /**
+     * Gets optional argument specification.
+     *
+     * @param type Type of argument value.
+     */
+    fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>?
+
+    /**
+     * Gets required argument specification.
+     *
+     * @param type Type of argument value.
+     */
+    fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T>
 }

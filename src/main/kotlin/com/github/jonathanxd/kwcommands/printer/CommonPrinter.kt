@@ -62,7 +62,7 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
                 this.append(if (it.isOptional) "<" else "[")
                 this.append(it.id.toString())
 
-                this.append(": ").append(if (it.type.canResolve()) it.type.typeClass.simpleName else it.type.classLiteral)
+                this.append(": ").append(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)
 
                 this.append(if (it.isOptional) ">" else "]")
             }
@@ -86,7 +86,6 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
 
             commands.forEachIndexed { index, command ->
                 val buff = buffer[index]
-
                 val remaining = maxSize - buff.length
 
                 val builder = StringBuilder(buff)
@@ -143,6 +142,8 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
 
                         command.requirements.forEach(requirementPrinter)
                     }
+
+                    this.out("")
 
                 }
 

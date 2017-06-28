@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test.reflect
 
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.exception.InformationMissingException
 import com.github.jonathanxd.kwcommands.exception.UnsatisfiedRequirementException
 import com.github.jonathanxd.kwcommands.information.Information
@@ -38,10 +39,14 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
 import com.github.jonathanxd.kwcommands.reflect.annotation.Id
 import com.github.jonathanxd.kwcommands.reflect.annotation.Require
+import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
+import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
+import com.github.jonathanxd.kwcommands.reflect.env.cast
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.test.assertAll
+import com.github.jonathanxd.kwcommands.util.ArgumentType
 import com.github.jonathanxd.kwcommands.util.printAll
 import com.github.jonathanxd.kwcommands.util.registerInformation
 import org.junit.Test
@@ -102,6 +107,20 @@ class ReflectionTest {
 
         processor.handle(processor.process(listOf("world", "setblock", "10", "10", "0", "stone"), this), information)
                 .assertAll(listOf("setted block STONE at 10, 10, 0"))
+
+        ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+                if(type == TypeInfo.of(SimplePlayer::class.java)) {
+                    return ArgumentType({true}, {SimplePlayer(it)}, emptyList(), null).cast(type)
+                }
+
+                return null
+            }
+
+        })
+
+        processor.handle(processor.process(listOf("world", "tpto", "Adm", "A,B,C"), this), information)
+                .assertAll(listOf("teleported A, B, C to Adm!"))
     }
 
 }
@@ -134,12 +153,19 @@ class World {
                  )) block: Block): Any {
         return "setted block $block at $x, $y, $z"
     }
+
+    @Cmd(name = "tpto", description = "Teleport [players] to [target] player")
+    fun tpTo(@Arg("target") target: String, @Arg("players") players: List<SimplePlayer>): Any {
+        return "teleported ${players.map { it.name }.joinToString()} to $target!"
+    }
 }
 
 
 object Player {
     fun hasPermission(perm: String) = perm == "world.modify" || perm == "world.modify.block"
 }
+
+data class SimplePlayer(val name: String)
 
 enum class Block {
     STONE,

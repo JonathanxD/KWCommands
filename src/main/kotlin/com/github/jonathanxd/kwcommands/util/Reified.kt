@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.type.ConcreteTypeInfo
+import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -37,10 +37,10 @@ import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 inline fun <reified T> InformationManager.registerInformation(id: Information.Id, value: T, description: String? = null)
-        = this.registerInformation(id, value, object : ConcreteTypeInfo<T>() {}, description)
+        = this.registerInformation(id, value, object : AbstractTypeInfo<T>() {}, description)
 
 inline fun <reified T> Information(id: Information.Id, value: T, description: String?): Information<T> =
-        Information<T>(id, value, object : ConcreteTypeInfo<T>(){}, description)
+        Information<T>(id, value, object : AbstractTypeInfo<T>(){}, description)
 
 /**
  * Reified function to create argument with a implicit [TypeInfo] of type [T].
@@ -53,13 +53,13 @@ inline fun <reified T> Argument(id: Any,
                                 possibilities: List<String>,
                                 requirements: List<Requirement<*, *>>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
-        Argument(id, isOptional, object : ConcreteTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, requirements, handler)
+        Argument(id, isOptional, object : AbstractTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, requirements, handler)
 
 inline fun <reified T> ArgumentType(noinline validator: (String) -> Boolean,
                                     noinline transformer: (String) -> T,
                                     possibilities: List<String>,
                                     defaultValue: T?): ArgumentType<T> =
-        ArgumentType(object : ConcreteTypeInfo<T>() {}, validator, transformer, possibilities, defaultValue)
+        ArgumentType(object : AbstractTypeInfo<T>() {}, validator, transformer, possibilities, defaultValue)
 
 
 /**
