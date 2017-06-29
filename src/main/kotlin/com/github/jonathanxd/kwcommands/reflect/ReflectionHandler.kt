@@ -31,9 +31,9 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.exception.InformationMissingException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 
@@ -43,7 +43,9 @@ import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
 
     @Suppress("UNCHECKED_CAST")
-    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
+    override fun handle(commandContainer: CommandContainer,
+                        informationManager: InformationManager,
+                        resultHandler: ResultHandler): Any {
 
         val link = element.elementLink
         val args = mutableListOf<Any?>()
@@ -56,17 +58,25 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                 is Parameter.InformationParameter<*> -> {
                     val information = informationManager.find(parameter.id, parameter.type)
 
-                    if (!parameter.isOptional && information == null)
-                        throw InformationMissingException("Required information with id ${parameter.id} and of type ${parameter.type} is missing!")
+                    if (!parameter.isOptional && information == null) {
+                        resultHandler.informationMissing(parameter.id, parameter, true)
+                    }
+
                     args += information ?: Information.EMPTY
                 }
             }
         }
 
+        if(resultHandler.shouldCancel())
+            return Unit
+
         return link(*args.toTypedArray()) ?: Unit
     }
 
-    override fun handle(argumentContainer: ArgumentContainer<Any>, commandContainer: CommandContainer, informationManager: InformationManager): Any {
+    override fun handle(argumentContainer: ArgumentContainer<Any>,
+                        commandContainer: CommandContainer,
+                        informationManager: InformationManager,
+                        resultHandler: ResultHandler): Any {
         val link = element.elementLink
 
         val parameter = element.parameters.first()
@@ -78,9 +88,12 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
             is Parameter.InformationParameter<*> -> {
                 val information = informationManager.find(parameter.id, parameter.type)
 
-                if (!parameter.isOptional && information == null)
-                    throw InformationMissingException("Required information with id ${parameter.id} and of type ${parameter.type} is missing!")
-                return link.invoke(information ?: Information.EMPTY) ?: Unit
+                if (!parameter.isOptional && information == null) {
+                    resultHandler.informationMissing(parameter.id, parameter, true)
+                    return Unit
+                } else {
+                    return link.invoke(information ?: Information.EMPTY) ?: Unit
+                }
             }
         }
     }

@@ -27,54 +27,44 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.kwcommands.exception.InformationMissingException
-import com.github.jonathanxd.kwcommands.exception.UnsatisfiedRequirementException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 
 /**
  * Check if all [Information] matches the [requirements][Requirement].
  *
- * @throws UnsatisfiedRequirementException If an information does not satisfies the requirements.
- * @throws InformationMissingException If an information required by a [Requirement] is not present.
+ * @return Empty list if all requirements was satisfied or a list with unsatisfied requirements.
  */
-fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager) {
-    var exception: Exception? = null
+fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager): List<UnsatisfiedRequirement<*>> {
+    val fails = mutableListOf<UnsatisfiedRequirement<*>>()
 
     this.forEach {
         val find = manager.find(it.subject, it.infoType)
 
         if (find == null) {
-            InformationMissingException("Information id '${it.subject}' requested by Requirement '$it' is missing!").let {
-                if (exception == null)
-                    exception = it
-                else
-                    exception!!.addSuppressed(it)
-            }
+            fails.add(UnsatisfiedRequirement(it, it.subject, null, Reason.MISSING_INFORMATION))
         } else {
+            @Suppress("UNCHECKED_CAST")
+            it as Requirement<Any, *>
+            @Suppress("UNCHECKED_CAST")
+            find as Information<Any>
 
-            try {
+            if (!it.test(find))
+                fails.add(UnsatisfiedRequirement(it, it.subject, find, Reason.UNSATISFIED_REQUIREMENT))
 
-                @Suppress("UNCHECKED_CAST")
-                it as Requirement<Any, *>
-                @Suppress("UNCHECKED_CAST")
-                find as Information<Any>
-
-                it.test(find)
-
-            } catch (ex: UnsatisfiedRequirementException) {
-                if (exception == null)
-                    exception = ex
-                else
-                    exception!!.addSuppressed(ex)
-            }
         }
 
     }
 
-    exception?.let {
-        throw it
-    }
-
+    return fails
 }
 
+data class UnsatisfiedRequirement<T>(val requirement: Requirement<T, *>,
+                                     val informationId: Information.Id,
+                                     val information: Information<T>?,
+                                     val reason: Reason)
+
+enum class Reason {
+    MISSING_INFORMATION,
+    UNSATISFIED_REQUIREMENT
+}

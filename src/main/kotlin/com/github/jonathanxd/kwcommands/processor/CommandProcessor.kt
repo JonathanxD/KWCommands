@@ -62,14 +62,16 @@ interface CommandProcessor {
     fun process(stringList: List<String>, owner: Any?): List<CommandContainer>
 
     /**
-     * Handle [commands] and returns [results][Result] of executions.
+     * Handle [commands] and returns [result list][ComandResult] of command executions.
      *
      * This function will first check requirements, and then handle arguments and the command.
      *
      * @param commands Command to handle.
      * @param informationManager Information provide manager.
-     * @return [Result] of command execution.
+     * @return Result of command handling process. May be command handler return values or values added via
+     * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
+     * each command.
      */
-    fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerEmpty): List<Result>
+    fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerEmpty): List<CommandResult>
 
 }

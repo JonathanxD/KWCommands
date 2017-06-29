@@ -28,8 +28,69 @@
 package com.github.jonathanxd.kwcommands.processor
 
 import com.github.jonathanxd.kwcommands.command.Container
+import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.requirement.UnsatisfiedRequirement
 
 /**
  * Result of command handling.
  */
-data class Result(val value: Any?, val container: Container)
+interface CommandResult {
+    /**
+     * Root container of command handling. (Null if [container] is the root container).
+     */
+    val rootContainer: Container?
+
+    /**
+     * Current container.
+     */
+    val container: Container
+}
+
+/**
+ * When [container] returns an object value.
+ */
+data class ValueResult(val value: Any?,
+                       override val rootContainer: Container?,
+                       override val container: Container): CommandResult
+
+/**
+ * When requirement processor reports missing requirements.
+ */
+data class UnsatisfiedRequirementsResult(val unsatisfiedRequirements: List<UnsatisfiedRequirement<*>>,
+                                         override val rootContainer: Container?,
+                                         override val container: Container): CommandResult
+
+/**
+ * When [container] reports a missing information of [id][informationId].
+ */
+data class MissingInformationResult(val informationId: Information.Id,
+                                    val requester: Any,
+                                    override val rootContainer: Container?,
+                                    override val container: Container): CommandResult
+
+/**
+ * A particular result handler which allows command handler to add more [CommandResults][CommandResult]
+ * during command handling phase.
+ */
+interface ResultHandler {
+
+    /**
+     * Reports missing information. If called by an argument handler, the command will not be handled.
+     *
+     * @param informationId Information which is missing.
+     * @param requester Instance which requested information of [id][informationId].
+     * @param cancel True if the command execution should be cancelled. Obs: Only for argument handlers, this
+     * does not have effects in command handlers.
+     */
+    fun informationMissing(informationId: Information.Id, requester: Any, cancel: Boolean)
+
+    /**
+     * Adds a [ValueResult] to the result list.
+     */
+    fun result(value: Any?)
+
+    /**
+     * Returns true if any handler request cancellation of command execution.
+     */
+    fun shouldCancel(): Boolean
+}

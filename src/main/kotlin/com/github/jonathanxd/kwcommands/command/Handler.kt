@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 /**
  * Command handler. Handles the [command][Command] and [arguments][Argument] passed to the command.
@@ -41,28 +42,11 @@ interface Handler {
      *
      * @param commandContainer Parsed command.
      * @param informationManager Information manager.
+     * @param resultHandler Particular result handler.
      * @return Value result of command handling ([Unit] if none)
      */
-    fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any
-
-    companion object {
-        /**
-         * Create handler from a function.
-         */
-        inline fun create(crossinline function: (commandContainer: CommandContainer, informationManager: InformationManager) -> Any) = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(commandContainer, informationManager)
-            }
-        }
-
-        /**
-         * Create handler from a function.
-         */
-        inline fun create(crossinline function: (commandContainer: CommandContainer) -> Any) = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(commandContainer)
-            }
-        }
-    }
+    fun handle(commandContainer: CommandContainer,
+               informationManager: InformationManager,
+               resultHandler: ResultHandler): Any
 
 }

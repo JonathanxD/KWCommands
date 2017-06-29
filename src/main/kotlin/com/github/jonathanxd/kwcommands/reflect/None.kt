@@ -32,6 +32,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 
 sealed class None
@@ -55,13 +56,13 @@ object NonePossibilities : None(), () -> List<String> {
 }
 
 object NoneHandler : None(), Handler {
-    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
+    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler): Any {
         return Unit
     }
 }
 
 object NoneArgumentHandler : None(), ArgumentHandler<Any?> {
-    override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer, informationManager: InformationManager): Any {
+    override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler): Any {
         return Unit
     }
 }

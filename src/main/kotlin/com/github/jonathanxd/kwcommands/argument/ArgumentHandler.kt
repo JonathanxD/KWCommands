@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 /**
  * Argument handler. Handles the [argument][Argument] passed to a [commandContainer][CommandContainer].
@@ -43,17 +44,24 @@ interface ArgumentHandler<T> {
      * @param argumentContainer parsed argument.
      * @param commandContainer Parsed command.
      * @param informationManager Information manager.
+     * @param resultHandler Result handler.
      * @return Value result of argument handling ([Unit] if none)
      */
-    fun handle(argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager): Any
+    fun handle(argumentContainer: ArgumentContainer<T>,
+               commandContainer: CommandContainer,
+               informationManager: InformationManager,
+               resultHandler: ResultHandler): Any
 
     companion object {
         /**
          * Create argument handler from a function.
          */
-        inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager) -> Any) = object : ArgumentHandler<T> {
-            override fun handle(argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager): Any {
-                return function(argumentContainer, commandContainer, informationManager)
+        inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler) -> Any) = object : ArgumentHandler<T> {
+            override fun handle(argumentContainer: ArgumentContainer<T>,
+                                commandContainer: CommandContainer,
+                                informationManager: InformationManager,
+                                resultHandler: ResultHandler): Any {
+                return function(argumentContainer, commandContainer, informationManager, resultHandler)
             }
         }
 

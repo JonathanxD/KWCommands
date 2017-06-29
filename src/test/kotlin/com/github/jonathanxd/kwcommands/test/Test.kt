@@ -33,8 +33,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.processor.Processors
-import com.github.jonathanxd.kwcommands.processor.Result
+import com.github.jonathanxd.kwcommands.processor.*
 import com.github.jonathanxd.kwcommands.util.Argument
 import org.junit.Assert
 import org.junit.ComparisonFailure
@@ -45,7 +44,9 @@ class CommandTest {
     @Test
     fun test() {
         val fnmHandler = object : Handler {
-            override fun handle(commandContainer: CommandContainer, informationManager: InformationManager): Any {
+            override fun handle(commandContainer: CommandContainer,
+                                informationManager: InformationManager,
+                                resultHandler: ResultHandler): Any {
                 val sb = StringBuilder()
 
                 sb.append(commandContainer.command.fullname)
@@ -111,7 +112,7 @@ class CommandTest {
                                 transformer = String::toInt,
                                 possibilities = emptyList(),
                                 requirements = emptyList(),
-                                handler = ArgumentHandler.create { arg, _, _ ->
+                                handler = ArgumentHandler.create { arg, _, _, _ ->
                                     return@create arg.value!!
                                 }),
                         Argument(id = "double",
@@ -145,17 +146,17 @@ class CommandTest {
 
 }
 
-fun Result.assert(expected: Any?) {
+fun ValueResult.assert(expected: Any?) {
     Assert.assertEquals(expected, this.value)
 }
 
-fun List<Result>.assertAll(expected: List<Any?>) {
+fun List<CommandResult>.assertAll(expected: List<Any?>) {
 
-    if(this.size != expected.size)
-        throw ComparisonFailure("List is not equal.", expected.toString(), this.map { it.value }.toString())
+    if(this.count { it is ValueResult } != expected.size)
+        throw ComparisonFailure("List is not equal.", expected.toString(), this.map { it.toString() }.toString())
 
     this.forEachIndexed { index, result ->
-        result.assert(expected[index])
+        (result as? ValueResult)?.assert(expected[index])
     }
 
 }

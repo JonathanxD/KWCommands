@@ -27,13 +27,14 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
-import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.exception.ArgumentsMissingException
 import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
@@ -143,7 +144,7 @@ object Processors {
 
                         if (requiredCount != requiredArgsCount) {
                             val missing = arguments.filter { !it.isOptional }.map {
-                                if(it.possibilities.isNotEmpty()) "${it.id}{possibilities=${it.possibilities}}"
+                                if (it.possibilities.isNotEmpty()) "${it.id}{possibilities=${it.possibilities}}"
                                 else it.id.toString()
                             }.joinToString()
                             throw ArgumentsMissingException("Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
@@ -167,10 +168,12 @@ object Processors {
         }
 
         @Suppress("UNCHECKED_CAST")
-        override fun handle(commands: List<CommandContainer>, informationManager: InformationManager): List<Result> {
-            val results = mutableListOf<Result>()
+        override fun handle(commands: List<CommandContainer>, informationManager: InformationManager): List<CommandResult> {
+            val results = mutableListOf<CommandResult>()
+            val perCommandResults = mutableListOf<CommandResult>()
 
             commands.forEach { command ->
+                perCommandResults.clear()
 
                 var container: CommandContainer? = command
 
@@ -181,26 +184,63 @@ object Processors {
                 }
 
                 container?.let {
-                    it.arguments.forEach {
-                        it.argument.requirements.checkRequirements(informationManager)
+                    val argWithReq = it.arguments.map {
+                        it to it.argument.requirements.checkRequirements(informationManager)
                     }
 
-                    command.command.requirements.checkRequirements(informationManager)
+                    val commandReq =
+                            command.command.requirements.checkRequirements(informationManager)
 
-                    // Process arguments first because arguments must be resolved before command handling
-                    it.arguments.forEach { arg ->
-                        (arg as ArgumentContainer<Any?>).handler?.let { handler ->
-                            results += Result(handler.handle(arg, it, informationManager), arg)
+                    if(commandReq.isNotEmpty()) {
+                        perCommandResults.add(UnsatisfiedRequirementsResult(commandReq, null, it))
+                    }
+
+                    var anyArgReqNotEmpty = false
+
+                    if(commandReq.isEmpty() && !anyArgReqNotEmpty) {
+                        argWithReq.forEach { (arg, req) ->
+                            if(req.isNotEmpty()) {
+                                anyArgReqNotEmpty = true
+                                perCommandResults.add(UnsatisfiedRequirementsResult(req, rootContainer = it, container = arg))
+                            }
+                        }
+
+                        var shouldExecuteCommand = true
+
+                        // Process arguments first because arguments must be resolved before command handling
+                        it.arguments.forEach { arg ->
+                            (arg as ArgumentContainer<Any?>).handler?.let { handler ->
+                                val resultHandler = ParticularResultHandler(root = it, current = arg, targetList = perCommandResults)
+                                if(resultHandler.shouldCancel())
+                                    shouldExecuteCommand = false
+
+                                val handle = handler.handle(arg, it, informationManager, resultHandler)
+
+                                resultHandler.result(handle)
+                            }
+                        }
+
+                        if(shouldExecuteCommand) {
+                            val resultHandler = ParticularResultHandler(
+                                    root = null,
+                                    current = it,
+                                    targetList = perCommandResults)
+
+                            it.handler?.let { handler ->
+                                val handle = handler.handle(it, informationManager, resultHandler)
+
+                                resultHandler.result(handle)
+                            }
+
+
                         }
                     }
 
-                    val result = Result(it.handler?.handle(it, informationManager), it)
-
-                    results += result
-
                     interceptors.forEach { interceptor ->
-                        interceptor.post(command, it, result)
+                        interceptor.post(command, it, perCommandResults)
                     }
+
+                    results.addAll(perCommandResults)
                 }
             }
 
@@ -209,6 +249,29 @@ object Processors {
 
         @Suppress("NOTHING_TO_INLINE")
         inline private fun String.isAndOp() = this == "&"
+    }
+
+    private class ParticularResultHandler(val root: Container?,
+                                           val current: Container,
+                                           val targetList: MutableList<CommandResult>): ResultHandler {
+
+        private var cancel = false
+
+        override fun informationMissing(informationId: Information.Id, requester: Any, cancel: Boolean) {
+            this.targetList += MissingInformationResult(informationId, requester, root, current)
+
+            if(cancel)
+                this.cancel = true
+        }
+
+        override fun result(value: Any?) {
+            if(value !is Unit)
+                this.targetList += ValueResult(value, root, current)
+        }
+
+        override fun shouldCancel(): Boolean {
+            return this.cancel
+        }
     }
 
 }

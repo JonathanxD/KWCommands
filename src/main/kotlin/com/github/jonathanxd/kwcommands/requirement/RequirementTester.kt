@@ -37,6 +37,6 @@ interface RequirementTester<T, R> {
     /**
      * Test [Requirement.subject] against the [Requirement.required] value.
      */
-    fun test(requirement: Requirement<T, R>, information: Information<T>)
+    fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean
 
 }

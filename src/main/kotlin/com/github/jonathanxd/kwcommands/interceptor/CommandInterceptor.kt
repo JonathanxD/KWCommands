@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.interceptor
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.processor.Result
+import com.github.jonathanxd.kwcommands.processor.CommandResult
 
 /**
  * Intercept command handling. A command interceptor can intercept, block and modify a [CommandContainer] and
@@ -50,12 +50,12 @@ interface CommandInterceptor {
     fun pre(original: CommandContainer, current: CommandContainer): CommandContainer?
 
     /**
-     * Called after command handling.
+     * Called after command handling (even if command handling fails).
      *
      * @param original Original command container
      * @param final Final command container.
-     * @param result Result of handler invocation.
+     * @param results Result of handler invocation. It includes argument results and command results.
      */
-    fun post(original: CommandContainer, final: CommandContainer, result: Result)
+    fun post(original: CommandContainer, final: CommandContainer, results: List<CommandResult>)
 
 }

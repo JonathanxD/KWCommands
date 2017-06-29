@@ -28,14 +28,13 @@
 package com.github.jonathanxd.kwcommands.test.reflect
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.exception.InformationMissingException
-import com.github.jonathanxd.kwcommands.exception.UnsatisfiedRequirementException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
 import com.github.jonathanxd.kwcommands.reflect.annotation.Id
@@ -44,17 +43,19 @@ import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.reflect.env.cast
+import com.github.jonathanxd.kwcommands.requirement.Reason
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.test.assertAll
 import com.github.jonathanxd.kwcommands.util.ArgumentType
 import com.github.jonathanxd.kwcommands.util.printAll
 import com.github.jonathanxd.kwcommands.util.registerInformation
+import org.junit.Assert
 import org.junit.Test
 
 class ReflectionTest {
 
-    @Test(expected = UnsatisfiedRequirementException::class)
+    @Test
     fun test() {
         val information = InformationManagerImpl()
 
@@ -70,11 +71,13 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this), information)// ?
+        val result = processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this), information)// ?
+
+        Assert.assertTrue(result.any { it is UnsatisfiedRequirementsResult })
     }
 
-    @Test(expected = InformationMissingException::class)
-    fun testMissReq() {
+    @Test
+    fun testMissInfo() {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
@@ -86,7 +89,13 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this))// ?
+        val result = processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this))// ?
+
+        Assert.assertTrue(result.any {
+            it is UnsatisfiedRequirementsResult
+                    && it.unsatisfiedRequirements.isNotEmpty()
+                    && it.unsatisfiedRequirements.first().reason == Reason.MISSING_INFORMATION
+        })
     }
 
     @Test
@@ -111,8 +120,8 @@ class ReflectionTest {
 
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
-                if(type == TypeInfo.of(SimplePlayer::class.java)) {
-                    return ArgumentType({true}, {SimplePlayer(it)}, emptyList(), null).cast(type)
+                if (type == TypeInfo.of(SimplePlayer::class.java)) {
+                    return ArgumentType({ true }, { SimplePlayer(it) }, emptyList(), null).cast(type)
                 }
 
                 return null
@@ -199,9 +208,8 @@ val permissionRequirement = Requirement.create("world.modify", Information.Id(Pl
 
 
 object PermissionRequirementTest : RequirementTester<Player, String> {
-    override fun test(requirement: Requirement<Player, String>, information: Information<Player>) {
-        if (!information.value.hasPermission(requirement.required))
-            throw UnsatisfiedRequirementException("Player ${information.value} does not have permission ${requirement.required}")
+    override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean {
+        return information.value.hasPermission(requirement.required)
     }
 
 }
