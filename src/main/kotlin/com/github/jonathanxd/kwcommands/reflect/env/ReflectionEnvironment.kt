@@ -157,11 +157,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             if (it.superCommand != null) {
                 it.superCommand.let {
                     if (!this.manager.isRegistered(it, owner))
-                        if(!this.manager.registerCommand(it, owner))
+                        if (!this.manager.registerCommand(it, owner))
                             success = false
                 }
             } else {
-                if(!this.manager.registerCommand(it, owner))
+                if (!this.manager.registerCommand(it, owner))
                     success = false
             }
 
@@ -215,7 +215,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     }
 
     /**
-     * Create command list from commands of class [klass]
+     * Create command list from commands of class [klass].
      *
      * @param instanceProvider Provider of class instances (null for static elements).
      * @param owner Owner of commands.
@@ -228,16 +228,74 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                       instanceProvider: (Class<*>) -> Any?,
                       owner: Any?,
                       queue: CommandFactoryQueue,
+                      includeInner: Boolean): List<Command> =
+            fromClass(klass, instanceProvider, null, owner, queue, includeInner)
+
+
+    /**
+     * Create command list from commands of class [klass].
+     *
+     * @param instanceProvider Provider of class instances (null for static elements).
+     * @param superCommand Super command.
+     * @param owner Owner of commands.
+     * @param queue Command Factory Queue.
+     * @param includeInner Include inner class commands.
+     * @see CommandFactoryQueue
+     * @see ReflectionEnvironment
+     */
+    fun <T> fromClass(klass: Class<T>,
+                      instanceProvider: (Class<*>) -> Any?,
+                      superCommand: Command?,
+                      owner: Any?,
+                      queue: CommandFactoryQueue,
                       includeInner: Boolean): List<Command> {
+        this.fromClassToQueue(klass, instanceProvider, superCommand, owner, queue, includeInner)
+        return queue.commands
+    }
+
+    /**
+     * Add commands of [klass] to queue. This function should be used instead of [fromClass] only
+     * if a parent command should be resolved later because depends on commands which is not present in
+     * [klass] (this does not include commands in inner classes).
+     *
+     * @param instanceProvider Provider of class instances (null for static elements).
+     * @param superCommand Super command.
+     * @param owner Owner of commands.
+     * @param queue Command Factory Queue.
+     * @param includeInner Include inner class commands.
+     * @see CommandFactoryQueue
+     * @see ReflectionEnvironment
+     */
+    fun <T> fromClassToQueue(klass: Class<T>,
+                             instanceProvider: (Class<*>) -> Any?,
+                             superCommand: Command?,
+                             owner: Any?,
+                             queue: CommandFactoryQueue,
+                             includeInner: Boolean) {
 
         val instance = klass.cast(instanceProvider(klass))
 
         val command = klass.getDeclaredAnnotation(Cmd::class.java)
 
-        val kCommand = command?.toKCommand(manager, command.getHandlerOrNull(), null, klass.declaredFields.filter {
-            !it.isAnnotationPresent(Exclude::class.java)
-                    && ((Modifier.isStatic(it.modifiers) && instance == null) || (!Modifier.isStatic(it.modifiers) && instance != null))
-        }.map { fromField(instance, it) }, owner, klass)
+        var args: List<Argument<*>> = emptyList()
+
+        val handler = command?.getClassHandlerOrNull(klass) {
+            val (lElement, lArgs) = createElement(instance, it)
+            args = lArgs
+            lElement
+        }
+
+        if (command != null && handler == null) {
+            args = klass.declaredFields.filter {
+                !it.isAnnotationPresent(Exclude::class.java)
+                        && ((Modifier.isStatic(it.modifiers) && instance == null) || (!Modifier.isStatic(it.modifiers) && instance != null))
+            }.map { fromField(instance, it) }
+        }
+
+        val kCommand = command?.toKCommand(manager,
+                handler,
+                superCommand,
+                args, owner, klass)
 
         kCommand?.let { k ->
             queue.queueCommand(klass, command.getName(klass), {
@@ -250,11 +308,10 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         if (includeInner) {
             klass.declaredClasses.forEach {
                 if (it.isAnnotationPresent(Cmd::class.java))
-                    fromClass(it, instanceProvider, owner, queue, includeInner)
+                    fromClassToQueue(it, instanceProvider, kCommand, owner, queue, includeInner)
             }
         }
 
-        return queue.commands
     }
 
     /**
@@ -412,6 +469,24 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     fun fromMethod(instance: Any?, method: Method, superCommand: Command?, owner: Any?, queue: CommandFactoryQueue) {
         val command = method.getDeclaredAnnotation(Cmd::class.java)
+        val (element, arguments) = createElement(instance, method)
+
+        queue.queueCommand(method, command.getName(method), { cmds ->
+            val superCmd = command.resolveParents(this.manager, owner, method, cmds) ?: superCommand
+
+            command.toKCommand(manager, command.getHandler(element), superCmd, arguments, owner, method)
+        }, Checker(this.manager, owner, command, method), { command.getPath(method).joinToString(separator = " ") })
+
+    }
+
+    /**
+     * Create a [Element] instance from a [method].
+     *
+     * @param instance Instance of method declaring class (null for static).
+     * @param method Method to create [Command].
+     * @see ReflectionEnvironment
+     */
+    private fun createElement(instance: Any?, method: Method): Pair<Element, List<Argument<*>>> {
 
         val link = Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(method))).let {
             if (instance != null) it.bind(instance) else it
@@ -473,12 +548,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             }
         }
 
-        queue.queueCommand(method, command.getName(method), { cmds ->
-            val superCmd = command.resolveParents(this.manager, owner, method, cmds) ?: superCommand
-
-            command.toKCommand(manager, command.getHandler(Element(link, parameters)), superCmd, arguments, owner, method)
-        }, Checker(this.manager, owner, command, method), { command.getPath(method).joinToString(separator = " ") })
-
+        return Element(link, parameters) to arguments
     }
 
     /**

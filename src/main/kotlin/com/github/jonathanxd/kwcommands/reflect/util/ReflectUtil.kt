@@ -40,6 +40,7 @@ import com.github.jonathanxd.kwcommands.reflect.None
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
+import com.github.jonathanxd.kwcommands.reflect.annotation.CmdHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.Require
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -150,6 +151,14 @@ fun Cmd.getRequirements(): List<Requirement<*, *>> = this.requirements.toSpecs()
  */
 fun Cmd.getHandlerOrNull(): Handler? =
         this.handler.get()
+
+/**
+ * Gets handler of [Cmd] (or null if default)
+ */
+fun Cmd.getClassHandlerOrNull(klass: Class<*>, elementFactory: (method: Method) -> Element): Handler? =
+        this.getHandlerOrNull() ?: klass.methods.firstOrNull { it.isAnnotationPresent(CmdHandler::class.java) }?.let {
+            ReflectionHandler(elementFactory(it))
+        }
 
 /**
  * Gets handler of [Cmd] or create a [ReflectionHandler] if not present.

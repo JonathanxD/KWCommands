@@ -27,18 +27,17 @@
  */
 package com.github.jonathanxd.kwcommands.test.reflect
 
+import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
+import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
-import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
-import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
-import com.github.jonathanxd.kwcommands.reflect.annotation.Id
-import com.github.jonathanxd.kwcommands.reflect.annotation.Require
+import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
@@ -145,6 +144,29 @@ class ReflectionTest {
                 .assertAll(listOf("Teleported a to c!"))
     }
 
+    @Test
+    fun testInner() {
+        val manager = ReflectCommandManagerImpl()
+
+        manager.registerClassWithInner(InnerCommands::class.java, object : InstanceProvider {
+            override fun <T> get(type: Class<T>): T {
+                return type.newInstance()
+            }
+        }, this)
+
+        val printer = CommonPrinter(::println)
+
+        printer.printAll(manager)
+
+        val processor = Processors.createCommonProcessor(manager)
+
+        processor.handle(processor.process(listOf("a", "capitalize", "kwcommands"), this))
+                .assertAll(listOf("Kwcommands"))
+
+        processor.handle(processor.process(listOf("a", "b", "kwcommands"), this))
+                .assertAll(listOf("KWCOMMANDS"))
+    }
+
 }
 
 
@@ -210,6 +232,22 @@ val permissionRequirement = Requirement.create("world.modify", Information.Id(Pl
 object PermissionRequirementTest : RequirementTester<Player, String> {
     override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean {
         return information.value.hasPermission(requirement.required)
+    }
+}
+
+
+@Cmd(name = "a", description = "")
+class InnerCommands {
+
+    @Cmd(name = "capitalize", description = "")
+    fun capitalize(@Arg("text") text: String): String = text.capitalize()
+
+    @Cmd(name = "b", description = "")
+    class CommandB {
+        @CmdHandler
+        fun handle(@Arg("name") name: String): String {
+            return name.toUpperCase()
+        }
     }
 
 }
