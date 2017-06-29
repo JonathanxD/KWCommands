@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.command
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import java.util.*
 
 /**
  * Container to hold parsed [command][Command].
@@ -44,18 +45,11 @@ data class CommandContainer(val command: Command,
                             val handler: Handler?) : Container {
 
     /**
-     * Gets argument by [id]. Returns found argument or null if argument cannot be found.
-     */
-    fun getArgumentById(id: Any): ArgumentContainer<*>? {
-        return arguments.firstOrNull { it.argument.id == id }
-    }
-
-    /**
      * Gets argument by [id] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or
      * null if argument cannot be found.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> getArgumentAndType(id: Any, type: TypeInfo<T>): ArgumentContainer<T>? {
+    fun <T> getArgument(id: Any, type: TypeInfo<T>): ArgumentContainer<T>? {
         return arguments.firstOrNull { it.argument.id == id && it.argument.type == type } as? ArgumentContainer<T>
     }
 
@@ -66,6 +60,42 @@ data class CommandContainer(val command: Command,
     @Suppress("UNCHECKED_CAST")
     fun <T> getArgument(id: Any): ArgumentContainer<T>? {
         return arguments.firstOrNull { it.argument.id == id } as? ArgumentContainer<T>
+    }
+
+    /**
+     * Gets argument by [id] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or
+     * null if argument cannot be found.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getArgumentValue(id: Any, type: TypeInfo<T>): T? {
+        return this.getArgument(id, type)?.value
+    }
+
+    /**
+     * Gets argument by [id]. Returns found argument casted to [ArgumentContainer] of [T] or
+     * null if argument cannot be found.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getArgumentValue(id: Any): T? {
+        return this.getArgument<T>(id)?.value
+    }
+
+    /**
+     * Gets argument by [id] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or
+     * null if argument cannot be found.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getArgumentValueOptional(id: Any, type: TypeInfo<T>): Optional<T> {
+        return Optional.ofNullable(this.getArgumentValue(id, type))
+    }
+
+    /**
+     * Gets argument by [id]. Returns found argument casted to [ArgumentContainer] of [T] or
+     * null if argument cannot be found.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getArgumentValueOptional(id: Any): Optional<T> {
+        return Optional.ofNullable(this.getArgumentValue(id))
     }
 
     override fun toString(): String {
