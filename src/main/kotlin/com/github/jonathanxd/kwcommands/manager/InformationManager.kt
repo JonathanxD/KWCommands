@@ -80,6 +80,11 @@ interface InformationManager {
      * one information is found for specified [id] and [type], it will return first non-null information provided
      * by a registered [InformationProvider].
      *
+     * If no one information can be found using [id][Information.Id.id]-[tags][Information.Id.tags] combination,
+     * then the implementation should lookup by [id][Information.Id.id] only, if one information has the same
+     * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
+     * has the same id, then `null` should be returned.
+     *
      * @return Found information or null if information cannot be found.
      */
     fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>?
@@ -88,6 +93,11 @@ interface InformationManager {
      * Find a information by [id] and [type], this method will first lookup for `static information`, if no
      * one information is found for specified [id] and [type] and [useProviders] is `true`, it will return first
      * non-null information provided by a registered [InformationProvider].
+     *
+     * If no one information can be found using [id][Information.Id.id]-[tags][Information.Id.tags] combination,
+     * then the implementation should lookup by [id][Information.Id.id] only, if one information has the same
+     * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
+     * has the same id, then `null` should be returned.
      *
      * @return Found information or null if information cannot be found.
      */

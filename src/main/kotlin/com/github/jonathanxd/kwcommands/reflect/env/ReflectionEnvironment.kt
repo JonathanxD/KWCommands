@@ -34,7 +34,6 @@ import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
@@ -417,7 +416,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
             if (infoAnnotation != null) {
                 val infoIsOptional = infoAnnotation.isOptional
-                val infoId = infoAnnotation.value.let { Information.Id(it.value.java, it.tags) }
+                val infoId = infoAnnotation.createId(type)
 
                 return@let Parameter.InformationParameter(
                         id = infoId,
@@ -503,8 +502,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             if (infoAnnotation != null) {
 
                 val isOptional = infoAnnotation.isOptional
-                val id = infoAnnotation.value.let { Information.Id(it.value.java, it.tags) }
-
+                val id = infoAnnotation.createId(type)
 
                 return@map Parameter.InformationParameter(
                         id = id,

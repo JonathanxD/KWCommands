@@ -43,7 +43,9 @@ sealed class Parameter<T>(val type: TypeInfo<T>) {
      *
      * @property argument Backing command argument.
      */
-    class ArgumentParameter<T>(val argument: Argument<T>, type: TypeInfo<T>): Parameter<T>(type)
+    class ArgumentParameter<T>(val argument: Argument<T>, type: TypeInfo<T>) : Parameter<T>(type) {
+        override fun toString(): String = "ArgumentParameter(argument=$argument, type=$type)"
+    }
 
     /**
      * Information parameter. An parameter that receives a [Information] value.
@@ -52,6 +54,21 @@ sealed class Parameter<T>(val type: TypeInfo<T>) {
      * @property isOptional If the [Information] is optional, if true, a [Information.EMPTY] will be passed if the
      * information is not present.
      */
-    class InformationParameter<T>(val id: Information.Id, val isOptional: Boolean, type: TypeInfo<T>): Parameter<T>(type)
+    class InformationParameter<T>(val id: Information.Id, val isOptional: Boolean, type: TypeInfo<T>) : Parameter<T>(type) {
+
+        /**
+         * Component of information.
+         */
+        val infoComponent: TypeInfo<*>
+            get() = this.type.infoComponent
+
+        override fun toString(): String = "InformationParameter(id=$id, isOptional=$isOptional, type=$type)"
+    }
 
 }
+
+val TypeInfo<*>.infoComponent
+    get() =
+    if (this.typeClass == Information::class.java && this.related.size == 1)
+        this.related.first()
+    else this

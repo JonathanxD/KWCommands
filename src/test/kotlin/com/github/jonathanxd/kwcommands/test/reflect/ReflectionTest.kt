@@ -167,6 +167,30 @@ class ReflectionTest {
                 .assertAll(listOf("KWCOMMANDS"))
     }
 
+    @Test
+    fun testOptionalInfo() {
+        val information = InformationManagerImpl()
+
+        val simplePlayer = SimplePlayer("Player9")
+
+        information.registerInformation(Information.Id(SimplePlayer::class.java, arrayOf("player")),
+                simplePlayer)
+
+        val manager = CommandManagerImpl()
+        val env = ReflectionEnvironment(manager)
+        env.registerCommands(env.fromClass(TestOptInfo::class, { it.newInstance() }, this), this)
+
+        val printer = CommonPrinter(::println)
+
+        printer.printAll(manager)
+
+        val processor = Processors.createCommonProcessor(manager)
+
+        val result = processor.handle(processor.process(listOf("getName"), this), information)
+
+        result.assertAll(listOf(simplePlayer.name))
+    }
+
 }
 
 
@@ -250,4 +274,13 @@ class InnerCommands {
         }
     }
 
+}
+
+@Cmd(name = "getName", description = "Gets player name.")
+class TestOptInfo {
+    @CmdHandler
+    fun handle(@Info player: SimplePlayer, @Info playerInfo: Information<SimplePlayer>): String {
+        Assert.assertEquals(player.name, playerInfo.value.name) // Ensure correctness?
+        return playerInfo.value.name
+    }
 }

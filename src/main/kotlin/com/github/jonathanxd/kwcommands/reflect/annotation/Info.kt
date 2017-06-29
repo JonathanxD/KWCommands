@@ -27,12 +27,21 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
+import com.github.jonathanxd.iutils.`object`.Default
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.reflect.element.infoComponent
 
 /**
  * Information request.
  *
- * The annotated element must be of [Information] type and have a reified type for [Information.T].
+ * The annotated element should be of either types:
+ *
+ * - [Information] with a reified type of value type
+ * - [Information] [value][Information.value] type.
+ *
+ * If the annotated element type is [value][Information.value] type (and not [Information]) it should be nullable if
+ * [Info] is [optional][isOptional].
  *
  * @property value Id of information.
  * @property isOptional If true, a [Information.EMPTY] will be passed if
@@ -40,4 +49,16 @@ import com.github.jonathanxd.kwcommands.information.Information
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER)
-annotation class Info(val value: Id, val isOptional: Boolean = false)
+annotation class Info(val value: Id = Id(Default::class), val isOptional: Boolean = false)
+
+/**
+ * Creates [Information.Id] from [Info].
+ *
+ * @param inferredType Inferred type to be used if [Info] does not provide one.
+ */
+fun Info.createId(inferredType: TypeInfo<*>): Information.Id = this.value.let {
+    if (it.value.java == Default::class.java && it.tags.isEmpty())
+        Information.Id(inferredType.infoComponent.typeClass, emptyArray())
+    else
+        Information.Id(it.value.java, it.tags)
+}

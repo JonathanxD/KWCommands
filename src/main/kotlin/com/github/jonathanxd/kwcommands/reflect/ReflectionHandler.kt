@@ -56,13 +56,18 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                     args += commandContainer.arguments.find { parameter.argument.id == it.argument.id }?.value
                 }
                 is Parameter.InformationParameter<*> -> {
-                    val information = informationManager.find(parameter.id, parameter.type)
+                    val information = informationManager.find(parameter.id, parameter.infoComponent)
 
                     if (!parameter.isOptional && information == null) {
                         resultHandler.informationMissing(parameter.id, parameter, true)
+                        args.add(null)
+                    } else {
+                        if (parameter.type.typeClass != Information::class.java) {
+                            args += information?.value
+                        } else {
+                            args += information ?: Information.EMPTY
+                        }
                     }
-
-                    args += information ?: Information.EMPTY
                 }
             }
         }
@@ -86,13 +91,17 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                 return link.invoke(argumentContainer.value) ?: Unit
             }
             is Parameter.InformationParameter<*> -> {
-                val information = informationManager.find(parameter.id, parameter.type)
+                val information = informationManager.find(parameter.id, parameter.infoComponent)
 
                 if (!parameter.isOptional && information == null) {
                     resultHandler.informationMissing(parameter.id, parameter, true)
                     return Unit
                 } else {
-                    return link.invoke(information ?: Information.EMPTY) ?: Unit
+                    if (parameter.type.typeClass != Information::class.java) {
+                        return link.invoke(information?.value) ?: Unit
+                    } else {
+                        return link.invoke(information ?: Information.EMPTY) ?: Unit
+                    }
                 }
             }
         }
