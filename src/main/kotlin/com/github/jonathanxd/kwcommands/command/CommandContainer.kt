@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.command
 
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 
@@ -40,7 +41,32 @@ import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
  */
 data class CommandContainer(val command: Command,
                             val arguments: List<ArgumentContainer<*>>,
-                            val handler: Handler?): Container {
+                            val handler: Handler?) : Container {
+
+    /**
+     * Gets argument by [id]. Returns found argument or null if argument cannot be found.
+     */
+    fun getArgumentById(id: Any): ArgumentContainer<*>? {
+        return arguments.firstOrNull { it.argument.id == id }
+    }
+
+    /**
+     * Gets argument by [id] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or
+     * null if argument cannot be found.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getArgumentAndType(id: Any, type: TypeInfo<T>): ArgumentContainer<T>? {
+        return arguments.firstOrNull { it.argument.id == id && it.argument.type == type } as? ArgumentContainer<T>
+    }
+
+    /**
+     * Gets argument by [id]. Returns found argument casted to [ArgumentContainer] of [T] or
+     * null if argument cannot be found.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> getArgument(id: Any): ArgumentContainer<T>? {
+        return arguments.firstOrNull { it.argument.id == id } as? ArgumentContainer<T>
+    }
 
     override fun toString(): String {
         return "CommandContainer(command = $command, arguments = ${this.arguments.map { "argument = Argument(${it.argument.id}: ${it.argument.type}), value = ${it.value}" }.joinToString()}, handler = ${handler?.javaClass})"
