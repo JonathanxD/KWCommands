@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
@@ -42,6 +44,7 @@ class CommandBuilder {
     private var handler: Handler? = null
     private val arguments = mutableListOf<Argument<*>>()
     private val requirements = mutableListOf<Requirement<*, *>>()
+    private val requiredInfo = mutableSetOf<RequiredInformation>()
     private val alias = mutableListOf<CommandName>()
 
     /**
@@ -149,6 +152,38 @@ class CommandBuilder {
     }
 
     /**
+     * Adds [Command.requiredInfo].
+     */
+    fun addRequiredInfo(requiredInfoList: List<RequiredInformation>): CommandBuilder {
+        this.requiredInfo.addAll(requiredInfoList)
+        return this
+    }
+
+    /**
+     * Add a [Requirement][Command.requiredInfo].
+     */
+    fun addRequiredInfo(requiredInfo: RequiredInformation): CommandBuilder {
+        this.requiredInfo.add(requiredInfo)
+        return this
+    }
+
+    /**
+     * Removes a [Requirement][Command.requiredInfo].
+     */
+    fun removeRequiredInfo(requiredInfo: RequiredInformation): CommandBuilder {
+        this.requiredInfo.remove(requiredInfo)
+        return this
+    }
+
+    /**
+     * Clear [Command.requiredInfo]
+     */
+    fun clearRequiredInfo(): CommandBuilder {
+        this.requiredInfo.clear()
+        return this
+    }
+
+    /**
      * Adds [Command.alias].
      */
     fun addAlias(aliases: List<CommandName>): CommandBuilder {
@@ -188,6 +223,7 @@ class CommandBuilder {
             handler = this.handler,
             arguments = this.arguments.toList(),
             requirements = this.requirements.toList(),
+            requiredInfo = this.requiredInfo.toSet(),
             alias = this.alias.toList()
     )
 

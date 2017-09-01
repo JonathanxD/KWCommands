@@ -33,6 +33,9 @@ import com.github.jonathanxd.kwcommands.information.Information
 
 /**
  * Requirement of a information.
+ *
+ * @param T Information value type.
+ * @param R Required value type.
  */
 data class Requirement<T, R>(val required: R,
                              val subject: Information.Id,

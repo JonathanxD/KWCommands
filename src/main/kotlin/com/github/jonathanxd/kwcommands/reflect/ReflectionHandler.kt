@@ -32,6 +32,8 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.MissingInformation
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.element.Element
@@ -59,13 +61,12 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                     val information = informationManager.find(parameter.id, parameter.infoComponent)
 
                     if (!parameter.isOptional && information == null) {
-                        resultHandler.informationMissing(parameter.id, parameter, true)
                         args.add(null)
                     } else {
-                        if (parameter.type.typeClass != Information::class.java) {
-                            args += information?.value
+                        args += if (parameter.type.typeClass != Information::class.java) {
+                            information?.value
                         } else {
-                            args += information ?: Information.EMPTY
+                            information ?: Information.EMPTY
                         }
                     }
                 }
@@ -86,21 +87,19 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
 
         val parameter = element.parameters.first()
 
-        when (parameter) {
-            is Parameter.ArgumentParameter<*> -> {
-                return link.invoke(argumentContainer.value) ?: Unit
-            }
+        return when (parameter) {
+            is Parameter.ArgumentParameter<*> ->
+                link.invoke(argumentContainer.value) ?: Unit
             is Parameter.InformationParameter<*> -> {
                 val information = informationManager.find(parameter.id, parameter.infoComponent)
 
                 if (!parameter.isOptional && information == null) {
-                    resultHandler.informationMissing(parameter.id, parameter, true)
-                    return Unit
+                    Unit
                 } else {
                     if (parameter.type.typeClass != Information::class.java) {
-                        return link.invoke(information?.value) ?: Unit
+                        link.invoke(information?.value) ?: Unit
                     } else {
-                        return link.invoke(information ?: Information.EMPTY) ?: Unit
+                        link.invoke(information ?: Information.EMPTY) ?: Unit
                     }
                 }
             }

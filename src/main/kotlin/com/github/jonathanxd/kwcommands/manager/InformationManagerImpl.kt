@@ -98,7 +98,7 @@ class InformationManagerImpl : InformationManager {
 /**
  * Empty information manager.
  */
-object InformationManagerEmpty : InformationManager {
+object InformationManagerVoid : InformationManager {
 
     override val informationSet: Set<Information<*>>
         get() = emptySet()

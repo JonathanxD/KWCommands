@@ -25,21 +25,11 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.requirement
+package com.github.jonathanxd.kwcommands.information
 
-import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.iutils.type.TypeInfo
 
-/**
- * A [RequirementTester] tests a subject against a [Requirement].
- *
- * @param T Information value type
- * @param R Required value.
- */
-interface RequirementTester<T, R> {
-
-    /**
-     * Test [Requirement.subject] against the [Requirement.required] value.
-     */
-    fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean
-
-}
+data class RequiredInformation @JvmOverloads constructor(
+        val id: Information.Id,
+        val type: TypeInfo<*>,
+        val useProviders: Boolean = true)

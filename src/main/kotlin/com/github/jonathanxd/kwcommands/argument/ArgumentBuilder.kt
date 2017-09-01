@@ -28,6 +28,10 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandBuilder
+import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
@@ -43,6 +47,7 @@ class ArgumentBuilder<T> {
     private lateinit var transformer: (String) -> T
     private val possibilities = mutableListOf<String>()
     private val requirements = mutableListOf<Requirement<*, *>>()
+    private val requiredInfo = mutableSetOf<RequiredInformation>()
     private var handler: ArgumentHandler<out T>? = null
 
     /**
@@ -159,6 +164,38 @@ class ArgumentBuilder<T> {
     }
 
     /**
+     * Adds [Command.requiredInfo].
+     */
+    fun addRequiredInfo(requiredInfoList: List<RequiredInformation>): ArgumentBuilder<T> {
+        this.requiredInfo.addAll(requiredInfoList)
+        return this
+    }
+
+    /**
+     * Add a [Requirement][Command.requiredInfo].
+     */
+    fun addRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<T> {
+        this.requiredInfo.add(requiredInfo)
+        return this
+    }
+
+    /**
+     * Removes a [Requirement][Command.requiredInfo].
+     */
+    fun removeRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<T> {
+        this.requiredInfo.remove(requiredInfo)
+        return this
+    }
+
+    /**
+     * Clear [Command.requiredInfo]
+     */
+    fun clearRequiredInfo(): ArgumentBuilder<T> {
+        this.requiredInfo.clear()
+        return this
+    }
+
+    /**
      * Sets [Argument.handler]
      */
     fun handler(handler: ArgumentHandler<out T>?): ArgumentBuilder<T> {
@@ -176,8 +213,9 @@ class ArgumentBuilder<T> {
             defaultValue = this.defaultValue,
             validator = this.validator,
             transformer = this.transformer,
-            possibilities = this.possibilities,
-            requirements = this.requirements,
+            possibilities = this.possibilities.toList(),
+            requirements = this.requirements.toList(),
+            requiredInfo = this.requiredInfo.toSet(),
             handler = this.handler
     )
 

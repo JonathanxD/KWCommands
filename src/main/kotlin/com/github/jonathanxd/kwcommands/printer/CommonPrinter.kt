@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.printer
 
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.append
 
@@ -92,13 +93,15 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
 
                 builder.append(' ', remaining)
 
-                builder.append(" - ${command.description}")
+                if (command.description.isNotBlank())
+                    builder.append(" - ${command.description}")
 
                 this.out(builder.toString())
 
                 val anyReq = command.requirements.isNotEmpty() || command.arguments.any { it.requirements.isNotEmpty() }
+                val anyInfoReq = command.requiredInfo.isNotEmpty() || command.arguments.any { it.requiredInfo.isNotEmpty() }
 
-                if (anyReq) {
+                if (anyReq || anyInfoReq) {
                     builder.setLength(0)
 
                     val to = buff.indexOf(">")
@@ -116,32 +119,55 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
 
                         builder.append(' ', to + 3)
 
-                        builder.append("Requires value '${it.required}' of subject '${it.subject.id.simpleName}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
+                        builder.append("** Requires value '${it.required}' of subject '${it.subject.id.simpleName}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
                         this.out(builder.toString())
                         builder.setLength(0)
 
+                    }
+
+                    val infoRequirementPrinter: (RequiredInformation) -> Unit = {
+                        builder.setLength(0)
+
+                        builder.append(' ', to + 3)
+
+                        builder.append("* Requires information '${it.id}' of type '${it.type}'.")
+                        this.out(builder.toString())
+                        builder.setLength(0)
                     }
 
                     command.arguments.forEach { arg ->
 
-                        if(arg.requirements.isNotEmpty()) {
+                        if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
                             builder.append(' ', to + 2)
                             builder.append("Argument(${arg.id}):")
                             this.out(builder.toString())
                             builder.setLength(0)
+                        }
 
+                        if (arg.requiredInfo.isNotEmpty()) {
+                            arg.requiredInfo.forEach(infoRequirementPrinter)
+                        }
+
+                        if(arg.requirements.isNotEmpty()) {
                             arg.requirements.forEach(requirementPrinter)
                         }
                     }
 
-                    if (command.requirements.isNotEmpty()) {
+                    if (command.requirements.isNotEmpty() || command.requiredInfo.isNotEmpty()) {
                         builder.append(' ', to + 2)
                         builder.append("Command:")
                         this.out(builder.toString())
                         builder.setLength(0)
+                    }
 
+                    if (command.requiredInfo.isNotEmpty()) {
+                        command.requiredInfo.forEach(infoRequirementPrinter)
+                    }
+
+                    if (command.requirements.isNotEmpty()) {
                         command.requirements.forEach(requirementPrinter)
                     }
+
 
                     this.out("")
 
@@ -173,7 +199,8 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
                 "  -> = Main command",
                 " -'> = Sub command",
                 "  -  = Description",
-                "  ** = Requirements",
+                "  *  = Information Requirement",
+                "  ** = Requirement",
                 "--------   Label  --------",
                 "")
 

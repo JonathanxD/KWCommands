@@ -48,7 +48,15 @@ import java.util.*
  */
 data class Information<out T>(val id: Information.Id, val value: T, val type: TypeInfo<out T>, val description: String?) {
 
+    /**
+     * True if information is [EMPTY]
+     */
     val isEmpty get() = this === EMPTY
+
+    /**
+     * True if information is not [EMPTY]
+     */
+    val isNotEmpty get() = this !== EMPTY
 
     override fun hashCode(): Int {
         return this.id.hashCode()
@@ -59,30 +67,37 @@ data class Information<out T>(val id: Information.Id, val value: T, val type: Ty
     }
 
     /**
+     * Consumes the [value] if `this` [Information is not empty][Information.isNotEmpty]
+     */
+    fun consume(func: (T) -> Unit) {
+        if (this.isNotEmpty)
+            func(this.value)
+    }
+
+    /**
      * Identification of information
      *
-     * @property id String Identification of information
-     * @property
+     * @property id Identification of information.
+     * @property tags Additional tags of information id.
      */
     data class Id(val id: Class<*>, val tags: Array<out String>) {
-        override fun hashCode(): Int {
-            var result = 1
-
-
-            result = 31 * result + id.hashCode()
-            result = 31 * result + Arrays.hashCode(tags)
-
-            return result
-        }
+        override fun hashCode(): Int =
+                Objects.hash(id.hashCode(), Arrays.hashCode(tags))
 
         override fun equals(other: Any?): Boolean =
-                if (other != null && other is Information.Id) this.id == other.id && Arrays.equals(this.tags, other.tags) else super.equals(other)
+                if (other != null && other is Information.Id) this.id == other.id
+                        && Arrays.equals(this.tags, other.tags)
+                else super.equals(other)
 
     }
 
     companion object {
         @JvmField
         val EMPTY = Information(Id(Unit::class.java, emptyArray()), Unit, TypeInfo.of(Unit::class.java), null)
+
+        @Suppress("UNCHECKED_CAST")
+        fun <T> empty(): Information<T> =
+                EMPTY as Information<T>
 
         @JvmStatic
         fun <T> builder() = InformationBuilder<T>()

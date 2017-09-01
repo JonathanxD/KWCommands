@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.processor
 
 import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.MissingInformation
 import com.github.jonathanxd.kwcommands.requirement.UnsatisfiedRequirement
 
 /**
@@ -61,9 +62,9 @@ data class UnsatisfiedRequirementsResult(val unsatisfiedRequirements: List<Unsat
                                          override val container: Container): CommandResult
 
 /**
- * When [container] reports a missing information of [id][informationId].
+ * When [container] reports missing information list.
  */
-data class MissingInformationResult(val informationId: Information.Id,
+data class MissingInformationResult(val missingInformationList: List<MissingInformation>,
                                     val requester: Any,
                                     override val rootContainer: Container?,
                                     override val container: Container): CommandResult
@@ -77,12 +78,12 @@ interface ResultHandler {
     /**
      * Reports missing information. If called by an argument handler, the command will not be handled.
      *
-     * @param informationId Information which is missing.
-     * @param requester Instance which requested information of [id][informationId].
+     * @param missingInformationList List of missing information.
+     * @param requester Instance which requested information.
      * @param cancel True if the command execution should be cancelled. Obs: Only for argument handlers, this
      * does not have effects in command handlers.
      */
-    fun informationMissing(informationId: Information.Id, requester: Any, cancel: Boolean)
+    fun informationMissing(missingInformationList: List<MissingInformation>, requester: Any, cancel: Boolean)
 
     /**
      * Adds a [ValueResult] to the result list.

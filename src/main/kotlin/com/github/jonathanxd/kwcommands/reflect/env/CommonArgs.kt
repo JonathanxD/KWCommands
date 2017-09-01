@@ -56,3 +56,21 @@ class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E
     }
 
 }
+
+@Suppress("UNCHECKED_CAST")
+class EnumValidator<T>(val type: Class<T>) : (String) -> Boolean {
+    override fun invoke(p1: String): Boolean {
+        val consts = type.enumConstants as Array<Enum<*>>
+        return consts.any { it.name == p1 }
+    }
+
+}
+
+@Suppress("UNCHECKED_CAST")
+class EnumTransformer<T>(val type: Class<T>) : (String) -> T {
+    override fun invoke(p1: String): T {
+        val consts = type.enumConstants as Array<Enum<*>>
+        return consts.first { it.name == p1 } as T
+    }
+
+}

@@ -49,4 +49,32 @@ interface InformationProvider {
      */
     fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>?
 
+    companion object {
+        /**
+         * Creates unsafe [InformationProvider]
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun unsafe(provider: (id: Information.Id, type: TypeInfo<*>) -> Information<*>?): InformationProvider =
+                object : InformationProvider {
+                    override fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>? {
+                        return provider(id, type) as Information<T>?
+                    }
+                }
+
+        /**
+         * Creates a safe [InformationProvider] that is safe for [stype].
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun <U> safeFor(stype: TypeInfo<U>, provider: (id: Information.Id, type: TypeInfo<U>) -> Information<U>?): InformationProvider =
+                object : InformationProvider {
+                    override fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>? {
+                        if (stype == type)
+                            return provider(id, type as TypeInfo<U>) as Information<T>?
+
+                        return null
+                    }
+
+                }
+    }
+
 }

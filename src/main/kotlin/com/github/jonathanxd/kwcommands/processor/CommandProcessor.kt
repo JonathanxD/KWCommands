@@ -31,7 +31,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.manager.InformationManagerEmpty
+import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid
 
 interface CommandProcessor {
 
@@ -57,9 +57,22 @@ interface CommandProcessor {
      * command or a argument to pass to command.
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
-     * @param informationManager Information provide manager.
      */
-    fun process(stringList: List<String>, owner: Any?): List<CommandContainer>
+    fun process(stringList: List<String>, owner: Any?): List<CommandContainer> =
+            processWithOwnerFunction(stringList, { owner })
+
+    /**
+     * Process command string list.
+     *
+     * This provides a way to specify owner based on command input string (`commandName`).
+     *
+     * @param stringList List of commands and its arguments. Each element of this string represents a
+     * command or a argument to pass to command.
+     * @param ownerProvider Provider of the owner of the input command.
+     * The owner is used to lookup for the command in the [commandManager], if a
+     * null owner is provided, the [commandManager] will return the first found command.
+     */
+    fun processWithOwnerFunction(stringList: List<String>, ownerProvider: (commandName: String) -> Any?): List<CommandContainer>
 
     /**
      * Handle [commands] and returns [result list][ComandResult] of command executions.
@@ -72,6 +85,6 @@ interface CommandProcessor {
      * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
      * each command.
      */
-    fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerEmpty): List<CommandResult>
+    fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerVoid): List<CommandResult>
 
 }

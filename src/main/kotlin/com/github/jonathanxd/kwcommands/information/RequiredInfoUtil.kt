@@ -25,21 +25,11 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.requirement
+package com.github.jonathanxd.kwcommands.information
 
-import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.manager.InformationManager
 
-/**
- * A [RequirementTester] tests a subject against a [Requirement].
- *
- * @param T Information value type
- * @param R Required value.
- */
-interface RequirementTester<T, R> {
+fun Set<RequiredInformation>.checkRequiredInfo(manager: InformationManager): List<MissingInformation> =
+    this.filter { manager.find(it.id, it.type, it.useProviders) == null }.map(::MissingInformation)
 
-    /**
-     * Test [Requirement.subject] against the [Requirement.required] value.
-     */
-    fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean
-
-}
+data class MissingInformation(val requiredInfo: RequiredInformation)

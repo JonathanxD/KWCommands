@@ -85,7 +85,7 @@ interface InformationManager {
      * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
      * has the same id, then `null` should be returned.
      *
-     * @return Found information or null if information cannot be found.
+     * @return Found information or `null` if information cannot be found.
      */
     fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>?
 
@@ -99,8 +99,25 @@ interface InformationManager {
      * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
      * has the same id, then `null` should be returned.
      *
-     * @return Found information or null if information cannot be found.
+     * @return Found information or `null` if information cannot be found.
      */
     fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean = true): Information<T>?
 
+    /**
+     * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
+     *
+     * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
+     * lead to cast exception.
+     */
+    fun <T> findOrEmpty(id: Information.Id, type: TypeInfo<T>): Information<T> =
+            this.find(id, type) ?: Information.empty()
+
+    /**
+     * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
+     *
+     * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
+     * lead to cast exception.
+     */
+    fun <T> findOrEmpty(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean = true): Information<T> =
+            this.find(id, type, useProviders) ?: Information.empty()
 }

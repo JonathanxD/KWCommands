@@ -74,9 +74,11 @@ class CommandTest {
                                 validator = { true },
                                 transformer = { it },
                                 requirements = emptyList(),
+                                requiredInfo = emptySet(),
                                 possibilities = emptyList())
 
                 ),
+                requiredInfo = emptySet(),
                 requirements = emptyList())
 
         command.addSubCommand(Command(
@@ -87,6 +89,7 @@ class CommandTest {
                 order = 0,
                 alias = emptyList(),
                 arguments = emptyList(),
+                requiredInfo = emptySet(),
                 requirements = emptyList()
         ))
 
@@ -104,6 +107,7 @@ class CommandTest {
                                 validator = { true },
                                 transformer = { it },
                                 requirements = emptyList(),
+                                requiredInfo = emptySet(),
                                 possibilities = emptyList()),
                         Argument(id = "amount",
                                 isOptional = true,
@@ -112,6 +116,7 @@ class CommandTest {
                                 transformer = String::toInt,
                                 possibilities = emptyList(),
                                 requirements = emptyList(),
+                                requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
                                     return@create arg.value!!
                                 }),
@@ -121,8 +126,10 @@ class CommandTest {
                                 validator = { it.toDoubleOrNull() != null },
                                 transformer = String::toDouble,
                                 requirements = emptyList(),
+                                requiredInfo = emptySet(),
                                 possibilities = emptyList())
                 ),
+                requiredInfo = emptySet(),
                 requirements = emptyList()
         ))
 

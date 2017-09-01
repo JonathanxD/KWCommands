@@ -27,14 +27,15 @@
  */
 package com.github.jonathanxd.kwcommands.test.reflect
 
-import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.MissingInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
+import com.github.jonathanxd.kwcommands.processor.MissingInformationResult
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.reflect.annotation.*

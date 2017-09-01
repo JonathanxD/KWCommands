@@ -35,6 +35,8 @@ import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.exception.ArgumentsMissingException
 import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.MissingInformation
+import com.github.jonathanxd.kwcommands.information.checkRequiredInfo
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
@@ -63,7 +65,8 @@ object Processors {
         override fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean =
                 this.interceptors.remove(commandInterceptor)
 
-        override fun process(stringList: List<String>, owner: Any?): List<CommandContainer> {
+        override fun processWithOwnerFunction(stringList: List<String>,
+                                              ownerProvider: (commandName: String) -> Any?): List<CommandContainer> {
             val commands = mutableListOf<CommandContainer>()
             val deque: Deque<Command> = LinkedList()
             val getStr: (Int) -> String = { stringList[it].escape('\\') }
@@ -82,7 +85,7 @@ object Processors {
                 while (command == null) {
 
                     if (deque.isEmpty()) {
-                        command = commandManager.getCommand(getStr(index), owner)
+                        command = commandManager.getCommand(getStr(index), ownerProvider(getStr(index)))
 
                         if (command == null)
                             throw CommandNotFoundException("Command ${getStr(index)} (index $index in $stringList) was not found.")
@@ -188,33 +191,61 @@ object Processors {
                         it to it.argument.requirements.checkRequirements(informationManager)
                     }
 
+                    val argWithInfoReq = it.arguments.map {
+                        it to it.argument.requiredInfo.checkRequiredInfo(informationManager)
+                    }
+
                     val commandReq =
                             command.command.requirements.checkRequirements(informationManager)
+
+                    val commandInfoReq =
+                            command.command.requiredInfo.checkRequiredInfo(informationManager)
 
                     if(commandReq.isNotEmpty()) {
                         perCommandResults.add(UnsatisfiedRequirementsResult(commandReq, null, it))
                     }
 
-                    var anyArgReqNotEmpty = false
+                    if (commandInfoReq.isNotEmpty()) {
+                        perCommandResults.add(MissingInformationResult(
+                                missingInformationList = commandInfoReq,
+                                requester = command.command,
+                                rootContainer = null,
+                                container = it))
+                    }
 
-                    if(commandReq.isEmpty() && !anyArgReqNotEmpty) {
+                    var anyArgumentReqMissing = false
+
+                    if(commandReq.isEmpty() && commandInfoReq.isEmpty() && !anyArgumentReqMissing) { // <-- WHAT?
                         argWithReq.forEach { (arg, req) ->
                             if(req.isNotEmpty()) {
-                                anyArgReqNotEmpty = true
+                                anyArgumentReqMissing = true
                                 perCommandResults.add(UnsatisfiedRequirementsResult(req, rootContainer = it, container = arg))
                             }
                         }
 
-                        var shouldExecuteCommand = true
+                        argWithInfoReq.forEach { (arg, infoReq) ->
+                            if (infoReq.isNotEmpty()) {
+                                anyArgumentReqMissing = true
+
+                                perCommandResults.add(MissingInformationResult(
+                                        missingInformationList = infoReq,
+                                        requester = arg,
+                                        rootContainer = it,
+                                        container = arg))
+                            }
+                        }
+
+                        var shouldExecuteCommand = !anyArgumentReqMissing
 
                         // Process arguments first because arguments must be resolved before command handling
                         it.arguments.forEach { arg ->
                             (arg as ArgumentContainer<Any?>).handler?.let { handler ->
                                 val resultHandler = ParticularResultHandler(root = it, current = arg, targetList = perCommandResults)
-                                if(resultHandler.shouldCancel())
-                                    shouldExecuteCommand = false
 
                                 val handle = handler.handle(arg, it, informationManager, resultHandler)
+
+                                if(resultHandler.shouldCancel())
+                                    shouldExecuteCommand = false
 
                                 resultHandler.result(handle)
                             }
@@ -257,8 +288,8 @@ object Processors {
 
         private var cancel = false
 
-        override fun informationMissing(informationId: Information.Id, requester: Any, cancel: Boolean) {
-            this.targetList += MissingInformationResult(informationId, requester, root, current)
+        override fun informationMissing(missingInformationList: List<MissingInformation>, requester: Any, cancel: Boolean) {
+            this.targetList += MissingInformationResult(missingInformationList, requester, root, current)
 
             if(cancel)
                 this.cancel = true

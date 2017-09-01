@@ -35,6 +35,7 @@ import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.None
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
@@ -111,7 +112,13 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?, annotatedElement: A
 /**
  * Create commands instance from [Cmd] annotation.
  */
-fun Cmd.toKCommand(manager: CommandManager, handler: Handler?, superCommand: Command?, arguments: List<Argument<*>>, owner: Any?, annotatedElement: AnnotatedElement): Command {
+fun Cmd.toKCommand(manager: CommandManager,
+                   handler: Handler?,
+                   superCommand: Command?,
+                   arguments: List<Argument<*>>,
+                   reqInfo: Set<RequiredInformation>,
+                   owner: Any?,
+                   annotatedElement: AnnotatedElement): Command {
     val order = this.order
     val name = this.getName(annotatedElement)
     val alias = this.alias
@@ -125,6 +132,7 @@ fun Cmd.toKCommand(manager: CommandManager, handler: Handler?, superCommand: Com
             handler = handler,
             arguments = arguments,
             requirements = this.getRequirements(),
+            requiredInfo = reqInfo,
             alias = alias.map { CommandName.StringName(it) }.toList())
 
 }

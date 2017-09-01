@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -52,8 +53,18 @@ inline fun <reified T> Argument(id: Any,
                                 noinline transformer: (String) -> T,
                                 possibilities: List<String>,
                                 requirements: List<Requirement<*, *>>,
+                                requiredInfo: Set<RequiredInformation>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
-        Argument(id, isOptional, object : AbstractTypeInfo<T>() {}, defaultValue, validator, transformer, possibilities, requirements, handler)
+        Argument(id,
+                isOptional,
+                object : AbstractTypeInfo<T>() {},
+                defaultValue,
+                validator,
+                transformer,
+                possibilities,
+                requirements,
+                requiredInfo,
+                handler)
 
 inline fun <reified T> ArgumentType(noinline validator: (String) -> Boolean,
                                     noinline transformer: (String) -> T,

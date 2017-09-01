@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
@@ -39,6 +41,7 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * @property validator Argument value validator.
  * @property transformer Transformer of argument to a object of type [T].
  * @property requirements Requirements of this argument.
+ * @property requiredInfo Identifications of required information for this argument work.
  * @property possibilities Possibilities of argument values.
  */
 data class Argument<out T>(val id: Any,
@@ -49,6 +52,7 @@ data class Argument<out T>(val id: Any,
                            val transformer: (String) -> T,
                            val possibilities: List<String>,
                            val requirements: List<Requirement<*, *>>,
+                           val requiredInfo: Set<RequiredInformation>,
                            val handler: ArgumentHandler<out T>? = null) {
     companion object {
         @JvmStatic

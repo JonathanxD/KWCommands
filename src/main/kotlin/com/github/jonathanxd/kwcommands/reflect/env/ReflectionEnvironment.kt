@@ -34,6 +34,7 @@ import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
@@ -277,10 +278,12 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         val command = klass.getDeclaredAnnotation(Cmd::class.java)
 
         var args: List<Argument<*>> = emptyList()
+        val requiredInfo = mutableSetOf<RequiredInformation>()
 
         val handler = command?.getClassHandlerOrNull(klass) {
-            val (lElement, lArgs) = createElement(instance, it)
+            val (lElement, lArgs, lreqs) = createElement(instance, it)
             args = lArgs
+            requiredInfo += lreqs
             lElement
         }
 
@@ -288,13 +291,27 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             args = klass.declaredFields.filter {
                 !it.isAnnotationPresent(Exclude::class.java)
                         && ((Modifier.isStatic(it.modifiers) && instance == null) || (!Modifier.isStatic(it.modifiers) && instance != null))
-            }.map { fromField(instance, it) }
+            }.map {
+                fromField(instance, it).also {
+                    val fhandler = it.handler
+                    (fhandler as? ReflectionHandler)?.element?.parameters?.forEach {
+                        if (it is Parameter.InformationParameter) {
+                            if (!it.isOptional) {
+                                requiredInfo += RequiredInformation(it.id, it.infoComponent)
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         val kCommand = command?.toKCommand(manager,
                 handler,
                 superCommand,
-                args, owner, klass)
+                args,
+                requiredInfo,
+                owner,
+                klass)
 
         kCommand?.let { k ->
             queue.queueCommand(klass, command.getName(klass), {
@@ -393,13 +410,14 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             val possibilities = argumentAnnotation?.possibilities?.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
             val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.require(type).transformer
             val validator = argumentAnnotation?.validator?.get() ?: argumentType.require(type).validator
-            val defaultValue: Any? = if (argumentType != null)
-                argumentType.defaultValue
-            else if (typeIsOpt) Optional.empty<Any>()
-            else if (typeIsOptInt) OptionalInt.empty()
-            else if (typeIsOptDouble) OptionalDouble.empty()
-            else if (typeIsOptLong) OptionalLong.empty()
-            else null
+            val defaultValue: Any? = when {
+                argumentType != null -> argumentType.defaultValue
+                typeIsOpt -> Optional.empty<Any>()
+                typeIsOptInt -> OptionalInt.empty()
+                typeIsOptDouble -> OptionalDouble.empty()
+                typeIsOptLong -> OptionalLong.empty()
+                else -> null
+            }
 
             @Suppress("UNCHECKED_CAST")
             karg = Argument(
@@ -410,6 +428,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     validator = validator,
                     defaultValue = defaultValue,
                     type = type,
+                    requiredInfo = emptySet(),
                     requirements = argumentAnnotation?.requirements.orEmpty().toSpecs(),
                     handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
             )
@@ -468,12 +487,12 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     fun fromMethod(instance: Any?, method: Method, superCommand: Command?, owner: Any?, queue: CommandFactoryQueue) {
         val command = method.getDeclaredAnnotation(Cmd::class.java)
-        val (element, arguments) = createElement(instance, method)
+        val (element, arguments, lreqs) = createElement(instance, method)
 
         queue.queueCommand(method, command.getName(method), { cmds ->
             val superCmd = command.resolveParents(this.manager, owner, method, cmds) ?: superCommand
 
-            command.toKCommand(manager, command.getHandler(element), superCmd, arguments, owner, method)
+            command.toKCommand(manager, command.getHandler(element), superCmd, arguments, lreqs, owner, method)
         }, Checker(this.manager, owner, command, method), { command.getPath(method).joinToString(separator = " ") })
 
     }
@@ -485,13 +504,14 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @param method Method to create [Command].
      * @see ReflectionEnvironment
      */
-    private fun createElement(instance: Any?, method: Method): Pair<Element, List<Argument<*>>> {
+    private fun createElement(instance: Any?, method: Method): MethodElement {
 
         val link = Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(method))).let {
             if (instance != null) it.bind(instance) else it
         }
 
         val arguments = mutableListOf<Argument<*>>()
+        val requiredInfo = mutableSetOf<RequiredInformation>()
 
         val parameters = method.parameters.map {
             val argumentAnnotation = it.getDeclaredAnnotation(Arg::class.java)
@@ -499,54 +519,62 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
             val type = TypeUtil.toTypeInfo(it.parameterizedType)
 
-            if (infoAnnotation != null) {
+            when {
+                infoAnnotation != null -> {
 
-                val isOptional = infoAnnotation.isOptional
-                val id = infoAnnotation.createId(type)
+                    val isOptional = infoAnnotation.isOptional
+                    val id = infoAnnotation.createId(type)
 
-                return@map Parameter.InformationParameter(
-                        id = id,
-                        isOptional = isOptional,
-                        type = type
-                )
-            } else if (argumentAnnotation != null) {
+                    val param = Parameter.InformationParameter(
+                            id = id,
+                            isOptional = isOptional,
+                            type = type
+                    )
 
-                val id = argumentAnnotation.value.let { arg ->
-                    if (arg.isEmpty())
-                        it.name
-                    else arg
+                    requiredInfo += RequiredInformation(id, param.infoComponent)
+
+                    return@map param
                 }
+                argumentAnnotation != null -> {
 
-                val isOptional = argumentAnnotation.optional
+                    val id = argumentAnnotation.value.let { arg ->
+                        if (arg.isEmpty())
+                            it.name
+                        else arg
+                    }
 
-                val argumentType = this.getOrNull(type)
+                    val isOptional = argumentAnnotation.optional
 
-                val possibilities = argumentAnnotation.possibilities.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
-                val transformer = argumentAnnotation.transformer.get() ?: argumentType.require(type).transformer
-                val validator = argumentAnnotation.validator.get() ?: argumentType.require(type).validator
-                val defaultValue = argumentType?.defaultValue
-                val requirements = argumentAnnotation.requirements.toSpecs()
+                    val argumentType = this.getOrNull(type)
 
-                val argument = Argument(
-                        id = id,
-                        isOptional = isOptional,
-                        possibilities = possibilities,
-                        transformer = transformer,
-                        validator = validator,
-                        defaultValue = defaultValue,
-                        requirements = requirements,
-                        type = type)
+                    val possibilities = argumentAnnotation.possibilities.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
+                    val transformer = argumentAnnotation.transformer.get() ?: argumentType.require(type).transformer
+                    val validator = argumentAnnotation.validator.get() ?: argumentType.require(type).validator
+                    val defaultValue = argumentType?.defaultValue
+                    val requirements = argumentAnnotation.requirements.toSpecs()
 
-                arguments += argument
+                    val argument = Argument(
+                            id = id,
+                            isOptional = isOptional,
+                            possibilities = possibilities,
+                            transformer = transformer,
+                            validator = validator,
+                            defaultValue = defaultValue,
+                            requirements = requirements,
+                            requiredInfo = emptySet(),
+                            type = type
+                    )
 
-                @Suppress("UNCHECKED_CAST")
-                return@map Parameter.ArgumentParameter(argument, type as TypeInfo<Any>)
-            } else {
-                throw IllegalStateException("Missing annotation for parameter: $it")
+                    arguments += argument
+
+                    @Suppress("UNCHECKED_CAST")
+                    return@map Parameter.ArgumentParameter(argument, type as TypeInfo<Any>)
+                }
+                else -> throw IllegalStateException("Missing annotation for parameter: $it")
             }
         }
 
-        return Element(link, parameters) to arguments
+        return MethodElement(Element(link, parameters), arguments, requiredInfo)
     }
 
     /**
@@ -681,6 +709,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
         }
     }
+
+    private data class MethodElement(val element: Element, val arguments: List<Argument<*>>, val requiredInfo: Set<RequiredInformation>)
 }
 
 class Checker(val manager: CommandManager, val owner: Any?, val command: Cmd, val annotatedElement: AnnotatedElement) : (List<Command>) -> Boolean {

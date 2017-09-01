@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import java.util.*
 
@@ -41,6 +43,7 @@ import java.util.*
  * @property handler Command handler.
  * @property arguments Arguments that this command can receive.
  * @property requirements Command requirements.
+ * @property requiredInfo Identifications of required information for this command work.
  * @property alias Aliases to this command.
  */
 data class Command(val parent: Command?,
@@ -50,6 +53,7 @@ data class Command(val parent: Command?,
                    val handler: Handler?,
                    val arguments: List<Argument<*>>,
                    val requirements: List<Requirement<*, *>>,
+                   val requiredInfo: Set<RequiredInformation>,
                    val alias: List<CommandName>) : Comparable<Command> {
 
     /**
@@ -120,7 +124,7 @@ data class Command(val parent: Command?,
     }
 
     override fun toString(): String {
-        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: ${arguments.map{ "${it.id}: ${it.type}" }.joinToString()}, subCommands: {${subCommands.map { it.name.toString() }.joinToString()}})"
+        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: ${arguments.joinToString { "${it.id}: ${it.type}" }}, requirements: ${requirements.joinToString { "${it.subject}: ${it.required}" }}, requiredInformation: ${requiredInfo.joinToString { it.id.toString() }}, subCommands: {${subCommands.joinToString { it.name.toString() }}})"
     }
 
     override fun compareTo(other: Command): Int {
