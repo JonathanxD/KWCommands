@@ -35,9 +35,70 @@ import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.processor.*
 import com.github.jonathanxd.kwcommands.util.Argument
+import com.github.jonathanxd.kwcommands.util.Mode
+import com.github.jonathanxd.kwcommands.util.toCommandStringList
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import org.junit.Test
+
+class StringTest {
+
+    @Test
+    fun test1() {
+        val str = "create KWCommands \"Command system\""
+
+        Assert.assertEquals(listOf("create", "KWCommands", "Command system"), str.toCommandStringList())
+    }
+
+    @Test
+    fun test2() {
+        val str = "create KWCommands \"\\\"Command system\\\"\""
+
+        Assert.assertEquals(listOf("create", "KWCommands", "\"Command system\""), str.toCommandStringList())
+    }
+
+    @Test
+    fun test3() {
+        val str = "create KWCommands \\\"Command system\\\""
+
+        Assert.assertEquals(listOf("create", "KWCommands", "\"Command", "system\""), str.toCommandStringList())
+    }
+
+    @Test
+    fun testMulti1() {
+        val str = "create KWCommands \\\"'Command system'\\\""
+
+        Assert.assertEquals(listOf("create", "KWCommands", "\"Command system\""), str.toCommandStringList())
+    }
+
+    @Test
+    fun testMulti1m() {
+        val str = "create KWCommands '\\\"Command system\\\"'"
+
+        Assert.assertEquals(listOf("create", "KWCommands", "\"Command system\""), str.toCommandStringList())
+    }
+
+    @Test
+    fun testMulti2() {
+        val str = "create KWCommands '\"Command system\"'"
+
+        Assert.assertEquals(listOf("create", "KWCommands", "\"Command system\""), str.toCommandStringList())
+    }
+
+    @Test
+    fun testMulti3() {
+        val str = "create KWCommands '\"Command system'\""
+
+        Assert.assertEquals(listOf("create", "KWCommands", "\"Command system\""), str.toCommandStringList())
+    }
+
+    @Test
+    fun testMulti4() {
+        val str = "create KWCommands \"'Command system\"'"
+
+        Assert.assertEquals(listOf("create", "KWCommands", "Command system"), str.toCommandStringList(mode = Mode.MULTI_DELIMITER))
+    }
+}
 
 class CommandTest {
 
