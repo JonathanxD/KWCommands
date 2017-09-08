@@ -41,155 +41,24 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
     private val commands = mutableListOf<Command>()
 
     override fun printCommand(command: Command, level: Int) {
-        val builder = StringBuilder()
+        Companion.printTo(buffer, commands, command, level)
+    }
 
-        if (level == 0)
-            builder.append("->")
-        else
-            builder.append("-").let {
-                for (i in 0..level)
-                    it.append("-")
-                it.append("'>")
-            }
-
-        builder.append(" ")
-
-        builder.append(command.name)
-
-        command.arguments.forEach {
-            builder.append(" ")
-
-            builder.apply {
-                this.append(if (it.isOptional) "<" else "[")
-                this.append(it.id.toString())
-
-                this.append(": ").append(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)
-
-                this.append(if (it.isOptional) ">" else "]")
-            }
-
-        }
-
-        buffer += builder.toString()
-        commands += command
+    override fun printTo(command: Command, level: Int, out: (String) -> Unit) {
+        val buffer = mutableListOf<String>()
+        val commands = mutableListOf<Command>()
+        Companion.printTo(buffer, commands, command, level)
+        Companion.flushTo(out, commands, buffer)
     }
 
     override fun flush() {
-
-        header.forEach {
-            this.out(it)
-        }
-
-        if (buffer.isNotEmpty()) {
-            val maxSize = buffer.maxBy(String::length)!!.length + 5
-
-            require(commands.size == buffer.size) { "Command size and buffer size is not equal. Commands: <$commands>. Buffer: <$buffer>" }
-
-            commands.forEachIndexed { index, command ->
-                val buff = buffer[index]
-                val remaining = maxSize - buff.length
-
-                val builder = StringBuilder(buff)
-
-                builder.append(' ', remaining)
-
-                if (command.description.isNotBlank())
-                    builder.append(" - ${command.description}")
-
-                this.out(builder.toString())
-
-                val anyReq = command.requirements.isNotEmpty() || command.arguments.any { it.requirements.isNotEmpty() }
-                val anyInfoReq = command.requiredInfo.isNotEmpty() || command.arguments.any { it.requiredInfo.isNotEmpty() }
-
-                if (anyReq || anyInfoReq) {
-                    builder.setLength(0)
-
-                    val to = buff.indexOf(">")
-
-                    builder.append(' ', to + 1)
-
-                    builder.append("Requirements:")
-
-                    this.out(builder.toString())
-
-                    builder.setLength(0)
-
-                    val requirementPrinter: (Requirement<*, *>) -> Unit = {
-                        builder.setLength(0)
-
-                        builder.append(' ', to + 3)
-
-                        builder.append("** Requires value '${it.required}' of subject '${it.subject.id.simpleName}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
-                        this.out(builder.toString())
-                        builder.setLength(0)
-
-                    }
-
-                    val infoRequirementPrinter: (RequiredInformation) -> Unit = {
-                        builder.setLength(0)
-
-                        builder.append(' ', to + 3)
-
-                        builder.append("* Requires information '${it.id}' of type '${it.type}'.")
-                        this.out(builder.toString())
-                        builder.setLength(0)
-                    }
-
-                    command.arguments.forEach { arg ->
-
-                        if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
-                            builder.append(' ', to + 2)
-                            builder.append("Argument(${arg.id}):")
-                            this.out(builder.toString())
-                            builder.setLength(0)
-                        }
-
-                        if (arg.requiredInfo.isNotEmpty()) {
-                            arg.requiredInfo.forEach(infoRequirementPrinter)
-                        }
-
-                        if(arg.requirements.isNotEmpty()) {
-                            arg.requirements.forEach(requirementPrinter)
-                        }
-                    }
-
-                    if (command.requirements.isNotEmpty() || command.requiredInfo.isNotEmpty()) {
-                        builder.append(' ', to + 2)
-                        builder.append("Command:")
-                        this.out(builder.toString())
-                        builder.setLength(0)
-                    }
-
-                    if (command.requiredInfo.isNotEmpty()) {
-                        command.requiredInfo.forEach(infoRequirementPrinter)
-                    }
-
-                    if (command.requirements.isNotEmpty()) {
-                        command.requirements.forEach(requirementPrinter)
-                    }
-
-
-                    this.out("")
-
-                }
-
-            }
-
-
-        } else {
-            this.out("No commands")
-        }
-
-        footer.forEach {
-            this.out(it)
-        }
-
-        this.buffer.clear()
+        Companion.flushTo(this.out, this.commands, this.buffer)
         this.commands.clear()
+        this.buffer.clear()
     }
 
     companion object {
-        internal val header = listOf(
+        private val header = listOf(
                 "-------- Commands --------",
                 "",
                 "--------   Label  --------",
@@ -204,9 +73,166 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
                 "--------   Label  --------",
                 "")
 
-        internal val footer = listOf(
+        private val footer = listOf(
                 "",
                 "-------- Commands --------"
         )
+
+        /**
+         * Prints [command] of inheritance [level][level] to [out]. See [Printer.printTo].
+         */
+        fun printTo(command: Command, level: Int, out: (String) -> Unit) {
+            val buffer = mutableListOf<String>()
+            val commands = mutableListOf<Command>()
+            this.printTo(buffer, commands, command, level)
+            this.flushTo(out, commands, buffer)
+        }
+
+        fun printTo(buffer: MutableList<String>,
+                    commands: MutableList<Command>,
+                    command: Command,
+                    level: Int) {
+            val builder = StringBuilder()
+
+            if (level == 0)
+                builder.append("->")
+            else
+                builder.append("-").let {
+                    for (i in 0..level)
+                        it.append("-")
+                    it.append("'>")
+                }
+
+            builder.append(" ")
+
+            builder.append(command.name)
+
+            command.arguments.forEach {
+                builder.append(" ")
+
+                builder.apply {
+                    this.append(if (it.isOptional) "<" else "[")
+                    this.append(it.id.toString())
+
+                    this.append(": ").append(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)
+
+                    this.append(if (it.isOptional) ">" else "]")
+                }
+
+            }
+
+            buffer += builder.toString()
+            commands += command
+        }
+
+        fun flushTo(out: (String) -> Unit, commands: List<Command>, buffer: List<String>) {
+            header.forEach {
+                out(it)
+            }
+
+            if (buffer.isNotEmpty()) {
+                val maxSize = buffer.maxBy(String::length)!!.length + 5
+
+                require(commands.size == buffer.size) { "Command size and buffer size is not equal. Commands: <$commands>. Buffer: <$buffer>" }
+
+                commands.forEachIndexed { index, command ->
+                    val buff = buffer[index]
+                    val remaining = maxSize - buff.length
+
+                    val builder = StringBuilder(buff)
+
+                    builder.append(' ', remaining)
+
+                    if (command.description.isNotBlank())
+                        builder.append(" - ${command.description}")
+
+                    out(builder.toString())
+
+                    val anyReq = command.requirements.isNotEmpty() || command.arguments.any { it.requirements.isNotEmpty() }
+                    val anyInfoReq = command.requiredInfo.isNotEmpty() || command.arguments.any { it.requiredInfo.isNotEmpty() }
+
+                    if (anyReq || anyInfoReq) {
+                        builder.setLength(0)
+
+                        val to = buff.indexOf(">")
+
+                        builder.append(' ', to + 1)
+
+                        builder.append("Requirements:")
+
+                        out(builder.toString())
+
+                        builder.setLength(0)
+
+                        val requirementPrinter: (Requirement<*, *>) -> Unit = {
+                            builder.setLength(0)
+
+                            builder.append(' ', to + 3)
+
+                            builder.append("** Requires value '${it.required}' of subject '${it.subject.id.simpleName}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
+                            out(builder.toString())
+                            builder.setLength(0)
+
+                        }
+
+                        val infoRequirementPrinter: (RequiredInformation) -> Unit = {
+                            builder.setLength(0)
+
+                            builder.append(' ', to + 3)
+
+                            builder.append("* Requires information '${it.id}' of type '${it.type}'.")
+                            out(builder.toString())
+                            builder.setLength(0)
+                        }
+
+                        command.arguments.forEach { arg ->
+
+                            if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
+                                builder.append(' ', to + 2)
+                                builder.append("Argument(${arg.id}):")
+                                out(builder.toString())
+                                builder.setLength(0)
+                            }
+
+                            if (arg.requiredInfo.isNotEmpty()) {
+                                arg.requiredInfo.forEach(infoRequirementPrinter)
+                            }
+
+                            if(arg.requirements.isNotEmpty()) {
+                                arg.requirements.forEach(requirementPrinter)
+                            }
+                        }
+
+                        if (command.requirements.isNotEmpty() || command.requiredInfo.isNotEmpty()) {
+                            builder.append(' ', to + 2)
+                            builder.append("Command:")
+                            out(builder.toString())
+                            builder.setLength(0)
+                        }
+
+                        if (command.requiredInfo.isNotEmpty()) {
+                            command.requiredInfo.forEach(infoRequirementPrinter)
+                        }
+
+                        if (command.requirements.isNotEmpty()) {
+                            command.requirements.forEach(requirementPrinter)
+                        }
+
+
+                        out("")
+                    }
+
+                }
+
+
+            } else {
+                out("No commands")
+            }
+
+            footer.forEach {
+                out(it)
+            }
+
+        }
     }
 }

@@ -17,7 +17,7 @@ plugins {
 }
 
 group 'com.github.jonathanxd'
-version '1.0.11-SNAPSHOT'
+version '1.0.12-SNAPSHOT'
 
 apply plugin: 'java'
 apply plugin: 'kotlin'

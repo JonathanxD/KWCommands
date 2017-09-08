@@ -35,7 +35,7 @@ import com.github.jonathanxd.kwcommands.command.Command
 interface Printer {
 
     /**
-     * Prints command
+     * Prints command to buffer.
      *
      * @param command Command to print.
      * @param level   Command inheritance level (0 for main commands).
@@ -43,7 +43,15 @@ interface Printer {
     fun printCommand(command: Command, level: Int)
 
     /**
-     * Flush texts to stream.
+     * Prints command directly to an [output][out].
+     *
+     * @param command Command to print.
+     * @param level   Command inheritance level (0 for main commands).
+     */
+    fun printTo(command: Command, level: Int, out: (String) -> Unit)
+
+    /**
+     * Flush buffer texts to predefined output.
      */
     fun flush()
 }
