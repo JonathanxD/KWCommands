@@ -93,6 +93,14 @@ class InformationManagerImpl : InformationManager {
                 return@let null
             }
 
+    override fun copy(): InformationManager {
+        val newManager = InformationManagerImpl()
+
+        newManager.informationSet_.addAll(this.informationSet_)
+        newManager.informationProviders_.addAll(this.informationProviders_)
+
+        return newManager
+    }
 }
 
 /**
@@ -133,5 +141,7 @@ object InformationManagerVoid : InformationManager {
     override fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean): Information<T>? {
         return null
     }
+
+    override fun copy(): InformationManager = this
 
 }

@@ -120,4 +120,9 @@ interface InformationManager {
      */
     fun <T> findOrEmpty(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean = true): Information<T> =
             this.find(id, type, useProviders) ?: Information.empty()
+
+    /**
+     * Creates a safe copy of this manager, modifications on the copy does not affect this instance.
+     */
+    fun copy(): InformationManager
 }
