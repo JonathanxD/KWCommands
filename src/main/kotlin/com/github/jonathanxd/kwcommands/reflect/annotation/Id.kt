@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
+import com.github.jonathanxd.iutils.`object`.Default
 import kotlin.reflect.KClass
 
-annotation class Id(val value: KClass<*>, vararg val tags: String = arrayOf())
+annotation class Id(val value: KClass<*> = Default::class, vararg val tags: String = arrayOf())

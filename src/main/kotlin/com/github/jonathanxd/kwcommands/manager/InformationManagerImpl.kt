@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
+import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
@@ -72,7 +73,7 @@ class InformationManagerImpl : InformationManager {
                 if (it.type == type) {
                     val itId = it.id
 
-                    if (id.id == itId.id
+                    if ((id.id == Default::class.java || id.id == itId.id)
                             && (id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) })) {
                         return@f true
                     }
