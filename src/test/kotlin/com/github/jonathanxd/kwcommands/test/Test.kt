@@ -33,7 +33,10 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.processor.*
+import com.github.jonathanxd.kwcommands.processor.CommandResult
+import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.processor.ResultHandler
+import com.github.jonathanxd.kwcommands.processor.ValueResult
 import com.github.jonathanxd.kwcommands.util.Argument
 import com.github.jonathanxd.kwcommands.util.Mode
 import com.github.jonathanxd.kwcommands.util.toCommandStringList
@@ -113,7 +116,7 @@ class CommandTest {
                 sb.append(commandContainer.command.fullname)
 
                 if (commandContainer.arguments.isNotEmpty()) {
-                    sb.append(commandContainer.arguments.filter {it.isDefined}.map { it.value!!.toString() }.joinToString(prefix = "(", postfix = ")"))
+                    sb.append(commandContainer.arguments.filter { it.isDefined }.map { it.value!!.toString() }.joinToString(prefix = "(", postfix = ")"))
                 }
 
                 println(sb.toString())
@@ -220,7 +223,7 @@ fun ValueResult.assert(expected: Any?) {
 
 fun List<CommandResult>.assertAll(expected: List<Any?>) {
 
-    if(this.count { it is ValueResult } != expected.size)
+    if (this.count { it is ValueResult } != expected.size)
         throw ComparisonFailure("List is not equal.", expected.toString(), this.map { it.toString() }.toString())
 
     this.forEachIndexed { index, result ->

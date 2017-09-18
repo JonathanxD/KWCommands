@@ -1,0 +1,540 @@
+/*
+ *      KWCommands - New generation of WCommands written in Kotlin <https://github.com/JonathanxD/KWCommands>
+ *
+ *         The MIT License (MIT)
+ *
+ *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) contributors
+ *
+ *
+ *      Permission is hereby granted, free of charge, to any person obtaining a copy
+ *      of this software and associated documentation files (the "Software"), to deal
+ *      in the Software without restriction, including without limitation the rights
+ *      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *      copies of the Software, and to permit persons to whom the Software is
+ *      furnished to do so, subject to the following conditions:
+ *
+ *      The above copyright notice and this permission notice shall be included in
+ *      all copies or substantial portions of the Software.
+ *
+ *      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *      THE SOFTWARE.
+ */
+package com.github.jonathanxd.kwcommands.dsl
+
+import com.github.jonathanxd.iutils.type.AbstractTypeInfo
+import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.command.*
+import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
+import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.processor.ResultHandler
+import com.github.jonathanxd.kwcommands.reflect.env.EnumTransformer
+import com.github.jonathanxd.kwcommands.reflect.env.EnumValidator
+import com.github.jonathanxd.kwcommands.reflect.env.enumPossibilities
+import com.github.jonathanxd.kwcommands.requirement.Requirement
+import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
+
+class BuildingArgument<T> {
+    lateinit var id: Any
+    var isOptional: Boolean = false
+    lateinit var type: TypeInfo<out T>
+    var defaultValue: T? = null
+    lateinit var validator: Validator
+    lateinit var transformer: Transformer<T>
+    val possibilities = UList<String>()
+    val requirements = UList<Requirement<*, *>>()
+    val requiredInfo = USet<RequiredInformation>()
+    var handler: ArgumentHandler<out T>? = null
+
+    inline fun id(f: () -> Any) {
+        this.id = f()
+    }
+
+    inline fun optional(f: () -> Boolean) {
+        this.isOptional = f()
+    }
+
+    inline fun type(f: () -> TypeInfo<T>) {
+        this.type = f()
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun validate(noinline validator: Validator) {
+        this.validator = validator
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun transformer(noinline transformer: Transformer<T>) {
+        this.transformer = transformer
+    }
+
+    inline fun defaultValue(f: () -> T?) {
+        this.defaultValue = f()
+    }
+
+    inline fun possibilities(f: UList<String>.() -> Unit) {
+        f(this.possibilities)
+    }
+
+    inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) {
+        f(this.requirements)
+    }
+
+    inline fun requiredInfo(f: USet<RequiredInformation>.() -> Unit) {
+        f(this.requiredInfo)
+    }
+
+    inline fun handler(crossinline f: (argumentContainer: ArgumentContainer<T>,
+                                       commandContainer: CommandContainer,
+                                       informationManager: InformationManager,
+                                       resultHandler: ResultHandler) -> Any) {
+        this.handler = object : ArgumentHandler<T> {
+            override fun handle(argumentContainer: ArgumentContainer<T>,
+                                commandContainer: CommandContainer,
+                                informationManager: InformationManager,
+                                resultHandler: ResultHandler): Any =
+                    f(argumentContainer, commandContainer, informationManager, resultHandler)
+
+        }
+    }
+
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun toArgument(): Argument<T> = Argument(
+            id = this.id,
+            isOptional = this.isOptional,
+            type = this.type,
+            defaultValue = this.defaultValue,
+            validator = this.validator,
+            transformer = this.transformer,
+            possibilities = this.possibilities.coll.toList(),
+            requirements = this.requirements.coll.toList(),
+            requiredInfo = this.requiredInfo.coll.toSet(),
+            handler = this.handler
+    )
+}
+
+class BuildingRequirement<T, R>(var required: R) {
+    val subject = BuildingInfoId()
+    lateinit var infoType: TypeInfo<in T>
+    lateinit var type: TypeInfo<out R>
+    lateinit var tester: RequirementTester<T, R>
+
+    inline fun subject(f: BuildingInfoId.() -> Unit) = f(this.subject)
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun subject(id: Information.Id) = subject { from(id) }
+
+    inline fun infoType(f: () -> TypeInfo<in T>) {
+        this.infoType = f()
+    }
+
+    inline fun type(f: () -> TypeInfo<out R>) {
+        this.type = f()
+    }
+
+    inline fun tester(crossinline f: (requirement: Requirement<T, R>, information: Information<T>) -> Boolean) {
+        this.tester = object : RequirementTester<T, R> {
+            override fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean =
+                    f(requirement, information)
+        }
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun toRequirement(): Requirement<T, R> = Requirement(
+            required = this.required,
+            subject = this.subject.toId(),
+            infoType = this.infoType,
+            type = this.type,
+            tester = this.tester
+    )
+}
+
+class BuildingInfoId {
+
+    lateinit var id: Class<*>
+    val tags = UList<String>()
+
+    inline fun id(f: () -> Class<*>) {
+        this.id = f()
+    }
+
+    inline fun tags(f: UList<String>.() -> Unit) =
+            f(this.tags)
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun from(id: Information.Id) {
+        this.id = id.id
+        this.tags.clear()
+        this.tags += id.tags
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun toId(): Information.Id = Information.Id(this.id, this.tags.coll.toTypedArray())
+
+}
+
+class BuildingRequiredInfo<T> {
+    val id = BuildingInfoId()
+    lateinit var type: TypeInfo<T>
+    var useProviders: Boolean = true
+
+    inline fun id(f: BuildingInfoId.() -> Unit) = f(id)
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun id(id: Information.Id) = id { from(id) }
+
+    inline fun type(f: () -> TypeInfo<T>) {
+        this.type = f()
+    }
+
+    inline fun useProviders(f: () -> Boolean) {
+        this.useProviders = f()
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun toRequiredInformation(): RequiredInformation = RequiredInformation(
+            id = this.id.toId(),
+            type = this.type,
+            useProviders = this.useProviders
+    )
+}
+
+inline fun <reified T> argument(f: BuildingArgument<T>.() -> Unit): Argument<T> {
+    val building = BuildingArgument<T>()
+
+    building.type = object : AbstractTypeInfo<T>() {}
+
+    f(building)
+
+    return building.toArgument()
+}
+
+
+inline fun <T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<T>.() -> Unit): Argument<T> {
+    val building = BuildingArgument<T>()
+
+    building.type = type
+
+    f(building)
+
+    return building.toArgument()
+}
+
+inline fun <reified T, reified R> requirement(required: R, f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
+    val building = BuildingRequirement<T, R>(required)
+
+    building.infoType = object : AbstractTypeInfo<T>() {}
+    building.type = object : AbstractTypeInfo<R>() {}
+
+    f(building)
+
+    return building.toRequirement()
+}
+
+inline fun <T, R> requirementPlain(infoType: TypeInfo<T>,
+                                   reqType: TypeInfo<R>,
+                                   required: R,
+                                   f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
+    val building = BuildingRequirement<T, R>(required)
+
+    building.infoType = infoType
+    building.type = reqType
+
+    f(building)
+
+    return building.toRequirement()
+}
+
+inline fun <reified T> requireInfo(f: BuildingRequiredInfo<T>.() -> Unit): RequiredInformation {
+    val building = BuildingRequiredInfo<T>()
+    building.type = object : AbstractTypeInfo<T>() {}
+
+    f(building)
+
+    return building.toRequiredInformation()
+}
+
+inline fun <T> requireInfoPlain(type: TypeInfo<T>, f: BuildingRequiredInfo<T>.() -> Unit): RequiredInformation {
+    val building = BuildingRequiredInfo<T>()
+    building.type = type
+
+    f(building)
+
+    return building.toRequiredInformation()
+}
+
+inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContainer<T>,
+                                               commandContainer: CommandContainer,
+                                               informationManager: InformationManager,
+                                               resultHandler: ResultHandler) -> Any): ArgumentHandler<T> = object : ArgumentHandler<T> {
+    override fun handle(argumentContainer: ArgumentContainer<T>,
+                        commandContainer: CommandContainer,
+                        informationManager: InformationManager,
+                        resultHandler: ResultHandler): Any =
+            f(argumentContainer, commandContainer, informationManager, resultHandler)
+
+}
+
+
+// Additionals
+
+val stringValidator: Validator = { true }
+val stringTransformer: Transformer<String> = { it }
+
+val intValidator: Validator = { it.toIntOrNull() != null }
+val intTransformer: Transformer<Int> = { it.toInt() }
+
+val longValidator: Validator = { it.toLongOrNull() != null }
+val longTransformer: Transformer<Long> = { it.toLong() }
+
+val doubleValidator: Validator = { it.toDoubleOrNull() != null }
+val doubleTransformer: Transformer<Double> = { it.toDouble() }
+
+val booleanValidator: Validator = { it == "yes" || it == "no" || it == "true" || it == "false" }
+val booleanTransformer: Transformer<Boolean> = {
+    when (it) {
+        "yes", "true" -> true
+        else -> false
+    }
+}
+val booleanPossibilities = listOf("yes", "true", "no", "false")
+
+inline fun stringArg(f: BuildingArgument<String>.() -> Unit): Argument<String> = argument {
+    validator = stringValidator
+    transformer = stringTransformer
+    f(this)
+}
+
+inline fun intArg(f: BuildingArgument<Int>.() -> Unit): Argument<Int> = argument {
+    validator = intValidator
+    transformer = intTransformer
+    f(this)
+}
+
+inline fun longArg(f: BuildingArgument<Long>.() -> Unit): Argument<Long> = argument {
+    validator = longValidator
+    transformer = longTransformer
+    f(this)
+}
+
+inline fun doubleArg(f: BuildingArgument<Double>.() -> Unit): Argument<Double> = argument {
+    validator = doubleValidator
+    transformer = doubleTransformer
+    f(this)
+}
+
+inline fun booleanArg(f: BuildingArgument<Boolean>.() -> Unit): Argument<Boolean> = argument {
+    validator = booleanValidator
+    transformer = booleanTransformer
+    possibilities += booleanPossibilities
+    f(this)
+}
+
+inline fun <reified T> enumArg(f: BuildingArgument<T>.() -> Unit): Argument<T> = argument {
+    validator = EnumValidator(T::class.java)
+    transformer = EnumTransformer(T::class.java)
+    possibilities += enumPossibilities(T::class.java)
+    f(this)
+}
+
+@Suppress("UNCHECKED_CAST")
+inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argument<T> = argument<Unit> {
+    this as BuildingArgument<T>
+    this.type { TypeInfo.of(type) }
+    validator = EnumValidator(type)
+    transformer = EnumTransformer(type)
+    possibilities += enumPossibilities(type)
+    f(this)
+} as Argument<T>
+
+// Command
+
+@Suppress("NOTHING_TO_INLINE")
+abstract class UColl<E> {
+    abstract val coll: MutableCollection<E>
+
+    inline fun clear() {
+        coll.clear()
+    }
+
+    inline operator fun E.unaryPlus() {
+        coll += this
+    }
+
+    inline operator fun E.unaryMinus() {
+        coll -= this
+    }
+
+    inline operator fun minusAssign(e: E) {
+        coll -= e
+    }
+
+    inline operator fun minusAssign(e: Iterable<E>) {
+        coll -= e
+    }
+
+    inline operator fun minusAssign(e: Array<out E>) {
+        coll -= e
+    }
+
+    inline operator fun plusAssign(e: E) {
+        coll += e
+    }
+
+    inline operator fun plusAssign(e: Iterable<E>) {
+        coll += e
+    }
+
+    inline operator fun plusAssign(e: Array<out E>) {
+        coll += e
+    }
+}
+
+class UList<E> : UColl<E>() {
+    override val coll = mutableListOf<E>()
+
+}
+
+class USet<E> : UColl<E>() {
+    override val coll = mutableSetOf<E>()
+}
+
+class BuildingCommandName {
+    lateinit var name: CommandName
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun string(string: String) {
+        this.name = CommandName.name(string)
+    }
+
+    inline fun string(f: () -> String) {
+        this.name = CommandName.name(f())
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun regexPattern(pattern: String) {
+        this.name = CommandName.regex(pattern)
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun regex(regex: Regex) {
+        this.name = CommandName.regex(regex)
+    }
+
+    inline fun regexPattern(f: () -> String) {
+        this.name = CommandName.regex(f())
+    }
+
+    inline fun regex(f: () -> Regex) {
+        this.name = CommandName.regex(f())
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun toName(): CommandName = this.name
+}
+
+class BuildingCommand {
+    var parent: Command? = null
+    var order = 0
+    var name = BuildingCommandName()
+    var description: String = ""
+    var handler: Handler? = null
+    val arguments = UList<Argument<*>>()
+    val requirements = UList<Requirement<*, *>>()
+    val requiredInfo = USet<RequiredInformation>()
+    val alias = UList<CommandName>()
+
+    inline fun order(f: () -> Int) {
+        this.order = f()
+    }
+
+    inline fun description(f: () -> String) {
+        this.description = f()
+    }
+
+    inline fun arguments(f: UList<Argument<*>>.() -> Unit) =
+            f(this.arguments)
+
+    inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) =
+            f(this.requirements)
+
+    inline fun requiredInfo(f: USet<RequiredInformation>.() -> Unit) =
+            f(this.requiredInfo)
+
+
+    inline fun alias(f: UList<CommandName>.() -> Unit) =
+            f(this.alias)
+
+    inline fun handler(crossinline f: (commandContainer: CommandContainer,
+                                       informationManager: InformationManager,
+                                       resultHandler: ResultHandler) -> Any) {
+        this.handler = object : Handler {
+            override fun handle(commandContainer: CommandContainer,
+                                informationManager: InformationManager,
+                                resultHandler: ResultHandler): Any =
+                    f(commandContainer, informationManager, resultHandler)
+        }
+    }
+
+    inline fun handlerWithContext(crossinline f: (context: CommandContext) -> Any) {
+        this.handler = object : Handler {
+            override fun handle(commandContainer: CommandContainer,
+                                informationManager: InformationManager,
+                                resultHandler: ResultHandler): Any =
+                    f(CommandContext(commandContainer, informationManager, resultHandler))
+        }
+    }
+
+    inline fun name(f: BuildingCommandName.() -> Unit) =
+            f(this.name)
+
+    inline fun stringName(f: () -> String) {
+        this.name.string(f)
+    }
+
+    inline fun regexName(f: () -> Regex) {
+        this.name.regex(f)
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun toCommand(): Command = Command(
+            parent = this.parent,
+            order = this.order,
+            name = this.name.toName(),
+            description = this.description,
+            handler = this.handler,
+            arguments = this.arguments.coll.toList(),
+            requirements = this.requirements.coll.toList(),
+            requiredInfo = this.requiredInfo.coll.toSet(),
+            alias = this.alias.coll.toList()
+    )
+}
+
+inline fun command(f: BuildingCommand.() -> Unit): Command =
+        BuildingCommand().also { f(it) }.toCommand()
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun commandName(name: String) = CommandName.StringName(name)
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun commandName(regex: Regex) = CommandName.RegexName(regex)
+
+inline fun handler(crossinline f: (commandContainer: CommandContainer,
+                                   informationManager: InformationManager,
+                                   resultHandler: ResultHandler) -> Any) = object : Handler {
+    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler): Any =
+            f(commandContainer, informationManager, resultHandler)
+}
+

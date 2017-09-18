@@ -56,7 +56,10 @@ interface ArgumentHandler<T> {
         /**
          * Create argument handler from a function.
          */
-        inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>, commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler) -> Any) = object : ArgumentHandler<T> {
+        inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>,
+                                                     commandContainer: CommandContainer,
+                                                     informationManager: InformationManager,
+                                                     resultHandler: ResultHandler) -> Any) = object : ArgumentHandler<T> {
             override fun handle(argumentContainer: ArgumentContainer<T>,
                                 commandContainer: CommandContainer,
                                 informationManager: InformationManager,

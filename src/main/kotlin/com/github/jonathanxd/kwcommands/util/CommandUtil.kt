@@ -34,7 +34,7 @@ import com.github.jonathanxd.kwcommands.command.Command
  */
 val Command.level: Int
     get() {
-        var current: Command? = this
+        var current: Command? = this.parent
         var count = 0
 
         while(current != null) {

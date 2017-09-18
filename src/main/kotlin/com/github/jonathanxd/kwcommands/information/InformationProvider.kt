@@ -49,16 +49,27 @@ interface InformationProvider {
      */
     fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>?
 
+    /**
+     * Provides information of [id].
+     *
+     * @param id Id of requested information
+     * @return Information or null if this provider cannot provide a information of id [id].
+     */
+    fun <T> provide(id: Information.Id): Information<T>?
+
     companion object {
         /**
-         * Creates unsafe [InformationProvider]
+         * Creates unsafe [InformationProvider]. `null` is provided to [type] when a information is requested only by [id].
          */
         @Suppress("UNCHECKED_CAST")
-        fun unsafe(provider: (id: Information.Id, type: TypeInfo<*>) -> Information<*>?): InformationProvider =
+        fun unsafe(provider: (id: Information.Id, type: TypeInfo<*>?) -> Information<*>?): InformationProvider =
                 object : InformationProvider {
                     override fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>? {
                         return provider(id, type) as Information<T>?
                     }
+
+                    override fun <T> provide(id: Information.Id): Information<T>? =
+                            provider(id, null) as Information<T>?
                 }
 
         /**
@@ -74,6 +85,7 @@ interface InformationProvider {
                         return null
                     }
 
+                    override fun <T> provide(id: Information.Id): Information<T>? = null
                 }
     }
 

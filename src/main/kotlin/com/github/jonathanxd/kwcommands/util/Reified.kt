@@ -83,3 +83,6 @@ inline fun <reified T> TypeInfo<*>.whenIs(type: TypeInfo<T>, exec: (TypeInfo<T>)
 
     return this
 }
+
+
+inline fun <reified T> type(): TypeInfo<T> = object : AbstractTypeInfo<T>(){}

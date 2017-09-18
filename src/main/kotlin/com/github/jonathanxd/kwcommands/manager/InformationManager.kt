@@ -76,6 +76,35 @@ interface InformationManager {
     fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean
 
     /**
+     * Find a information by [id], this method will first lookup for `static information`, if no
+     * one information is found for specified [id], it will return first non-null information provided
+     * by a registered [InformationProvider].
+     *
+     * If no one information can be found using [id][Information.Id.id]-[tags][Information.Id.tags] combination,
+     * then the implementation should lookup by [id][Information.Id.id] only, if one information has the same
+     * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
+     * has the same id, then `null` should be returned.
+     *
+     * @return Found information or `null` if information cannot be found.
+     */
+    fun <T> findById(id: Information.Id): Information<T>? =
+            this.findById(id, true)
+
+    /**
+     * Find a information by [id], this method will first lookup for `static information`, if no
+     * one information is found for specified [id], it will return first non-null information provided
+     * by a registered [InformationProvider].
+     *
+     * If no one information can be found using [id][Information.Id.id]-[tags][Information.Id.tags] combination,
+     * then the implementation should lookup by [id][Information.Id.id] only, if one information has the same
+     * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
+     * has the same id, then `null` should be returned.
+     *
+     * @return Found information or `null` if information cannot be found.
+     */
+    fun <T> findById(id: Information.Id, useProviders: Boolean = true): Information<T>?
+
+    /**
      * Find a information by [id] and [type], this method will first lookup for `static information`, if no
      * one information is found for specified [id] and [type], it will return first non-null information provided
      * by a registered [InformationProvider].
@@ -102,6 +131,24 @@ interface InformationManager {
      * @return Found information or `null` if information cannot be found.
      */
     fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean = true): Information<T>?
+
+    /**
+     * Same as [findById], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
+     *
+     * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
+     * lead to cast exception.
+     */
+    fun <T> findByIdOrEmpty(id: Information.Id): Information<T> =
+            this.findById(id) ?: Information.empty()
+
+    /**
+     * Same as [findById], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
+     *
+     * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
+     * lead to cast exception.
+     */
+    fun <T> findByIdOrEmpty(id: Information.Id, useProviders: Boolean = true): Information<T> =
+            this.findById(id, useProviders) ?: Information.empty()
 
     /**
      * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.

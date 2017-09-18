@@ -25,13 +25,13 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.help
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.exception.CommandException
+import com.github.jonathanxd.kwcommands.printer.Printer
 
-class ArgumentsMissingException(val command: Command,
-                                val providedArgs: List<ArgumentContainer<*>>,
-                                manager: CommandManager,
-                                message: String) : CommandException(manager, message)
+interface HelpInfoHandler {
+
+    fun handleCommandException(commandException: CommandException, printer: Printer)
+
+}

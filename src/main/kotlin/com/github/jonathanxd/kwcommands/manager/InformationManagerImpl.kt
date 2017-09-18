@@ -64,6 +64,30 @@ class InformationManagerImpl : InformationManager {
         return this.informationProviders_.remove(informationProvider)
     }
 
+    @Suppress("UNCHECKED_CAST")
+    override fun <T> findById(id: Information.Id, useProviders: Boolean): Information<T>? =
+            informationSet_.find f@ {
+                val itId = it.id
+
+                if ((id.id == Default::class.java || id.id == itId.id)
+                        && (id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) })) {
+                    return@f true
+                }
+
+                false
+            } as? Information<T> ?: this.informationProviders_.let provide@ {
+                if (!useProviders)
+                    return@provide null
+
+                it.forEach { p ->
+                    p.provide<T>(id)?.let {
+                        return@provide it
+                    }
+                }
+
+                return@provide null
+            }
+
     override fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>? =
             find(id, type, true)
 
@@ -81,17 +105,17 @@ class InformationManagerImpl : InformationManager {
                 }
 
                 false
-            } as? Information<T> ?: this.informationProviders_.let {
+            } as? Information<T> ?: this.informationProviders_.let provide@ {
                 if (!useProviders)
-                    return@let null
+                    return@provide null
 
                 it.forEach { p ->
-                    val get = p.provide(id, type)
-                    if (get != null)
-                        return@let get
+                    p.provide(id, type)?.let {
+                        return@provide it
+                    }
                 }
 
-                return@let null
+                return@provide null
             }
 
     override fun copy(): InformationManager {
@@ -133,6 +157,10 @@ object InformationManagerVoid : InformationManager {
 
     override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean {
         return true
+    }
+
+    override fun <T> findById(id: Information.Id, useProviders: Boolean): Information<T>? {
+        return null
     }
 
     override fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>? {

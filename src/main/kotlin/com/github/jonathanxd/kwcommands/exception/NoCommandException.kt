@@ -27,11 +27,4 @@
  */
 package com.github.jonathanxd.kwcommands.exception
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.manager.CommandManager
-
-class ArgumentsMissingException(val command: Command,
-                                val providedArgs: List<ArgumentContainer<*>>,
-                                manager: CommandManager,
-                                message: String) : CommandException(manager, message)
+class NoCommandException(message: String) : RuntimeException(message)

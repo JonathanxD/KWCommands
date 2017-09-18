@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
 
 /**
@@ -78,11 +79,12 @@ class CommandManagerImpl : CommandManager {
 
     override fun getCommand(path: Array<String>, owner: Any?): Command = path.let {
 
-        var cmd = this.getCommand(it.first(), owner) ?: throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")
+        var cmd = this.getCommand(it.first(), owner) ?:
+                throw NoCommandException("Specified parent command ${it.first()} was not found.")
 
         if (it.size > 1) {
             for (x in it.copyOfRange(1, it.size)) {
-                cmd = cmd.getSubCommand(x) ?: throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")
+                cmd = cmd.getSubCommand(x) ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
             }
         }
 
@@ -93,7 +95,7 @@ class CommandManagerImpl : CommandManager {
         if (it.isEmpty()) null else
             try {
                 getCommand(path, owner)
-            } catch (c: CommandNotFoundException) {
+            } catch (c: NoCommandException) {
                 null
             }
 

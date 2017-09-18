@@ -31,6 +31,8 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
 
 /**
  * A command argument.
@@ -48,8 +50,8 @@ data class Argument<out T>(val id: Any,
                            val isOptional: Boolean,
                            val type: TypeInfo<out T>,
                            val defaultValue: T?,
-                           val validator: (String) -> Boolean,
-                           val transformer: (String) -> T,
+                           val validator: Validator,
+                           val transformer: Transformer<T>,
                            val possibilities: List<String>,
                            val requirements: List<Requirement<*, *>>,
                            val requiredInfo: Set<RequiredInformation>,

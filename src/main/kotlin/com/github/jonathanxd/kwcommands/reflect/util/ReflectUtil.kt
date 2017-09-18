@@ -34,6 +34,7 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManager
@@ -72,11 +73,13 @@ fun <T : Any> KClass<T>.get(): T? =
 fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
         this.parents.let {
             if (it.isEmpty()) null else {
-                var cmd = manager.getCommand(it.first(), owner) ?: throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")
+                var cmd = manager.getCommand(it.first(), owner)
+                        ?: throw NoCommandException("Specified parent command ${it.first()} was not found.")
 
                 if (it.size > 1) {
                     for (x in it.copyOfRange(1, it.size)) {
-                        cmd = cmd.getSubCommand(x) ?: throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")
+                        cmd = cmd.getSubCommand(x)
+                                ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
                     }
                 }
 

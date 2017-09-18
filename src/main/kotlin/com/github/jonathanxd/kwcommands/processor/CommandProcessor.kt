@@ -75,7 +75,7 @@ interface CommandProcessor {
     fun processWithOwnerFunction(stringList: List<String>, ownerProvider: (commandName: String) -> Any?): List<CommandContainer>
 
     /**
-     * Handle [commands] and returns [result list][ComandResult] of command executions.
+     * Handle [commands] and returns [result list][CommandResult] of command executions.
      *
      * This function will first check requirements, and then handle arguments and the command.
      *
@@ -87,4 +87,19 @@ interface CommandProcessor {
      */
     fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerVoid): List<CommandResult>
 
+    /**
+     * Calls [process] and then [handle] to handle result of [process].
+     */
+    fun processAndHandle(stringList: List<String>,
+                         owner: Any?,
+                         informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
+            processAndHandleWithOwnerFunc(stringList, { owner }, informationManager)
+
+    /**
+     * Calls [processWithOwnerFunction] and then [handle] to handle result of [process].
+     */
+    fun processAndHandleWithOwnerFunc(stringList: List<String>,
+                                      ownerProvider: (commandName: String) -> Any?,
+                                      informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
+            processWithOwnerFunction(stringList, ownerProvider).let { handle(it, informationManager) }
 }

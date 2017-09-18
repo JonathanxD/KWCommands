@@ -28,36 +28,67 @@
 package com.github.jonathanxd.kwcommands.printer
 
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandName
+import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.append
+import com.github.jonathanxd.kwcommands.util.level
 
 /**
  * Common implementation of command printer backing to a print function
  */
-class CommonPrinter(val out: (String) -> Unit) : Printer {
+class CommonPrinter(val out: (String) -> Unit,
+                    val printHeaderAndFooter: Boolean = true) : Printer {
 
     private val buffer = mutableListOf<String>()
     private val commands = mutableListOf<Command>()
+
+    init {
+        if(printHeaderAndFooter) Companion.printHeader(commands, buffer)
+    }
 
     override fun printCommand(command: Command, level: Int) {
         Companion.printTo(buffer, commands, command, level)
     }
 
+    override fun printFromRoot(command: Command, level: Int) {
+        Companion.printFromRoot(buffer, commands, command, level)
+    }
+
     override fun printTo(command: Command, level: Int, out: (String) -> Unit) {
         val buffer = mutableListOf<String>()
         val commands = mutableListOf<Command>()
+
+        if(printHeaderAndFooter) Companion.printHeader(commands, buffer)
+
         Companion.printTo(buffer, commands, command, level)
+
+        if(printHeaderAndFooter) Companion.printFooter(commands, buffer)
+
         Companion.flushTo(out, commands, buffer)
     }
 
+    override fun printPlain(text: String) {
+        Companion.printPlain(text, this.commands, this.buffer)
+    }
+
     override fun flush() {
+        if(printHeaderAndFooter) Companion.printFooter(commands, buffer)
+
         Companion.flushTo(this.out, this.commands, this.buffer)
         this.commands.clear()
         this.buffer.clear()
+
+        if(printHeaderAndFooter) Companion.printHeader(commands, buffer)
     }
 
     companion object {
+        private val DummyCommand = command {
+            name { string { "dummy" } }
+            order = -1
+        }
+
         private val header = listOf(
                 "-------- Commands --------",
                 "",
@@ -78,14 +109,58 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
                 "-------- Commands --------"
         )
 
+        fun printPlain(text: String,
+                       commands: MutableList<Command>, buffer: MutableList<String>) {
+            commands += DummyCommand
+            buffer += text
+        }
+
+        fun printHeader(commands: MutableList<Command>, buffer: MutableList<String>) {
+            header.forEach {
+                printPlain(it, commands, buffer)
+            }
+        }
+
+        fun printFooter(commands: MutableList<Command>, buffer: MutableList<String>) {
+            footer.forEach {
+                printPlain(it, commands, buffer)
+            }
+        }
+
         /**
          * Prints [command] of inheritance [level][level] to [out]. See [Printer.printTo].
          */
         fun printTo(command: Command, level: Int, out: (String) -> Unit) {
             val buffer = mutableListOf<String>()
             val commands = mutableListOf<Command>()
+
+            printHeader(commands, buffer)
+
             this.printTo(buffer, commands, command, level)
+
+            printFooter(commands, buffer)
+
             this.flushTo(out, commands, buffer)
+        }
+
+        fun printFromRoot(buffer: MutableList<String>,
+                          commands: MutableList<Command>,
+                          command: Command,
+                          level: Int) {
+            val commandsToPrint = mutableListOf<Command>()
+
+            var parent: Command? = command.parent
+
+            while (parent != null) {
+                commandsToPrint.add(0, parent)
+                parent = parent.parent
+            }
+
+            commandsToPrint += command
+
+            commandsToPrint.forEach {
+                printTo(buffer, commands, it, it.level + level)
+            }
         }
 
         fun printTo(buffer: MutableList<String>,
@@ -126,11 +201,7 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
         }
 
         fun flushTo(out: (String) -> Unit, commands: List<Command>, buffer: List<String>) {
-            header.forEach {
-                out(it)
-            }
-
-            if (buffer.isNotEmpty()) {
+            if (commands.any { it !== DummyCommand }) {
                 val maxSize = buffer.maxBy(String::length)!!.length + 5
 
                 require(commands.size == buffer.size) { "Command size and buffer size is not equal. Commands: <$commands>. Buffer: <$buffer>" }
@@ -138,6 +209,11 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
                 commands.forEachIndexed { index, command ->
                     val buff = buffer[index]
                     val remaining = maxSize - buff.length
+
+                    if (command === DummyCommand) {
+                        out(buff)
+                        return@forEachIndexed // = continue
+                    }
 
                     val builder = StringBuilder(buff)
 
@@ -224,15 +300,13 @@ class CommonPrinter(val out: (String) -> Unit) : Printer {
 
                 }
 
-
             } else {
-                out("No commands")
+                if (commands.isNotEmpty()) {
+                    buffer.forEach { out(it) }
+                } else {
+                    out("No commands")
+                }
             }
-
-            footer.forEach {
-                out(it)
-            }
-
         }
     }
 }

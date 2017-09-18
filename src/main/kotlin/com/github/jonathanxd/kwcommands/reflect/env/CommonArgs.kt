@@ -31,7 +31,7 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 
 class ListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : (String) -> Boolean {
     override fun invoke(p1: String): Boolean {
-        val list = if(p1.contains(','))
+        val list = if (p1.contains(','))
             p1.split(',').toList()
         else listOf(p1)
 
@@ -44,7 +44,7 @@ class ListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) 
 
 class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>) : (String) -> List<E> {
     override fun invoke(p1: String): List<E> {
-        val list = if(p1.contains(','))
+        val list = if (p1.contains(','))
             p1.split(',').toList()
         else listOf(p1)
 
@@ -61,7 +61,7 @@ class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E
 class EnumValidator<T>(val type: Class<T>) : (String) -> Boolean {
     override fun invoke(p1: String): Boolean {
         val consts = type.enumConstants as Array<Enum<*>>
-        return consts.any { it.name == p1 }
+        return consts.any { it.name.equals(p1, true) }
     }
 
 }
@@ -70,7 +70,9 @@ class EnumValidator<T>(val type: Class<T>) : (String) -> Boolean {
 class EnumTransformer<T>(val type: Class<T>) : (String) -> T {
     override fun invoke(p1: String): T {
         val consts = type.enumConstants as Array<Enum<*>>
-        return consts.first { it.name == p1 } as T
+        return (consts.firstOrNull { it.name == p1 } ?: consts.first { it.name.equals(p1, true) }) as T
     }
-
 }
+
+fun enumPossibilities(type: Class<*>): List<String> =
+    (type.enumConstants as Array<Enum<*>>).map { it.name }

@@ -88,7 +88,10 @@ object Processors {
                         command = commandManager.getCommand(getStr(index), ownerProvider(getStr(index)))
 
                         if (command == null)
-                            throw CommandNotFoundException("Command ${getStr(index)} (index $index in $stringList) was not found.")
+                            throw CommandNotFoundException(getStr(index),
+                                    commands.toList(),
+                                    this.commandManager,
+                                    "Command ${getStr(index)} (index $index in $stringList) was not found.")
                     } else {
                         command = deque.last.getSubCommand(getStr(index))
 
@@ -113,12 +116,15 @@ object Processors {
 
                         if (index + requiredArgsCount >= stringList.size) {
 
-                            val required = arguments.filter { !it.isOptional }.map { it.id.toString() }.joinToString()
+                            val required = arguments.filter { !it.isOptional }.joinToString { it.id.toString() }
                             val provided = if (index + 1 < stringList.size)
                                 ", Provided arguments: ${stringList.subList(index + 1, stringList.size).joinToString()}"
                             else ""
 
-                            throw ArgumentsMissingException("Some required arguments of command $command is missing (Required arguments ids: $required$provided).")
+                            throw ArgumentsMissingException(command,
+                                    args.toList(),
+                                    this.commandManager,
+                                    "Some required arguments of command $command is missing (Required arguments ids: $required$provided).")
                         }
 
                         var requiredCount = 0
@@ -150,7 +156,10 @@ object Processors {
                                 if (it.possibilities.isNotEmpty()) "${it.id}{possibilities=${it.possibilities}}"
                                 else it.id.toString()
                             }.joinToString()
-                            throw ArgumentsMissingException("Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
+                            throw ArgumentsMissingException(command,
+                                    args.toList(),
+                                    this.commandManager,
+                                    "Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
                         }
 
                         arguments.map { ArgumentContainer(it, null, it.defaultValue, null) }

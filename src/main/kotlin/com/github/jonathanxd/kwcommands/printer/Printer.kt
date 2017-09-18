@@ -43,12 +43,27 @@ interface Printer {
     fun printCommand(command: Command, level: Int)
 
     /**
+     * Prints from root command to [command] to buffer.
+     *
+     * This will print all recursive parent commands of [command] and the [command] itself to buffer.
+     *
+     * @param command Command to print.
+     * @param level   Base command inheritance level (0 for main commands).
+     */
+    fun printFromRoot(command: Command, level: Int)
+
+    /**
      * Prints command directly to an [output][out].
      *
      * @param command Command to print.
      * @param level   Command inheritance level (0 for main commands).
      */
     fun printTo(command: Command, level: Int, out: (String) -> Unit)
+
+    /**
+     * Prints plain [text].
+     */
+    fun printPlain(text: String)
 
     /**
      * Flush buffer texts to predefined output.
