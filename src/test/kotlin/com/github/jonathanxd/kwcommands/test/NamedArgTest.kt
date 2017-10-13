@@ -31,6 +31,11 @@ class NamedArgTest {
                     name { "recursive" }
                 }
             }
+            handlerWithContext {
+                val dir: String = it.getArg("directory")
+                val recursive: Boolean = it.getArg("recursive")
+                println("Directory: $dir. Recursive: $recursive")
+            }
         }
 
         val infoManager = InformationManagerImpl()
@@ -40,7 +45,7 @@ class NamedArgTest {
         manager.registerCommand(cmd, this)
 
         try {
-            processor.processAndHandle(listOf("example", "--recursive", "x"), this, infoManager)
+            processor.processAndHandle(listOf("example", "--directory", "mydir", "--recursive"), this, infoManager)
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
         }

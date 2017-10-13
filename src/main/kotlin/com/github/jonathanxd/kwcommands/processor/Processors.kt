@@ -35,7 +35,6 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.exception.*
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.MissingInformation
 import com.github.jonathanxd.kwcommands.information.checkRequiredInfo
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
@@ -44,6 +43,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.escape
+import com.github.jonathanxd.kwcommands.util.isBoolean
 import com.github.jonathanxd.kwcommands.util.nameOrIdWithType
 import java.util.*
 
@@ -74,6 +74,10 @@ object Processors {
             val commands = mutableListOf<CommandContainer>()
             val deque: Deque<Command> = LinkedList()
             val getStr: (Int) -> String = { stringList[it].escape('\\') }
+
+            // Checks if is argument name
+            val isName: (Int) -> Boolean = { stringList[it].startsWith("--") }
+            val getName: (Int) -> String = { stringList[it].substring(2).escape('\\') }
 
             var index = 0
 
@@ -133,7 +137,15 @@ object Processors {
 
                         var requiredCount = 0
 
-                        val size = (index + arguments.size).let {
+                        val maxNames = arguments.size
+                        var names = 0
+
+                        (index + 1 until stringList.size).forEach {
+                            if (isName(it) && names + 1 < maxNames)
+                                ++names
+                        }
+
+                        val size = (index + names + arguments.size).let {
                             if (it >= stringList.size)
                                 stringList.size - 1
                             else
@@ -141,45 +153,86 @@ object Processors {
                         }
 
                         var argPos = 0
+                        var searchPos = index + 1
 
-                        ((index + 1)..size).forEach {
+                        while(searchPos <= size) {
+                            val it = searchPos
                             val argStr = getStr(it)
+                            var argInput = argStr
 
                             var arg: Argument<*>? = null
 
-                            if (!order)
-                                arg = arguments.find { it.validator(argStr) }
-                            else {
-                                if (argPos >= arguments.size)
-                                    arg = null
-                                else {
-                                    var any = false
-                                    while (argPos < arguments.size) {
-                                        val atPos = arguments[argPos]
-                                        if (!atPos.validator(argStr)) {
-                                            if (!atPos.isOptional)
-                                                throw InvalidInputForArgumentException(
-                                                        command!!,
-                                                        args.toList(),
-                                                        argStr,
-                                                        atPos,
-                                                        this.commandManager,
-                                                        "Invalid input $argStr for required argument " +
-                                                                "'${atPos.nameOrIdWithType}' of command $command.")
+                            if (isName(it)) {
+                                val argName = getName(it)
 
-                                        } else {
-                                            any = true
-                                            arg = atPos
-                                        }
-                                        ++argPos
+                                arg = arguments.first { it.name == argName }
+
+                                if (it + 1 > size) {
+                                    if (arg.isBoolean)
+                                        argInput = "true"
+                                    else
+                                        throw NoInputForArgumentException(command,
+                                            args.toList(),
+                                            arg,
+                                            this.commandManager,
+                                            "No input for specified named argument '${arg.nameOrIdWithType}' of command $command")
+                                } else {
+
+                                    val input = getStr(it + 1)
+
+                                    if (isName(it + 1) && arg.isBoolean) {
+                                        argInput = "true"
+                                    } else {
+                                        if (!arg.validator(input))
+                                            throw InvalidInputForArgumentException(
+                                                    command,
+                                                    args.toList(),
+                                                    input,
+                                                    arg,
+                                                    this.commandManager,
+                                                    "Invalid input $input for required argument " +
+                                                            "'${arg.nameOrIdWithType}' of command $command.")
+                                        argInput = input
+                                        ++searchPos
+                                        ++index
                                     }
+                                }
+                            } else {
 
-                                    if (!any)
-                                        throw NoArgumentForInputException(command!!,
-                                                args.toList(),
-                                                argStr,
-                                                this.commandManager,
-                                                "No argument for input string $argStr for command $command")
+                                if (!order)
+                                    arg = arguments.find { it.validator(argStr) }
+                                else {
+                                    if (argPos >= arguments.size)
+                                        arg = null
+                                    else {
+                                        var any = false
+                                        while (argPos < arguments.size) {
+                                            val atPos = arguments[argPos]
+                                            if (!atPos.validator(argStr)) {
+                                                if (!atPos.isOptional)
+                                                    throw InvalidInputForArgumentException(
+                                                            command,
+                                                            args.toList(),
+                                                            argStr,
+                                                            atPos,
+                                                            this.commandManager,
+                                                            "Invalid input $argStr for required argument " +
+                                                                    "'${atPos.nameOrIdWithType}' of command $command.")
+
+                                            } else {
+                                                any = true
+                                                arg = atPos
+                                            }
+                                            ++argPos
+                                        }
+
+                                        if (!any)
+                                            throw NoArgumentForInputException(command,
+                                                    args.toList(),
+                                                    argStr,
+                                                    this.commandManager,
+                                                    "No argument for input string $argStr for command $command")
+                                    }
                                 }
                             }
 
@@ -187,10 +240,17 @@ object Processors {
                                 if (!arg.isOptional)
                                     requiredCount++
                                 @Suppress("UNCHECKED_CAST")
-                                args.add(ArgumentContainer(arg, argStr, arg.transformer(argStr), arg.handler as? ArgumentHandler<Any?>))
+                                args.add(ArgumentContainer(
+                                        arg,
+                                        argInput,
+                                        arg.transformer(argInput),
+                                        arg.handler as? ArgumentHandler<Any?>
+                                ))
                                 arguments.remove(arg)
                                 ++index
                             }
+                            ++searchPos
+
                         }
 
                         if (requiredCount != requiredArgsCount) {

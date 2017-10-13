@@ -111,6 +111,22 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 printer.printFromRoot(command, 0)
                 printer.flush()
             }
+
+            is NoInputForArgumentException -> {
+                val command = commandException.command
+                val parsed = commandException.parsedArgs
+                val arg = commandException.arg
+                printer.printPlain("No input value provided for named argument '${arg.nameOrId}' of command '${command.fullname}'")
+
+                if (parsed.isNotEmpty())
+                    printer.printPlain("  Successfully parsed args: ${parsed.joinToString { it.argument.id.toString() }}")
+
+                printer.printPlain("")
+                printer.printPlain("Command specification:")
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
             else -> throw commandException
         }
 
