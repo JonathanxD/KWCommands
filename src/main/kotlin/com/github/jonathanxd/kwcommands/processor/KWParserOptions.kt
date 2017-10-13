@@ -25,30 +25,18 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.util
+package com.github.jonathanxd.kwcommands.processor
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.iutils.option.Option
 
 /**
- * This property provides the "inheritance" level of this command.
+ * Options for the parser of processor
  */
-val Command.level: Int
-    get() {
-        var current: Command? = this.parent
-        var count = 0
-
-        while (current != null) {
-            ++count
-            current = current.parent
-        }
-
-        return count
-    }
-
-val Argument<*>.nameOrId get() = if (this.name.isEmpty()) this.id.toString() else this.name
-val Argument<*>.nameOrIdWithType get() =
-    "${this.nameOrId}: ${this.typeStr}"
-
-val Argument<*>.typeStr: String
-    get() = if (this.type.canResolve()) this.type.toString() else this.type.classLiteral
+object KWParserOptions {
+    /**
+     * Sometimes, order matters. When enabled, parsers should not ignore arguments order when parsing commands. Some implementations
+     * may have this behavior enabled by default, others should ignore. Implementations provided by KWCommands always
+     * consider this option.
+     */
+    val ORDER = Option(false)
+}

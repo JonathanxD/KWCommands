@@ -133,6 +133,7 @@ class CommandTest {
                 alias = emptyList(),
                 arguments = listOf(
                         Argument(id = "name",
+                                name = "",
                                 isOptional = false,
                                 defaultValue = null,
                                 validator = { true },
@@ -166,6 +167,7 @@ class CommandTest {
                 alias = emptyList(),
                 arguments = listOf(
                         Argument(id = "name",
+                                name = "",
                                 isOptional = false,
                                 defaultValue = null,
                                 validator = { true },
@@ -174,6 +176,7 @@ class CommandTest {
                                 requiredInfo = emptySet(),
                                 possibilities = emptyList()),
                         Argument(id = "amount",
+                                name = "",
                                 isOptional = true,
                                 defaultValue = null,
                                 validator = { it.toIntOrNull() != null },
@@ -185,6 +188,7 @@ class CommandTest {
                                     return@create arg.value!!
                                 }),
                         Argument(id = "double",
+                                name = "",
                                 isOptional = false,
                                 defaultValue = null,
                                 validator = { it.toDoubleOrNull() != null },

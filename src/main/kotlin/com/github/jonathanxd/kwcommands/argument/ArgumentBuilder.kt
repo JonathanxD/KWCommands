@@ -40,6 +40,7 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
 class ArgumentBuilder<T> {
 
     private lateinit var id: Any
+    private var name: String = ""
     private var isOptional: Boolean = false
     private lateinit var type: TypeInfo<out T>
     private var defaultValue: T? = null
@@ -55,6 +56,14 @@ class ArgumentBuilder<T> {
      */
     fun id(id: Any): ArgumentBuilder<T> {
         this.id = id
+        return this
+    }
+
+    /**
+     * Sets [Argument.name]
+     */
+    fun name(name: String): ArgumentBuilder<T> {
+        this.name = name
         return this
     }
 
@@ -208,6 +217,7 @@ class ArgumentBuilder<T> {
      */
     fun build(): Argument<T> = Argument(
             id = this.id,
+            name = this.name,
             isOptional = this.isOptional,
             type = this.type,
             defaultValue = this.defaultValue,

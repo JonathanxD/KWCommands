@@ -47,6 +47,7 @@ inline fun <reified T> Information(id: Information.Id, value: T, description: St
  * Reified function to create argument with a implicit [TypeInfo] of type [T].
  */
 inline fun <reified T> Argument(id: Any,
+                                name: String,
                                 isOptional: Boolean,
                                 defaultValue: T?,
                                 noinline validator: (String) -> Boolean,
@@ -56,6 +57,7 @@ inline fun <reified T> Argument(id: Any,
                                 requiredInfo: Set<RequiredInformation>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
         Argument(id,
+                name,
                 isOptional,
                 object : AbstractTypeInfo<T>() {},
                 defaultValue,

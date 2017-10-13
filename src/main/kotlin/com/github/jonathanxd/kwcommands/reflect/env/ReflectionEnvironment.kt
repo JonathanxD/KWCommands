@@ -422,6 +422,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             @Suppress("UNCHECKED_CAST")
             karg = Argument(
                     id = id,
+                    name = "",
                     isOptional = isOptional,
                     possibilities = possibilities,
                     transformer = transformer,
@@ -555,6 +556,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                     val argument = Argument(
                             id = id,
+                            name = "",
                             isOptional = isOptional,
                             possibilities = possibilities,
                             transformer = transformer,

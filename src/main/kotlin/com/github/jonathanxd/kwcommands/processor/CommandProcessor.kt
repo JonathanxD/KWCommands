@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
+import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
@@ -39,6 +40,11 @@ interface CommandProcessor {
      * Command manager.
      */
     val commandManager: CommandManager
+
+    /**
+     * Processor options
+     */
+    val options: Options
 
     /**
      * Register a [command interceptor][CommandInterceptor].

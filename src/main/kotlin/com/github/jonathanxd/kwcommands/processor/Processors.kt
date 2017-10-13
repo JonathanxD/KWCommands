@@ -27,13 +27,14 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
+import com.github.jonathanxd.iutils.option.Options
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
-import com.github.jonathanxd.kwcommands.exception.ArgumentsMissingException
-import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.MissingInformation
 import com.github.jonathanxd.kwcommands.information.checkRequiredInfo
@@ -43,6 +44,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.escape
+import com.github.jonathanxd.kwcommands.util.nameOrIdWithType
 import java.util.*
 
 object Processors {
@@ -58,6 +60,7 @@ object Processors {
     private class CommonCommandProcessor(override val commandManager: CommandManager = CommandManagerImpl()) : CommandProcessor {
 
         private val interceptors = mutableSetOf<CommandInterceptor>()
+        override val options: Options = Options()
 
         override fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
                 this.interceptors.add(commandInterceptor)
@@ -67,6 +70,7 @@ object Processors {
 
         override fun processWithOwnerFunction(stringList: List<String>,
                                               ownerProvider: (commandName: String) -> Any?): List<CommandContainer> {
+            val order = this.options[KWParserOptions.ORDER]
             val commands = mutableListOf<CommandContainer>()
             val deque: Deque<Command> = LinkedList()
             val getStr: (Int) -> String = { stringList[it].escape('\\') }
@@ -136,10 +140,48 @@ object Processors {
                                 it
                         }
 
+                        var argPos = 0
+
                         ((index + 1)..size).forEach {
                             val argStr = getStr(it)
 
-                            val arg = arguments.find { it.validator(argStr) }
+                            var arg: Argument<*>? = null
+
+                            if (!order)
+                                arg = arguments.find { it.validator(argStr) }
+                            else {
+                                if (argPos >= arguments.size)
+                                    arg = null
+                                else {
+                                    var any = false
+                                    while (argPos < arguments.size) {
+                                        val atPos = arguments[argPos]
+                                        if (!atPos.validator(argStr)) {
+                                            if (!atPos.isOptional)
+                                                throw InvalidInputForArgumentException(
+                                                        command!!,
+                                                        args.toList(),
+                                                        argStr,
+                                                        atPos,
+                                                        this.commandManager,
+                                                        "Invalid input $argStr for required argument " +
+                                                                "'${atPos.nameOrIdWithType}' of command $command.")
+
+                                        } else {
+                                            any = true
+                                            arg = atPos
+                                        }
+                                        ++argPos
+                                    }
+
+                                    if (!any)
+                                        throw NoArgumentForInputException(command!!,
+                                                args.toList(),
+                                                argStr,
+                                                this.commandManager,
+                                                "No argument for input string $argStr for command $command")
+                                }
+                            }
 
                             if (arg != null) {
                                 if (!arg.isOptional)
@@ -152,10 +194,10 @@ object Processors {
                         }
 
                         if (requiredCount != requiredArgsCount) {
-                            val missing = arguments.filter { !it.isOptional }.map {
+                            val missing = arguments.filter { !it.isOptional }.joinToString {
                                 if (it.possibilities.isNotEmpty()) "${it.id}{possibilities=${it.possibilities}}"
                                 else it.id.toString()
-                            }.joinToString()
+                            }
                             throw ArgumentsMissingException(command,
                                     args.toList(),
                                     this.commandManager,

@@ -27,11 +27,12 @@
  */
 package com.github.jonathanxd.kwcommands.help
 
-import com.github.jonathanxd.kwcommands.exception.ArgumentsMissingException
-import com.github.jonathanxd.kwcommands.exception.CommandException
-import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
+import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.printer.Printer
 import com.github.jonathanxd.kwcommands.util.level
+import com.github.jonathanxd.kwcommands.util.nameOrId
+import com.github.jonathanxd.kwcommands.util.nameOrIdWithType
+import com.github.jonathanxd.kwcommands.util.typeStr
 
 class CommonHelpInfoHandler : HelpInfoHandler {
 
@@ -73,6 +74,44 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 }
                 printer.flush()
             }
+
+            is InvalidInputForArgumentException -> {
+                val command = commandException.command
+                val parsed = commandException.parsedArgs
+                val argument = commandException.arg
+                val input = commandException.input
+                printer.printPlain("Invalid input value '$input' provided for argument " +
+                        "'${argument.nameOrId}' of command '${command.fullname}'")
+
+                if (parsed.isNotEmpty())
+                    printer.printPlain("  Successfully parsed args: ${parsed.joinToString { it.argument.id.toString() }}")
+
+                printer.printPlain("Argument type: ${argument.typeStr}")
+
+                if (argument.possibilities.isNotEmpty())
+                    printer.printPlain("Argument possibilities: ${argument.possibilities.joinToString()}")
+
+                printer.printPlain("")
+                printer.printPlain("Command specification:")
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
+            is NoArgumentForInputException -> {
+                val command = commandException.command
+                val parsed = commandException.parsedArgs
+                val input = commandException.input
+                printer.printPlain("Input value $input is not a valid for any argument of command '${command.fullname}'")
+
+                if (parsed.isNotEmpty())
+                    printer.printPlain("  Successfully parsed args: ${parsed.joinToString { it.argument.id.toString() }}")
+
+                printer.printPlain("")
+                printer.printPlain("Command specification:")
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+            else -> throw commandException
         }
 
 
