@@ -132,19 +132,14 @@ class BuildingArgument<T> {
 }
 
 class BuildingRequirement<T, R>(var required: R) {
-    val subject = BuildingInfoId()
-    lateinit var infoType: TypeInfo<in T>
+    val subject = BuildingInfoId<T>()
     lateinit var type: TypeInfo<out R>
     lateinit var tester: RequirementTester<T, R>
 
-    inline fun subject(f: BuildingInfoId.() -> Unit) = f(this.subject)
+    inline fun subject(f: BuildingInfoId<T>.() -> Unit) = f(this.subject)
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun subject(id: Information.Id) = subject { from(id) }
-
-    inline fun infoType(f: () -> TypeInfo<in T>) {
-        this.infoType = f()
-    }
+    inline fun subject(id: Information.Id<T>) = subject { from(id) }
 
     inline fun type(f: () -> TypeInfo<out R>) {
         this.type = f()
@@ -161,49 +156,43 @@ class BuildingRequirement<T, R>(var required: R) {
     inline fun toRequirement(): Requirement<T, R> = Requirement(
             required = this.required,
             subject = this.subject.toId(),
-            infoType = this.infoType,
             type = this.type,
             tester = this.tester
     )
 }
 
-class BuildingInfoId {
+class BuildingInfoId<T> {
 
-    lateinit var id: Class<*>
+    lateinit var type: TypeInfo<out T>
     val tags = UList<String>()
 
-    inline fun id(f: () -> Class<*>) {
-        this.id = f()
+    inline fun type(f: () -> TypeInfo<out T>) {
+        this.type = f()
     }
 
     inline fun tags(f: UList<String>.() -> Unit) =
             f(this.tags)
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun from(id: Information.Id) {
-        this.id = id.id
+    inline fun from(id: Information.Id<T>) {
+        this.type = id.type
         this.tags.clear()
         this.tags += id.tags
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun toId(): Information.Id = Information.Id(this.id, this.tags.coll.toTypedArray())
+    inline fun toId(): Information.Id<T> = Information.Id(this.type, this.tags.coll.toTypedArray())
 
 }
 
 class BuildingRequiredInfo<T> {
-    val id = BuildingInfoId()
-    lateinit var type: TypeInfo<T>
+    val id = BuildingInfoId<T>()
     var useProviders: Boolean = true
 
-    inline fun id(f: BuildingInfoId.() -> Unit) = f(id)
+    inline fun id(f: BuildingInfoId<T>.() -> Unit) = f(id)
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun id(id: Information.Id) = id { from(id) }
-
-    inline fun type(f: () -> TypeInfo<T>) {
-        this.type = f()
-    }
+    inline fun id(id: Information.Id<T>) = id { from(id) }
 
     inline fun useProviders(f: () -> Boolean) {
         this.useProviders = f()
@@ -212,9 +201,18 @@ class BuildingRequiredInfo<T> {
     @Suppress("NOTHING_TO_INLINE")
     inline fun toRequiredInformation(): RequiredInformation = RequiredInformation(
             id = this.id.toId(),
-            type = this.type,
             useProviders = this.useProviders
     )
+}
+
+inline fun <reified T> informationId(f: BuildingInfoId<T>.() -> Unit): Information.Id<T> {
+    val building = BuildingInfoId<T>()
+
+    building.type = object : AbstractTypeInfo<T>() {}
+
+    f(building)
+
+    return building.toId()
 }
 
 inline fun <reified T> argument(f: BuildingArgument<T>.() -> Unit): Argument<T> {
@@ -241,7 +239,6 @@ inline fun <T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<T>.() -> Uni
 inline fun <reified T, reified R> requirement(required: R, f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
-    building.infoType = object : AbstractTypeInfo<T>() {}
     building.type = object : AbstractTypeInfo<R>() {}
 
     f(building)
@@ -249,13 +246,11 @@ inline fun <reified T, reified R> requirement(required: R, f: BuildingRequiremen
     return building.toRequirement()
 }
 
-inline fun <T, R> requirementPlain(infoType: TypeInfo<T>,
-                                   reqType: TypeInfo<R>,
+inline fun <T, R> requirementPlain(reqType: TypeInfo<R>,
                                    required: R,
                                    f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
-    building.infoType = infoType
     building.type = reqType
 
     f(building)
@@ -265,7 +260,6 @@ inline fun <T, R> requirementPlain(infoType: TypeInfo<T>,
 
 inline fun <reified T> requireInfo(f: BuildingRequiredInfo<T>.() -> Unit): RequiredInformation {
     val building = BuildingRequiredInfo<T>()
-    building.type = object : AbstractTypeInfo<T>() {}
 
     f(building)
 
@@ -274,7 +268,6 @@ inline fun <reified T> requireInfo(f: BuildingRequiredInfo<T>.() -> Unit): Requi
 
 inline fun <T> requireInfoPlain(type: TypeInfo<T>, f: BuildingRequiredInfo<T>.() -> Unit): RequiredInformation {
     val building = BuildingRequiredInfo<T>()
-    building.type = type
 
     f(building)
 

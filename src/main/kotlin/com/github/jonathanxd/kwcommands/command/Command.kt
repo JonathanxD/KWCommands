@@ -94,6 +94,13 @@ data class Command(val parent: Command?,
     }
 
     /**
+     * Adds a copy of [commands] to sub-command list.
+     */
+    fun addSubCommands(commands: Iterable<Command>): Boolean {
+        return this.subCommands_.addAll(commands)
+    }
+
+    /**
      * Remove all commands with same name as [command] from sub-command list.
      */
     fun removeSubCommand(command: Command): Boolean =
@@ -120,11 +127,12 @@ data class Command(val parent: Command?,
     }
 
     override fun equals(other: Any?): Boolean {
-        return if (other != null && other is Command) this.parent == other.parent && this.name == other.name else super.equals(other)
+        return if (other != null && other is Command) this.parent == other.parent && this.name == other.name
+        else super.equals(other)
     }
 
     override fun toString(): String {
-        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: ${arguments.joinToString { "${it.id}: ${it.type}" }}, requirements: ${requirements.joinToString { "${it.subject}: ${it.required}" }}, requiredInformation: ${requiredInfo.joinToString { it.id.toString() }}, subCommands: {${subCommands.joinToString { it.name.toString() }}})"
+        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: [${arguments.joinToString { "${it.id}: ${it.type}" }}], requirements: [${requirements.joinToString { "${it.subject}: ${it.required}" }}], requiredInformation: [${requiredInfo.joinToString { it.id.toString() }}], subCommands: {${subCommands.joinToString { it.name.toString() }}})"
     }
 
     override fun compareTo(other: Command): Int {

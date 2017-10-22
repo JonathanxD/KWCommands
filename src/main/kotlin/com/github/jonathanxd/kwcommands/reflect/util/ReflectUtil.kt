@@ -27,23 +27,20 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.util
 
+import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
 import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.None
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
-import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
-import com.github.jonathanxd.kwcommands.reflect.annotation.CmdHandler
-import com.github.jonathanxd.kwcommands.reflect.annotation.Require
+import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
@@ -61,7 +58,8 @@ fun <T : Any> KClass<T>.get(): T? =
         else this.objectInstance ?: try {
             this.java.getDeclaredField("INSTANCE").get(null) as T
         } catch (e: Throwable) {
-            throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.", e)
+            Reflection.getInstance(this.java)
+                    ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.", e)
         }
 
 /**
@@ -147,9 +145,9 @@ fun Array<out Require>.toSpecs(): List<Requirement<*, *>> =
         this.map {
             @Suppress("UNCHECKED_CAST")
             Requirement(it.data,
-                    it.subject.let { Information.Id(it.value.java, it.tags) },
-                    TypeInfo.of(it.infoType.java) as TypeInfo<Any>,
-                    TypeInfo.of(String::class.java), it.testerType.get() as RequirementTester<Any, String>)
+                    it.subject.let { Information.Id(it.typeInfo, it.tags) },
+                    TypeInfo.of(String::class.java),
+                    it.testerType.get() as RequirementTester<Any, String>)
         }
 
 /**
@@ -222,8 +220,8 @@ fun Cmd.getPath(annotatedElement: AnnotatedElement): Array<String> {
     return this.parents + this.getName(annotatedElement)
 }
 
-fun Cmd.getName(annotatedElement: AnnotatedElement) = if(this.name.isNotEmpty()) this.name else
-    when(annotatedElement) {
+fun Cmd.getName(annotatedElement: AnnotatedElement) = if (this.name.isNotEmpty()) this.name else
+    when (annotatedElement) {
         is Class<*> -> annotatedElement.simpleName.decapitalize()
         is Field -> annotatedElement.name
         is Method -> annotatedElement.name

@@ -57,15 +57,12 @@ class DslTest {
             name { string("promote") }
             requiredInfo {
                 requireInfo<Group> {
-                    id {
-                        id { Group::class.java }
-                        tags { +"group" }
-                    }
+                    id(informationId<Group> { tags { +"group" } })
                 }
             }
             requirements {
                 +requirement<Group, Group>(Group.ADMIN) {
-                    subject(Information.Id(Group::class.java, arrayOf("group")))
+                    subject(informationId { tags { +"group" } })
                     tester { (required1), (_, value) -> value == required1 }
                 }
             }

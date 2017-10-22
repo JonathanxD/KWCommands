@@ -55,6 +55,6 @@ val Argument<*>.typeStr: String
     get() = if (this.type.canResolve()) this.type.toString() else this.type.classLiteral
 
 val Argument<*>.isBoolean: Boolean
-    get() = this.type.canResolve() &&
-            (this.type.typeClass == Boolean::class.javaObjectType || this.type.typeClass == Boolean::class.javaPrimitiveType)
+    get() = this.type.canResolve()
+            && (this.type.typeClass == Boolean::class.javaObjectType || this.type.typeClass == Boolean::class.javaPrimitiveType)
             && this.validator("true")

@@ -31,17 +31,15 @@ import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import kotlin.reflect.KClass
 
 /**
- * Requires a [subject] information to have a value of type [infoType] that matches [data]. (uses [testerType] to test
+ * Requires a [subject] information to have a value that matches [data]. (uses [testerType] to test
  * requirement).
  *
  * @property subject Subject information id.
- * @property infoType Type of information value
  * @property testerType Type of the [RequirementTester] (must be a singleton class).
  * @property data Requirement data, annotation requirements only supports String type.
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER)
 annotation class Require(val subject: Id,
-                         val infoType: KClass<out Any>,
                          val testerType: KClass<out RequirementTester<*, String>>,
                          val data: String)

@@ -58,7 +58,7 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                     args += commandContainer.arguments.find { parameter.argument.id == it.argument.id }?.value
                 }
                 is Parameter.InformationParameter<*> -> {
-                    val information = informationManager.find(parameter.id, parameter.infoComponent)
+                    val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)
 
                     if (!parameter.isOptional && information == null) {
                         args.add(null)
@@ -91,7 +91,7 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
             is Parameter.ArgumentParameter<*> ->
                 link.invoke(argumentContainer.value) ?: Unit
             is Parameter.InformationParameter<*> -> {
-                val information = informationManager.find(parameter.id, parameter.infoComponent)
+                val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)
 
                 if (!parameter.isOptional && information == null) {
                     Unit

@@ -41,51 +41,38 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 interface InformationProvider {
 
     /**
-     * Provides information for [id] of type [type].
+     * Provides information for [id].
      *
      * @param id Id of requested information
-     * @param type Type of requested information
-     * @return Information or null if this provider cannot provide a information of id [id] and type [type].
+     * @return Information or null if this provider cannot provide a information of [id].
      */
-    fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>?
-
-    /**
-     * Provides information of [id].
-     *
-     * @param id Id of requested information
-     * @return Information or null if this provider cannot provide a information of id [id].
-     */
-    fun <T> provide(id: Information.Id): Information<T>?
+    fun <T> provide(id: Information.Id<T>): Information<T>?
 
     companion object {
         /**
          * Creates unsafe [InformationProvider]. `null` is provided to [type] when a information is requested only by [id].
          */
         @Suppress("UNCHECKED_CAST")
-        fun unsafe(provider: (id: Information.Id, type: TypeInfo<*>?) -> Information<*>?): InformationProvider =
+        fun unsafe(provider: (id: Information.Id<*>) -> Information<*>?): InformationProvider =
                 object : InformationProvider {
-                    override fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>? {
-                        return provider(id, type) as Information<T>?
+                    override fun <T> provide(id: Information.Id<T>): Information<T>? {
+                        return provider(id) as Information<T>?
                     }
 
-                    override fun <T> provide(id: Information.Id): Information<T>? =
-                            provider(id, null) as Information<T>?
                 }
 
         /**
          * Creates a safe [InformationProvider] that is safe for [stype].
          */
         @Suppress("UNCHECKED_CAST")
-        fun <U> safeFor(stype: TypeInfo<U>, provider: (id: Information.Id, type: TypeInfo<U>) -> Information<U>?): InformationProvider =
+        fun <U> safeFor(stype: TypeInfo<U>, provider: (id: Information.Id<U>) -> Information<U>?): InformationProvider =
                 object : InformationProvider {
-                    override fun <T> provide(id: Information.Id, type: TypeInfo<T>): Information<T>? {
-                        if (stype == type)
-                            return provider(id, type as TypeInfo<U>) as Information<T>?
+                    override fun <T> provide(id: Information.Id<T>): Information<T>? {
+                        if (stype == id.type)
+                            return provider(id as Information.Id<U>) as Information<T>?
 
                         return null
                     }
-
-                    override fun <T> provide(id: Information.Id): Information<T>? = null
                 }
     }
 

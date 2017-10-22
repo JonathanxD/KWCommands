@@ -27,17 +27,22 @@
  */
 package com.github.jonathanxd.kwcommands.help
 
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.printer.Printer
+import com.github.jonathanxd.kwcommands.processor.CommandResult
+import com.github.jonathanxd.kwcommands.processor.MissingInformationResult
+import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.util.level
 import com.github.jonathanxd.kwcommands.util.nameOrId
-import com.github.jonathanxd.kwcommands.util.nameOrIdWithType
 import com.github.jonathanxd.kwcommands.util.typeStr
 
 class CommonHelpInfoHandler : HelpInfoHandler {
 
     override fun handleCommandException(commandException: CommandException, printer: Printer) {
-        when(commandException) {
+        when (commandException) {
             is ArgumentsMissingException -> {
                 val command = commandException.command
                 val providedArgs = commandException.providedArgs
@@ -131,6 +136,63 @@ class CommonHelpInfoHandler : HelpInfoHandler {
         }
 
 
+    }
+
+    private fun CommandResult.str(): String {
+        fun Container.containerStr(): String = when(this) {
+            is CommandContainer -> "command ${this.command.fullname}"
+            is ArgumentContainer<*> -> "argument ${this.argument.nameOrId}"
+            else -> this.toString()
+        }
+
+        return this.container.containerStr() + if (rootContainer != null) " of ${rootContainer!!.containerStr()}" else ""
+    }
+
+    override fun handleResults(commandResults: List<CommandResult>, printer: Printer) {
+        commandResults.forEach {
+            when (it) {
+                is UnsatisfiedRequirementsResult -> {
+                    val unsatisfied = it.unsatisfiedRequirements
+
+                    printer.printPlain("Unsatisfied requirements of '${it.str()}':")
+
+                    if (unsatisfied.isNotEmpty())
+                        unsatisfied.forEach {
+                            printer.printPlain("  Information identification:" +
+                                    " Type: ${it.informationId.type}." +
+                                    " Tags: ${it.informationId.tags.joinToString()}.")
+                            printer.printPlain("  Present: ${it.information != null}.${
+                            if (it.information != null) ". Value: ${it.information.value}" else ""
+                            }")
+                            printer.printPlain("  Required: ${it.requirement.required}")
+                            printer.printPlain("  Tester: ${it.requirement.tester}")
+                            printer.printPlain("  Reason: ${it.reason.name}")
+                        }
+
+                    printer.flush()
+                }
+                is MissingInformationResult -> {
+                    val missing = it.missingInformationList
+
+                    printer.printPlain("Missing information of '${it.str()}':")
+
+                    if (missing.isNotEmpty())
+                        missing.forEach {
+                            printer.printPlain("  " +
+                                    " Type: ${it.requiredInfo.id.type}." +
+                                    " Tags: ${it.requiredInfo.id.tags.joinToString()}." +
+                                    " Include provided: ${it.requiredInfo.useProviders}.")
+                        }
+
+                    printer.flush()
+                }
+            }
+
+            if (commandResults.size > 1) {
+                printer.printPlain("")
+                printer.flush()
+            }
+        }
     }
 
 }

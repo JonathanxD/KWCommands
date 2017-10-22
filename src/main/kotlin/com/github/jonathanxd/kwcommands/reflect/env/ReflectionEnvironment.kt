@@ -28,13 +28,16 @@
 package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.reflection.Invokables
+import com.github.jonathanxd.iutils.reflection.Link
 import com.github.jonathanxd.iutils.reflection.Links
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
+import com.github.jonathanxd.kwcommands.json.*
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
@@ -42,15 +45,14 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 import com.github.jonathanxd.kwcommands.reflect.util.*
-import com.github.jonathanxd.kwcommands.util.ArgumentType
-import com.github.jonathanxd.kwcommands.util.getFirstOrNull
+import com.github.jonathanxd.kwcommands.util.*
 import java.lang.invoke.MethodHandles
-import java.lang.reflect.AnnotatedElement
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.lang.reflect.Modifier
+import java.lang.reflect.*
 import java.util.*
 import kotlin.reflect.KClass
+
+typealias ReflectInstanceProvider = (Class<*>) -> Any?
+typealias JsonParserResolver = (Class<*>) -> JsonCommandParser
 
 /**
  * Reflection helper environment.
@@ -170,6 +172,75 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         return success
     }
 
+    // Json
+
+    /**
+     * Creates a list of commands from json command annotations present in [klass]. This includes
+     * annotations in fields, methods, and inner classes inside [klass].
+     */
+    fun <T : Any> fromJsonClass(klass: Class<T>,
+                                instanceProvider: ReflectInstanceProvider,
+                                jsonCommandParserResolver: JsonParserResolver): List<Command> {
+        val commands = mutableListOf<Command>()
+
+        commands += this.fromJsonAnnotated(klass, klass, instanceProvider, jsonCommandParserResolver)
+
+        klass.declaredFields.forEach {
+            commands += this.fromJsonAnnotated(it, klass, instanceProvider, jsonCommandParserResolver)
+        }
+
+        klass.declaredMethods.forEach {
+            commands += this.fromJsonAnnotated(it, klass, instanceProvider, jsonCommandParserResolver)
+        }
+
+        klass.classes.forEach {
+            commands += this.fromJsonClass(it, instanceProvider) {
+                jsonCommandParserResolver(it).let {
+                    it.factory.create(ReflectTypeResolver(klass, instanceProvider, this, it.typeResolver))
+                }
+            }
+        }
+
+        return commands
+    }
+
+    /**
+     * Creates a list of [Command] from json annotations in [annotatedElement], this does not include annotations
+     * present inside the [annotatedElement].
+     */
+    fun fromJsonAnnotated(annotatedElement: AnnotatedElement,
+                          klass: Class<*>,
+                          instanceProvider: ReflectInstanceProvider,
+                          jsonCommandParserResolver: JsonParserResolver): List<Command> {
+
+        val jsonObj = annotatedElement.getCommandJsonObj() ?: return emptyList()
+
+        val parser = jsonCommandParserResolver(jsonObj.parser).let {
+            it.factory.create(ReflectTypeResolver(klass, instanceProvider, this, it.typeResolver))
+        }
+
+        val cmd = parser.parseCommand(jsonObj.resolveJsonString(klass))
+
+        (cmd.handler as? DynamicHandler)?.resolveHandlers(cmd)
+
+        cmd.arguments.forEach {
+            (it.handler as? DynamicHandler)?.resolveHandlers(it, cmd)
+        }
+
+        return listOf(cmd)
+    }
+
+    /**
+     * Creates a list of [Command] from json annotations in [member], this does not include annotations
+     * present inside the [member].
+     */
+    fun <T> fromJsonMember(member: T,
+                           instanceProvider: ReflectInstanceProvider,
+                           jsonCommandParserResolver: JsonParserResolver) where T : Member, T : AnnotatedElement =
+            this.fromJsonAnnotated(member, member.declaringClass, instanceProvider, jsonCommandParserResolver)
+
+    // Reflection
+
     /**
      * Create command list from commands of class [klass]
      *
@@ -218,7 +289,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * Create command list from commands of class [klass].
      *
      * @param instanceProvider Provider of class instances (null for static elements).
-     * @param owner Owner of commands.
+     * @param owner Owner of commands, used to fetch parent command.
      * @param queue Command Factory Queue.
      * @param includeInner Include inner class commands.
      * @see CommandFactoryQueue
@@ -237,7 +308,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      *
      * @param instanceProvider Provider of class instances (null for static elements).
      * @param superCommand Super command.
-     * @param owner Owner of commands.
+     * @param owner Owner of commands, used to fetch parent command.
      * @param queue Command Factory Queue.
      * @param includeInner Include inner class commands.
      * @see CommandFactoryQueue
@@ -260,7 +331,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      *
      * @param instanceProvider Provider of class instances (null for static elements).
      * @param superCommand Super command.
-     * @param owner Owner of commands.
+     * @param owner Owner of commands, used to fetch parent command.
      * @param queue Command Factory Queue.
      * @param includeInner Include inner class commands.
      * @see CommandFactoryQueue
@@ -297,7 +368,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     (fhandler as? ReflectionHandler)?.element?.parameters?.forEach {
                         if (it is Parameter.InformationParameter) {
                             if (!it.isOptional) {
-                                requiredInfo += RequiredInformation(it.id, it.infoComponent)
+                                requiredInfo += RequiredInformation(it.id/*, it.infoComponent*/)
                             }
                         }
                     }
@@ -361,6 +432,24 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 .map { fromMethod(instance, it, superCommand, owner, queue) }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun createSetterHandler(instance: Any?, field: Field): Handler =
+        ReflectionHandler(Element(linkField(instance, field), emptyList()))
+
+    fun linkField(instance: Any?, field: Field): Link<Any?> =
+            if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
+                Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectSetter(field)))
+            } else {
+                field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type).let {
+                    if (it == null || (!Modifier.isPublic(it.modifiers) && !it.isAccessible))
+                        throw IllegalArgumentException("Accessible setter of field $field was not found!")
+                    else {
+                        Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(it)))
+                    }
+                }
+            }.let {
+                if (instance != null) it.bind(instance) else it
+            }
 
     /**
      * Creates a list of arguments from a [field].
@@ -372,22 +461,9 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     fun fromField(instance: Any?, field: Field): Argument<*> {
         val type = TypeUtil.toTypeInfo(field.genericType)
 
+        val link = linkField(instance, field)
 
-        val link = if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
-            Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflectSetter(field)))
-        } else {
-            field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type).let {
-                if (it == null || (!Modifier.isPublic(it.modifiers) && !it.isAccessible))
-                    throw IllegalArgumentException("Accessible setter of field $field was not found!")
-                else {
-                    Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(it)))
-                }
-            }
-        }.let {
-            if (instance != null) it.bind(instance) else it
-        }
-
-        var karg: Argument<Any>? = null
+        var karg: Argument<Any?>? = null
 
         val parameters = field.let {
             val argumentAnnotation: Arg? = field.getDeclaredAnnotation(Arg::class.java)
@@ -438,15 +514,16 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 val infoIsOptional = infoAnnotation.isOptional
                 val infoId = infoAnnotation.createId(type)
 
+                @Suppress("UNCHECKED_CAST")
                 return@let Parameter.InformationParameter(
                         id = infoId,
                         isOptional = infoIsOptional,
-                        type = type
+                        type = type as TypeInfo<Any?>
                 )
             } else {
 
                 @Suppress("UNCHECKED_CAST")
-                return@let Parameter.ArgumentParameter(karg!!, type as TypeInfo<Any>)
+                return@let Parameter.ArgumentParameter(karg!!, type as TypeInfo<Any?>)
             }
 
         }
@@ -499,6 +576,18 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     }
 
     /**
+     * Creates a handler for [method].
+     */
+    fun createHandler(instance: Any?, method: Method): Handler =
+            ReflectionHandler(this.createElement(instance, method).element)
+
+    /**
+     * Creates a handler for [method].
+     */
+    fun createArgumentHandler(instance: Any?, method: Method): ArgumentHandler<*> =
+            ReflectionHandler(this.createElement(instance, method).element)
+
+    /**
      * Create a [Element] instance from a [method].
      *
      * @param instance Instance of method declaring class (null for static).
@@ -526,13 +615,14 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val isOptional = infoAnnotation.isOptional
                     val id = infoAnnotation.createId(type)
 
+                    @Suppress("UNCHECKED_CAST")
                     val param = Parameter.InformationParameter(
                             id = id,
                             isOptional = isOptional,
-                            type = type
+                            type = type as TypeInfo<Any?>
                     )
 
-                    requiredInfo += RequiredInformation(id, param.infoComponent)
+                    requiredInfo += RequiredInformation(id/*, param.infoComponent*/)
 
                     return@map param
                 }
@@ -570,7 +660,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     arguments += argument
 
                     @Suppress("UNCHECKED_CAST")
-                    return@map Parameter.ArgumentParameter(argument, type as TypeInfo<Any>)
+                    return@map Parameter.ArgumentParameter(argument, type as TypeInfo<Any?>)
                 }
                 else -> throw IllegalStateException("Missing annotation for parameter: $it")
             }
@@ -624,11 +714,18 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         fun registerGlobal(argumentTypeProvider: ArgumentTypeProvider) = GLOBAL.registerProvider(argumentTypeProvider)
 
         /**
-         * Gets optional global argument specification.
+         * Gets required global argument specification.
          *
          * @param type Type of argument value.
          */
         fun <T> getGlobalArgumentType(type: TypeInfo<T>) = GLOBAL.getArgumentType(type)
+
+        /**
+         * Gets optional global argument specification.
+         *
+         * @param type Type of argument value.
+         */
+        fun <T> getGlobalArgumentTypeOrNull(type: TypeInfo<T>) = GLOBAL.getArgumentTypeOrNull(type)
 
         init {
             // Data types

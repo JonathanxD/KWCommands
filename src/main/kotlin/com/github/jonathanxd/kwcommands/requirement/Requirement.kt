@@ -38,8 +38,7 @@ import com.github.jonathanxd.kwcommands.information.Information
  * @param R Required value type.
  */
 data class Requirement<T, R>(val required: R,
-                             val subject: Information.Id,
-                             val infoType: TypeInfo<in T>,
+                             val subject: Information.Id<T>,
                              val type: TypeInfo<out R>,
                              val tester: RequirementTester<T, R>) {
 
@@ -49,8 +48,12 @@ data class Requirement<T, R>(val required: R,
     fun test(information: Information<T>) = this.tester.test(this, information)
 
     companion object {
-        inline fun <reified T, reified R> create(required: R, subject: Information.Id, tester: RequirementTester<T, R>) =
-                Requirement(required, subject, object : AbstractTypeInfo<T>() {}, object : AbstractTypeInfo<R>() {}, tester)
+        inline fun <reified T, reified R> create(required: R, subject: Information.Id<T>, tester: RequirementTester<T, R>) =
+                Requirement(required, subject, object : AbstractTypeInfo<R>() {}, tester)
+
+        inline fun <reified T, reified R> create(required: R, tags: Array<String>, tester: RequirementTester<T, R>) =
+                Requirement(required, Information.Id(object : AbstractTypeInfo<T>() {}, tags),
+                        object : AbstractTypeInfo<R>() {}, tester)
 
         @JvmStatic
         fun <T, R> builder() = RequirementBuilder<T, R>()

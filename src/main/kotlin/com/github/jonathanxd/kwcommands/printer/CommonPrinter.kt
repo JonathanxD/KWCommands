@@ -246,7 +246,7 @@ class CommonPrinter(val out: (String) -> Unit,
 
                             builder.append(' ', to + 3)
 
-                            builder.append("** Requires value '${it.required}' of subject '${it.subject.id.simpleName}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
+                            builder.append("** Requires value '${it.required}' of subject '${it.subject.type}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
                             out(builder.toString())
                             builder.setLength(0)
 
@@ -257,7 +257,7 @@ class CommonPrinter(val out: (String) -> Unit,
 
                             builder.append(' ', to + 3)
 
-                            builder.append("* Requires information '${it.id}' of type '${it.type}'.")
+                            builder.append("* Requires information '${it.id}' of type '${it.id.type}'.")
                             out(builder.toString())
                             builder.setLength(0)
                         }

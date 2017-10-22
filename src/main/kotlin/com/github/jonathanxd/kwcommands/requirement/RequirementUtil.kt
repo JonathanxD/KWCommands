@@ -35,14 +35,15 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
  *
  * @return Empty list if all requirements was satisfied or a list with unsatisfied requirements.
  */
+@Suppress("UNCHECKED_CAST")
 fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager): List<UnsatisfiedRequirement<*>> {
     val fails = mutableListOf<UnsatisfiedRequirement<*>>()
 
     this.forEach {
-        val find = manager.find(it.subject, it.infoType)
+        val find = manager.findErased<Any?>(it.subject)
 
         if (find == null) {
-            fails.add(UnsatisfiedRequirement(it, it.subject, null, Reason.MISSING_INFORMATION))
+            fails.add(UnsatisfiedRequirement(it as Requirement<Any?, *>, it.subject, null, Reason.MISSING_INFORMATION))
         } else {
             @Suppress("UNCHECKED_CAST")
             it as Requirement<Any, *>
@@ -54,13 +55,15 @@ fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager): List
 
         }
 
+        Unit
+
     }
 
     return fails
 }
 
 data class UnsatisfiedRequirement<T>(val requirement: Requirement<T, *>,
-                                     val informationId: Information.Id,
+                                     val informationId: Information.Id<T>,
                                      val information: Information<T>?,
                                      val reason: Reason)
 

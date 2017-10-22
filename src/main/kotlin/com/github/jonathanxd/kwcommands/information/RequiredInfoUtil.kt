@@ -30,6 +30,6 @@ package com.github.jonathanxd.kwcommands.information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 
 fun Set<RequiredInformation>.checkRequiredInfo(manager: InformationManager): List<MissingInformation> =
-    this.filter { manager.find(it.id, it.type, it.useProviders) == null }.map(::MissingInformation)
+    this.filter { manager.find(it.id, it.useProviders) == null }.map(::MissingInformation)
 
 data class MissingInformation(val requiredInfo: RequiredInformation)

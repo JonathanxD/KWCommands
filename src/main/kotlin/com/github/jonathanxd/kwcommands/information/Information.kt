@@ -43,10 +43,9 @@ import java.util.*
  * @param T Type of information
  * @property id Identification of information
  * @property value Stored value
- * @property type Type of value
  * @property description Optional description of this information.
  */
-data class Information<out T>(val id: Information.Id, val value: T, val type: TypeInfo<out T>, val description: String?) {
+data class Information<out T>(val id: Information.Id<T>, val value: T, val description: String?) {
 
     /**
      * True if information is [EMPTY]
@@ -77,15 +76,15 @@ data class Information<out T>(val id: Information.Id, val value: T, val type: Ty
     /**
      * Identification of information
      *
-     * @property id Identification of information.
-     * @property tags Additional tags of information id.
+     * @property type Type of identification value.
+     * @property tags Identification tags.
      */
-    data class Id(val id: Class<*>, val tags: Array<out String>) {
+    data class Id<out T>(val type: TypeInfo<out T>, val tags: Array<out String>) {
         override fun hashCode(): Int =
-                Objects.hash(id.hashCode(), Arrays.hashCode(tags))
+                Objects.hash(type.hashCode(), Arrays.hashCode(tags))
 
         override fun equals(other: Any?): Boolean =
-                if (other != null && other is Information.Id) this.id == other.id
+                if (other != null && other is Information.Id<*>) this.type == other.type
                         && Arrays.equals(this.tags, other.tags)
                 else super.equals(other)
 
@@ -93,7 +92,7 @@ data class Information<out T>(val id: Information.Id, val value: T, val type: Ty
 
     companion object {
         @JvmField
-        val EMPTY = Information(Id(Unit::class.java, emptyArray()), Unit, TypeInfo.of(Unit::class.java), null)
+        val EMPTY = Information(Id(TypeInfo.of(Unit::class.java), emptyArray()), Unit, null)
 
         @Suppress("UNCHECKED_CAST")
         fun <T> empty(): Information<T> =

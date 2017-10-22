@@ -29,3 +29,4 @@ package com.github.jonathanxd.kwcommands.util
 
 typealias Validator = (String) -> Boolean
 typealias Transformer<T> = (String) -> T
+typealias PossibilitiesFunc = () -> List<String>

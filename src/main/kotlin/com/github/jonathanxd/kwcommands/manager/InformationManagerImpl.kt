@@ -28,10 +28,12 @@
 package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.iutils.`object`.Default
-import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.iutils.collection.Comparators3
+import com.github.jonathanxd.iutils.type.TypeInfoSortComparator
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
 import java.util.*
+import java.util.function.Function
 
 /**
  * Common implementation of [InformationManager].
@@ -44,15 +46,15 @@ class InformationManagerImpl : InformationManager {
     override val informationSet: Set<Information<*>> = Collections.unmodifiableSet(this.informationSet_)
     override val informationProviders: Set<InformationProvider> = Collections.unmodifiableSet(this.informationProviders_)
 
-    override fun <T> registerInformation(id: Information.Id, value: T, valueType: TypeInfo<T>, description: String?): Boolean {
-        return this.informationSet_.add(Information(id, value, valueType, description))
+    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean {
+        return this.informationSet_.add(Information(id, value, description))
     }
 
     override fun registerInformation(information: Information<*>): Boolean {
         return this.informationSet_.add(information)
     }
 
-    override fun unregisterInformation(id: Information.Id): Boolean {
+    override fun unregisterInformation(id: Information.Id<*>): Boolean {
         return this.informationSet_.removeIf { it.id == id }
     }
 
@@ -65,58 +67,38 @@ class InformationManagerImpl : InformationManager {
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> findById(id: Information.Id, useProviders: Boolean): Information<T>? =
-            informationSet_.find f@ {
-                val itId = it.id
+    override fun <T> find(id: Information.Id<T>, useProviders: Boolean): Information<T>? {
 
-                if ((id.id == Default::class.java || id.id == itId.id)
-                        && (id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) })) {
-                    return@f true
-                }
+        val assignFound = mutableListOf<Information<*>>()
 
-                false
-            } as? Information<T> ?: this.informationProviders_.let provide@ {
-                if (!useProviders)
-                    return@provide null
+        informationSet_.forEach {
+            val itId = it.id
 
-                it.forEach { p ->
-                    p.provide<T>(id)?.let {
-                        return@provide it
-                    }
-                }
+            val tagsMatch = id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) }
 
-                return@provide null
+            if ((id.type == Default::class.java || id.type == itId.type)
+                    && tagsMatch)
+                return it as Information<T>
+
+            if (tagsMatch && id.type.isAssignableFrom(id.type))
+                assignFound += it
+        }
+
+        if (assignFound.isNotEmpty()) {
+            return assignFound.maxWith(Comparators3.map(comparator, Function { it.id.type })) as Information<T>
+        }
+
+        if (!useProviders)
+            return null
+
+        this.informationProviders_.forEach {
+            it.provide<T>(id)?.let {
+                return it
             }
+        }
 
-    override fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>? =
-            find(id, type, true)
-
-    @Suppress("UNCHECKED_CAST")
-    override fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean): Information<T>? =
-            informationSet_.find f@ {
-                if (it.type == type) {
-                    val itId = it.id
-
-                    if ((id.id == Default::class.java || id.id == itId.id)
-                            && (id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) })) {
-                        return@f true
-                    }
-
-                }
-
-                false
-            } as? Information<T> ?: this.informationProviders_.let provide@ {
-                if (!useProviders)
-                    return@provide null
-
-                it.forEach { p ->
-                    p.provide(id, type)?.let {
-                        return@provide it
-                    }
-                }
-
-                return@provide null
-            }
+        return null
+    }
 
     override fun copy(): InformationManager {
         val newManager = InformationManagerImpl()
@@ -126,6 +108,11 @@ class InformationManagerImpl : InformationManager {
 
         return newManager
     }
+
+    companion object {
+        internal val comparator = TypeInfoSortComparator()
+    }
+
 }
 
 /**
@@ -139,7 +126,7 @@ object InformationManagerVoid : InformationManager {
     override val informationProviders: Set<InformationProvider>
         get() = emptySet()
 
-    override fun <T> registerInformation(id: Information.Id, value: T, valueType: TypeInfo<T>, description: String?): Boolean {
+    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean {
         return false
     }
 
@@ -147,7 +134,7 @@ object InformationManagerVoid : InformationManager {
         return true
     }
 
-    override fun unregisterInformation(id: Information.Id): Boolean {
+    override fun unregisterInformation(id: Information.Id<*>): Boolean {
         return true
     }
 
@@ -159,17 +146,7 @@ object InformationManagerVoid : InformationManager {
         return true
     }
 
-    override fun <T> findById(id: Information.Id, useProviders: Boolean): Information<T>? {
-        return null
-    }
-
-    override fun <T> find(id: Information.Id, type: TypeInfo<T>): Information<T>? {
-        return null
-    }
-
-    override fun <T> find(id: Information.Id, type: TypeInfo<T>, useProviders: Boolean): Information<T>? {
-        return null
-    }
+    override fun <T> find(id: Information.Id<T>, useProviders: Boolean): Information<T>? = null
 
     override fun copy(): InformationManager = this
 

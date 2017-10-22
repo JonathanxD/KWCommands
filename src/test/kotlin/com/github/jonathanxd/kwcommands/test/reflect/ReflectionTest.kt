@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.test.reflect
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.MissingInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
@@ -59,7 +60,7 @@ class ReflectionTest {
     fun test() {
         val information = InformationManagerImpl()
 
-        information.registerInformation(Information.Id(Player::class.java, arrayOf("player")), Player)
+        information.registerInformation(informationId { tags { +"player" } }, Player)
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
@@ -102,7 +103,7 @@ class ReflectionTest {
     fun game() {
         val information = InformationManagerImpl()
 
-        information.registerInformation(Information.Id(Player::class.java, arrayOf("player")), Player)
+        information.registerInformation(informationId { tags { +"player" } }, Player)
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
@@ -174,8 +175,7 @@ class ReflectionTest {
 
         val simplePlayer = SimplePlayer("Player9")
 
-        information.registerInformation(Information.Id(SimplePlayer::class.java, arrayOf("player")),
-                simplePlayer)
+        information.registerInformation(informationId { tags { +"player" } }, simplePlayer)
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
@@ -199,7 +199,7 @@ class ReflectionTest {
 class Download {
 
     @Arg(value = "url", requirements = arrayOf(
-            Require(subject = Id(Player::class, "player"), data = "remote.download", infoType = Player::class, testerType = PermissionRequirementTest::class)
+            Require(subject = Id(Player::class, "player"), data = "remote.download", testerType = PermissionRequirementTest::class)
     ))
     lateinit var url: String
 
@@ -212,13 +212,13 @@ class World {
 
     @Cmd(name = "setblock", description = "Sets the block in position x, y, z",
             requirements = arrayOf(
-                    Require(subject = Id(Player::class, "player"), data = "world.modify", infoType = Player::class, testerType = PermissionRequirementTest::class)
+                    Require(subject = Id(Player::class, "player"), data = "world.modify", testerType = PermissionRequirementTest::class)
             ))
     fun setBlock(@Arg("x") x: Int,
                  @Arg("y") y: Int,
                  @Arg("z") z: Int,
                  @Arg(value = "block", requirements = arrayOf(
-                         Require(subject = Id(Player::class, "player"), data = "world.modify.block", infoType = Player::class, testerType = PermissionRequirementTest::class)
+                         Require(subject = Id(Player::class, "player"), data = "world.modify.block", testerType = PermissionRequirementTest::class)
                  )) block: Block): Any {
         return "setted block $block at $x, $y, $z"
     }
@@ -251,7 +251,7 @@ class TpCommand {
 }
 
 
-val permissionRequirement = Requirement.create("world.modify", Information.Id(Player::class.java, arrayOf("player")), PermissionRequirementTest)
+val permissionRequirement = Requirement.create("world.modify", informationId { tags { +"player" } }, PermissionRequirementTest)
 
 
 object PermissionRequirementTest : RequirementTester<Player, String> {

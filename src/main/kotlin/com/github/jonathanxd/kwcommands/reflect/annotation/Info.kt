@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.reflect.annotation
 
 import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.reflect.element.infoComponent
 
@@ -56,9 +57,11 @@ annotation class Info(val value: Id = Id(Default::class), val isOptional: Boolea
  *
  * @param inferredType Inferred type to be used if [Info] does not provide one.
  */
-fun Info.createId(inferredType: TypeInfo<*>): Information.Id = this.value.let {
-    if (it.value.java == Default::class.java && it.tags.isEmpty())
-        Information.Id(inferredType.infoComponent.typeClass, emptyArray())
+@Suppress("UNCHECKED_CAST")
+fun Info.createId(inferredType: TypeInfo<*>): Information.Id<*> = this.value.let {
+    if (it.value.java == Default::class.java && it.typeLiter.isEmpty() && it.tags.isEmpty())
+        Information.Id(inferredType.infoComponent, emptyArray())
     else
-        Information.Id(it.value.java, it.tags)
+        Information.Id(it.typeInfo, it.tags)
 }
+

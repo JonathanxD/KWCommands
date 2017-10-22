@@ -28,6 +28,19 @@
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
 import com.github.jonathanxd.iutils.`object`.Default
+import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import kotlin.reflect.KClass
 
-annotation class Id(val value: KClass<*> = Default::class, vararg val tags: String = arrayOf())
+annotation class Id(val value: KClass<*> = Default::class,
+                    val typeLiter: String = "",
+                    vararg val tags: String = arrayOf())
+
+val Id.typeInfo: TypeInfo<*>
+    get() =
+        if (this.value.java != Default::class.java)
+            TypeInfo.of(this.value.java)
+        else if (this.value.java == Default::class.java && this.typeLiter.isNotEmpty())
+            TypeInfoUtil.fromFullString(this.typeLiter).single()
+        else
+            throw IllegalStateException("Neither type literal nor value class was defined in annotation $this.")

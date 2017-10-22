@@ -37,8 +37,7 @@ import com.github.jonathanxd.kwcommands.information.Information
 class RequirementBuilder<T, R> {
 
     private var required = Opt.none<R>()
-    private lateinit var subject: Information.Id
-    private lateinit var infoType: TypeInfo<in T>
+    private lateinit var subject: Information.Id<T>
     private lateinit var type: TypeInfo<out R>
     private lateinit var tester: RequirementTester<T, R>
 
@@ -53,16 +52,8 @@ class RequirementBuilder<T, R> {
     /**
      * Sets [Requirement.subject]
      */
-    fun subject(subject: Information.Id): RequirementBuilder<T, R> {
+    fun subject(subject: Information.Id<T>): RequirementBuilder<T, R> {
         this.subject = subject
-        return this
-    }
-
-    /**
-     * Sets [Requirement.infoType]
-     */
-    fun infoType(infoType: TypeInfo<in T>): RequirementBuilder<T, R> {
-        this.infoType = infoType
         return this
     }
 
@@ -86,13 +77,12 @@ class RequirementBuilder<T, R> {
      * Build [Requirement]
      */
     fun build(): Requirement<T, R> {
-        if(!this.required.isPresent)
+        if (!this.required.isPresent)
             throw IllegalStateException("Property 'required' should be initialized.")
 
         return Requirement(
                 required = this.required.value,
                 subject = this.subject,
-                infoType = this.infoType,
                 type = this.type,
                 tester = this.tester
         )

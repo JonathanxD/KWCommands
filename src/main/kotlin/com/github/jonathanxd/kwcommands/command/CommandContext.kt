@@ -25,6 +25,8 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
+@file:Suppress("MemberVisibilityCanPrivate")
+
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.iutils.type.AbstractTypeInfo
@@ -61,37 +63,36 @@ data class CommandContext(val commandContainer: CommandContainer,
     fun <T> getOptArg(id: Any, type: TypeInfo<T>): T? =
             this.commandContainer.getArgument(id, type)?.value
 
-    fun <T> getInfo(infoId: Information.Id, typeInfo: TypeInfo<T>): Information<T> =
-            this.getOptInfo(infoId, typeInfo)
-                    ?: throw InfoMissingException("Information with id $infoId of type $typeInfo is missing!")
+    fun <T> getInfo(infoId: Information.Id<T>): Information<T> =
+            this.getOptInfo(infoId)
+                    ?: throw InfoMissingException("Information with id $infoId is missing!")
 
+    fun <T> getOptInfo(infoId: Information.Id<T>): Information<T>? =
+            this.informationManager.find(infoId)
 
-    fun <T> getOptInfo(infoId: Information.Id, typeInfo: TypeInfo<T>): Information<T>? =
-            this.informationManager.find(infoId, typeInfo)
-
-    fun <T> getInfoById(infoId: Information.Id): Information<T> =
-            this.informationManager.findById(infoId)
+    fun <T> getInfoErased(infoId: Information.Id<*>): Information<T> =
+            this.informationManager.findErased(infoId)
                     ?: throw InfoMissingException("Information with id $infoId is missing!")
 
 
-    fun <T> getOptInfoById(infoId: Information.Id): Information<T>? =
-            this.informationManager.findById(infoId)
+    fun <T> getOptInfoErased(infoId: Information.Id<*>): Information<T>? =
+            this.informationManager.findErased(infoId)
 
-    fun <T> getInfoValue(infoId: Information.Id, typeInfo: TypeInfo<T>): T =
-            this.getInfo(infoId, typeInfo).value
+    fun <T> getInfoValue(infoId: Information.Id<T>): T =
+            this.getInfo(infoId).value
 
-    fun <T> getInfoValueById(infoId: Information.Id): T =
-            this.getInfoById<T>(infoId).value
+    fun <T> getInfoErasedValue(infoId: Information.Id<*>): T =
+            this.getInfoErased<T>(infoId).value
 
-    fun <T> getOptInfoValue(infoId: Information.Id, typeInfo: TypeInfo<T>): T? =
-            this.getOptInfo(infoId, typeInfo)?.value
+    fun <T> getOptInfoValue(infoId: Information.Id<T>): T? =
+            this.getOptInfo(infoId)?.value
 
-    fun <T> getOptInfoValueById(infoId: Information.Id): T? =
-            this.getOptInfoById<T>(infoId)?.value
+    fun <T> getOptInfoErasedValue(infoId: Information.Id<*>): T? =
+            this.getOptInfoErased<T>(infoId)?.value
 
     @Suppress("UNCHECKED_CAST")
     fun <T> satisfyReq(req: Requirement<T, *>): Boolean =
-            getOptInfo(req.subject, req.infoType as TypeInfo<T>)?.let { req.test(it) } ?: false
+            getOptInfo(req.subject)?.let { req.test(it) } ?: false
 
     // inline
 
@@ -104,23 +105,20 @@ data class CommandContext(val commandContainer: CommandContainer,
     inline fun <reified T> getOptArg(id: Any): T? =
             commandContainer.getArgument(id, object : AbstractTypeInfo<T>() {})?.value
 
-    inline fun <reified T> getInfo(infoId: Information.Id): Information<T> =
-            (object : AbstractTypeInfo<T>() {}).let { type ->
-                this.informationManager.find(infoId, type)
-                        ?: throw InfoMissingException("Information with id $infoId of type $type is missing!")
+    inline fun <reified T> getInfo(tags: Array<String>): Information<T> =
+            Information.Id(object : AbstractTypeInfo<T>() {}, tags).let { infoId ->
+                this.informationManager.find(infoId)
+                        ?: throw InfoMissingException("Information with id $infoId is missing!")
             }
 
-    inline fun <reified T> getOptInfo(infoId: Information.Id): Information<T>? =
-            this.informationManager.find(infoId, object : AbstractTypeInfo<T>() {})
+    inline fun <reified T> getOptInfo(tags: Array<String>): Information<T>? =
+            this.informationManager.find(Information.Id(object : AbstractTypeInfo<T>() {}, tags))
 
-    inline fun <reified T> getInfoValue(infoId: Information.Id): T =
-            (object : AbstractTypeInfo<T>() {}).let { type ->
-                this.informationManager.find(infoId, type)?.value
-                        ?: throw InfoMissingException("Information with id $infoId of type $type is missing!")
-            }
+    inline fun <reified T> getInfoValue(tags: Array<String>): T =
+            this.getInfo<T>(tags).value
 
-    inline fun <reified T> getOptInfoValue(infoId: Information.Id): T? =
-            this.informationManager.find(infoId, object : AbstractTypeInfo<T>() {})?.value
+    inline fun <reified T> getOptInfoValue(tags: Array<String>): T? =
+            this.getOptInfo<T>(tags)?.value
 
     inline fun <reified T> inlineSatisfyReq(req: Requirement<T, *>): Boolean =
             getOptInfo<T>(req.subject)?.let { req.test(it) } ?: false

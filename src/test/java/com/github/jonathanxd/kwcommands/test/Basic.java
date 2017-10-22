@@ -58,7 +58,8 @@ import kotlin.jvm.functions.Function1;
 
 public class Basic {
 
-    private static final Information.Id SPEAKER_INFO_ID = new Information.Id(Speaker.class, new String[]{"speaker"});
+    private static final Information.Id SPEAKER_INFO_ID =
+            new Information.Id<Speaker>(TypeInfo.of(Speaker.class), new String[]{"speaker"});
 
     @Test
     public void command() {
@@ -67,20 +68,20 @@ public class Basic {
                 .name(CommandName.name("play"))
                 .description("Play a music on instrument")
                 .handler((commandContainer, informationManager, resultHandler) -> {
-                    Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID, TypeInfo.of(Speaker.class));
+                    Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
                     if (!speakerInfo.isEmpty()) {
                         speakerInfo.getValue().speak("...");
                     }
                     return Unit.INSTANCE;
                 })
-                .addRequiredInfo(new RequiredInformation(SPEAKER_INFO_ID, TypeInfo.of(Speaker.class)))
+                .addRequiredInfo(new RequiredInformation(SPEAKER_INFO_ID))
                 .addArgument(Argument.<Music>builder()
                         .id("music")
                         .type(TypeInfo.of(Music.class))
                         .validator(new EnumValidator<>(Music.class))
                         .transformer(new EnumTransformer<>(Music.class))
                         .handler((argumentContainer, commandContainer, informationManager, resultHandler) -> {
-                            Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID, TypeInfo.of(Speaker.class));
+                            Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
 
                             if (!speakerInfo.isEmpty()) {
                                 speakerInfo.getValue().speak(String.format("Playing %s", argumentContainer.getValue().name()));
@@ -95,9 +96,9 @@ public class Basic {
 
         InformationManager manager = new InformationManagerImpl();
 
-        manager.registerInformationProvider(InformationProvider.Companion.safeFor(TypeInfo.of(Speaker.class), (id, type) -> {
-            if (id.getId() == Speaker.class)
-                return new Information<>(id, System.out::println, type, null);
+        manager.registerInformationProvider(InformationProvider.Companion.safeFor(TypeInfo.of(Speaker.class), id -> {
+            if (id.getType().equals(TypeInfo.of(Speaker.class)))
+                return new Information<>(id, (Speaker) System.out::println, null);
             return null;
         }));
 
@@ -118,8 +119,7 @@ public class Basic {
 
         InformationManager informationManager = new InformationManagerImpl();
 
-        informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println,
-                TypeInfo.of(Speaker.class), null);
+        informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
 
         processor.handle(processor.process(Collections3.listOf("play", "a", "c"), this), informationManager);
     }

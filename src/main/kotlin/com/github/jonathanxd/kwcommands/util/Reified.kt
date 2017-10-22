@@ -37,11 +37,14 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
-inline fun <reified T> InformationManager.registerInformation(id: Information.Id, value: T, description: String? = null)
-        = this.registerInformation(id, value, object : AbstractTypeInfo<T>() {}, description)
+inline fun <reified T> InformationManager.registerInformation(tags: Array<String>, value: T, description: String? = null)
+        = this.registerInformation(Information.Id(object : AbstractTypeInfo<T>() {}, tags), value, description)
 
-inline fun <reified T> Information(id: Information.Id, value: T, description: String?): Information<T> =
-        Information<T>(id, value, object : AbstractTypeInfo<T>(){}, description)
+inline fun <reified T> Information(tags: Array<String>, value: T, description: String?): Information<T> =
+        Information<T>(Information.Id(object : AbstractTypeInfo<T>() {}, tags), value, description)
+
+inline fun <reified T> InformationId(tags: Array<String>): Information.Id<T> =
+        Information.Id(object : AbstractTypeInfo<T>() {}, tags)
 
 /**
  * Reified function to create argument with a implicit [TypeInfo] of type [T].
@@ -87,4 +90,4 @@ inline fun <reified T> TypeInfo<*>.whenIs(type: TypeInfo<T>, exec: (TypeInfo<T>)
 }
 
 
-inline fun <reified T> type(): TypeInfo<T> = object : AbstractTypeInfo<T>(){}
+inline fun <reified T> type(): TypeInfo<T> = object : AbstractTypeInfo<T>() {}

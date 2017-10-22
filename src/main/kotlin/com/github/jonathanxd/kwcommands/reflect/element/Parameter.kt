@@ -54,7 +54,7 @@ sealed class Parameter<T>(val type: TypeInfo<T>) {
      * @property isOptional If the [Information] is optional, if true, a [Information.EMPTY] will be passed if the
      * information is not present.
      */
-    class InformationParameter<T>(val id: Information.Id, val isOptional: Boolean, type: TypeInfo<T>) : Parameter<T>(type) {
+    class InformationParameter<T>(val id: Information.Id<T>, val isOptional: Boolean, type: TypeInfo<T>) : Parameter<T>(type) {
 
         /**
          * Component of information.
@@ -67,8 +67,8 @@ sealed class Parameter<T>(val type: TypeInfo<T>) {
 
 }
 
-val TypeInfo<*>.infoComponent
+val TypeInfo<*>.infoComponent: TypeInfo<*>
     get() =
-    if (this.typeClass == Information::class.java && this.related.size == 1)
-        this.related.first()
-    else this
+        if (this.typeClass == Information::class.java && this.related.size == 1)
+            this.related.first()
+        else this

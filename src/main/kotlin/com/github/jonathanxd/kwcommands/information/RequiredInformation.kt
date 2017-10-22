@@ -27,9 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.information
 
-import com.github.jonathanxd.iutils.type.TypeInfo
-
 data class RequiredInformation @JvmOverloads constructor(
-        val id: Information.Id,
-        val type: TypeInfo<*>,
+        val id: Information.Id<*>,
         val useProviders: Boolean = true)

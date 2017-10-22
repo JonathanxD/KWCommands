@@ -36,15 +36,14 @@ import com.github.jonathanxd.iutils.type.TypeInfo
  */
 class InformationBuilder<T> {
 
-    private lateinit var id: Information.Id
+    private lateinit var id: Information.Id<T>
     private var value: OptObject<T> = Opt.none()
-    private lateinit var type: TypeInfo<out T>
     private var description: String? = null
 
     /**
      * Sets [Information.id]
      */
-    fun id(id: Information.Id): InformationBuilder<T> {
+    fun id(id: Information.Id<T>): InformationBuilder<T> {
         this.id = id
         return this
     }
@@ -54,14 +53,6 @@ class InformationBuilder<T> {
      */
     fun value(value: T): InformationBuilder<T> {
         this.value = Opt.some(value)
-        return this
-    }
-
-    /**
-     * Sets [Information.type]
-     */
-    fun type(type: TypeInfo<out T>): InformationBuilder<T> {
-        this.type = type
         return this
     }
 
@@ -83,7 +74,6 @@ class InformationBuilder<T> {
         return Information(
                 id = this.id,
                 value = this.value.value,
-                type = this.type,
                 description = this.description
         )
     }

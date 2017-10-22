@@ -32,13 +32,25 @@ import com.github.jonathanxd.kwcommands.reflect.NoneArgumentHandler
 import com.github.jonathanxd.kwcommands.reflect.NonePossibilities
 import com.github.jonathanxd.kwcommands.reflect.NoneTransformer
 import com.github.jonathanxd.kwcommands.reflect.NoneValidator
+import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
+import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
 import kotlin.reflect.KClass
 
 /**
- * Argument.
+ * Argument specification. By default, [validator], [transformer], [possibilities] and depending on
+ * annotated element, [handler], is determined by default by the reflection system based on type and in registered
+ * [Argument Types][ArgumentType], changing these values overrides this behavior,
+ * so, changing the [validator] of an argument will cause the reflection system to use
+ * the specified [validator] instead of the determined one.
  *
+ * @property value Identification and name of argument
  * @property optional Whether this argument is optional.
- * @property value Id of argument.
+ * @property requirements Requirements of the argument.
+ * @property validator Custom validator to use for argument.
+ * @property transformer Custom transformer to use for argument.
+ * @property possibilities Custom possibilities provider to use for argument.
  * @property handler Argument handler (if this annotated element is a field, an field setter handler will
  * be used as default handler instead of [NoneArgumentHandler]) (**this property overrides default handler**).
  */
@@ -47,7 +59,7 @@ import kotlin.reflect.KClass
 annotation class Arg(val value: String = "",
                      val optional: Boolean = false,
                      val requirements: Array<Require> = arrayOf(),
-                     val validator: KClass<out (String) -> Boolean> = NoneValidator::class,
-                     val transformer: KClass<out (String) -> Any> = NoneTransformer::class,
-                     val possibilities: KClass<out () -> List<String>> = NonePossibilities::class,
+                     val validator: KClass<out Validator> = NoneValidator::class,
+                     val transformer: KClass<out Transformer<*>> = NoneTransformer::class,
+                     val possibilities: KClass<out PossibilitiesFunc> = NonePossibilities::class,
                      val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class)
