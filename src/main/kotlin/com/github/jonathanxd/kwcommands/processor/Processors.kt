@@ -35,8 +35,8 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.exception.*
-import com.github.jonathanxd.kwcommands.information.MissingInformation
-import com.github.jonathanxd.kwcommands.information.checkRequiredInfo
+import com.github.jonathanxd.kwcommands.util.MissingInformation
+import com.github.jonathanxd.kwcommands.util.checkRequiredInfo
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
@@ -101,7 +101,7 @@ object Processors {
                                     this.commandManager,
                                     "Command ${getStr(index)} (index $index in $stringList) was not found.")
                     } else {
-                        command = deque.last.getSubCommand(getStr(index))
+                        command = this.commandManager.getSubCommand(deque.last, getStr(index))
 
                         if (command == null) {
                             val rm = deque.removeLast()
@@ -114,7 +114,8 @@ object Processors {
 
                 if (index + 1 == stringList.size ||
                         (index + 1 < stringList.size
-                                && (stringList[index + 1].isAndOp() || command.getSubCommand(getStr(index + 1)) == null))) {
+                                && (stringList[index + 1].isAndOp()
+                                || this.commandManager.getSubCommand(command, getStr(index + 1)) == null))) {
 
                     val arguments = command.arguments.toMutableList()
                     val args = mutableListOf<ArgumentContainer<*>>()

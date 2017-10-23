@@ -98,6 +98,11 @@ interface CommandManager {
     fun getOwners(command: Command): Set<Any>
 
     /**
+     * Gets sub command of [command] that matches [name].
+     */
+    fun getSubCommand(command: Command, name: String): Command?
+
+    /**
      * Creates a pair of command and the command owner.
      *
      * Modifications made in this list is not reflected in the original list.

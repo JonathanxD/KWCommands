@@ -28,8 +28,7 @@
 package com.github.jonathanxd.kwcommands.processor
 
 import com.github.jonathanxd.kwcommands.command.Container
-import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.information.MissingInformation
+import com.github.jonathanxd.kwcommands.util.MissingInformation
 import com.github.jonathanxd.kwcommands.requirement.UnsatisfiedRequirement
 
 /**

@@ -112,6 +112,10 @@ class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl
         return this.manager.getOwners(command)
     }
 
+    override fun getSubCommand(command: Command, name: String): Command? {
+        return this.manager.getSubCommand(command, name)
+    }
+
     override fun createCommandsPair(): List<Pair<Command, Any>> {
         return this.manager.createCommandsPair()
     }

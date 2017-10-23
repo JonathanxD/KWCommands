@@ -30,13 +30,11 @@ package com.github.jonathanxd.kwcommands.test.reflect
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.information.MissingInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
-import com.github.jonathanxd.kwcommands.processor.MissingInformationResult
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
@@ -50,7 +48,6 @@ import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.test.assertAll
 import com.github.jonathanxd.kwcommands.util.ArgumentType
 import com.github.jonathanxd.kwcommands.util.printAll
-import com.github.jonathanxd.kwcommands.util.registerInformation
 import org.junit.Assert
 import org.junit.Test
 

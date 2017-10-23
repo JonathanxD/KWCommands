@@ -76,7 +76,7 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
 
                 if (it.size > 1) {
                     for (x in it.copyOfRange(1, it.size)) {
-                        cmd = cmd.getSubCommand(x)
+                        cmd = manager.getSubCommand(cmd, x)
                                 ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
                     }
                 }
@@ -101,7 +101,7 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?, annotatedElement: A
 
                 if (it.size > 1) {
                     for (x in it.copyOfRange(1, it.size)) {
-                        cmd = cmd.getSubCommand(x)
+                        cmd = manager.getSubCommand(cmd, x)
                                 ?: return null/*throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")*/
                     }
                 }

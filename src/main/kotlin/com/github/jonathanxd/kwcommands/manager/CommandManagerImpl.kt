@@ -84,7 +84,8 @@ class CommandManagerImpl : CommandManager {
 
         if (it.size > 1) {
             for (x in it.copyOfRange(1, it.size)) {
-                cmd = cmd.getSubCommand(x) ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
+                cmd = this.getSubCommand(cmd, x)
+                        ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
             }
         }
 
@@ -104,6 +105,9 @@ class CommandManagerImpl : CommandManager {
     override fun getOwners(command: Command): Set<Any> {
         return this.commands.filter { it.command == command }.toSet()
     }
+
+    override fun getSubCommand(command: Command, name: String): Command? =
+            command.getSubCommand(name)
 
     override fun createCommandsPair(): List<Pair<Command, Any>> =
             this.commands.map { it.command to it.owner }

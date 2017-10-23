@@ -92,7 +92,7 @@ class InformationManagerImpl : InformationManager {
             return null
 
         this.informationProviders_.forEach {
-            it.provide<T>(id)?.let {
+            it.provide(id)?.let {
                 return it
             }
         }

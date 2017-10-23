@@ -25,11 +25,14 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.information
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.iutils.`object`.Default
+import com.github.jonathanxd.kwcommands.information.Information
 
-fun Set<RequiredInformation>.checkRequiredInfo(manager: InformationManager): List<MissingInformation> =
-    this.filter { manager.find(it.id, it.useProviders) == null }.map(::MissingInformation)
-
-data class MissingInformation(val requiredInfo: RequiredInformation)
+/**
+ * Utility method to check if [Information.Id] matches the [required] information id.
+ */
+fun <T> Information.Id<T>.matches(required: Information.Id<*>): Boolean =
+        (this.type == Default::class.java || this.type == required.type || this.type.isAssignableFrom(required.type))
+                && (this.tags.isEmpty() || this.tags.all { required.tags.contains(it) })
