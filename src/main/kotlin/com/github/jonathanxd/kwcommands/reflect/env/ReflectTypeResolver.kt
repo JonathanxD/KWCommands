@@ -72,7 +72,7 @@ internal class ReflectTypeResolver(val type: Class<*>,
     }
 
     override fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc =
-            this.reflectionEnvironment.getOrNull(type)?.possibilities?.let { v -> {v} }
+            this.reflectionEnvironment.getOrNull(type)?.possibilities
                     ?: super.resolvePossibilitiesFunc(type)
 
     override fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?> =

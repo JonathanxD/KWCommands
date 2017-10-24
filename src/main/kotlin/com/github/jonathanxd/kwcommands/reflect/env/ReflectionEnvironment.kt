@@ -483,7 +483,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
             val argumentType = this.getOrNull(type)
 
-            val possibilities = argumentAnnotation?.possibilities?.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
+            val possibilities = argumentAnnotation?.possibilities?.get() ?: argumentType?.possibilities ?: { emptyList() }
             val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.require(type).transformer
             val validator = argumentAnnotation?.validator?.get() ?: argumentType.require(type).validator
             val defaultValue: Any? = when {
@@ -638,9 +638,16 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                     val argumentType = this.getOrNull(type)
 
-                    val possibilities = argumentAnnotation.possibilities.get()?.invoke() ?: argumentType?.possibilities ?: emptyList()
-                    val transformer = argumentAnnotation.transformer.get() ?: argumentType.require(type).transformer
-                    val validator = argumentAnnotation.validator.get() ?: argumentType.require(type).validator
+                    val possibilities = argumentAnnotation.possibilities.get()
+                            ?: argumentType?.possibilities
+                            ?: { emptyList() }
+
+                    val transformer = argumentAnnotation.transformer.get()
+                            ?: argumentType.require(type).transformer
+
+                    val validator = argumentAnnotation.validator.get()
+                            ?: argumentType.require(type).validator
+
                     val defaultValue = argumentType?.defaultValue
                     val requirements = argumentAnnotation.requirements.toSpecs()
 
@@ -747,44 +754,44 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                             constants.any { it.name.toLowerCase() == name }
                         }, { name ->
                             constants.first { it.name.toLowerCase() == name }
-                        }, constants.map { it.name.toLowerCase() }, null).cast(type)
+                        }, { constants.map { it.name.toLowerCase() } }, null).cast(type)
                     }
                 }
 
                 return when (type) {
                     TypeInfo.of(Short::class.java),
                     TypeInfo.of(Short::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toShortOrNull() != null }, String::toShort, emptyList(), 0)
+                    -> ArgumentType(type, { it.toShortOrNull() != null }, String::toShort, { emptyList() }, 0)
 
                     TypeInfo.of(Char::class.java),
                     TypeInfo.of(Char::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.length == 1 }, { it[0] }, emptyList(), 0.toChar())
+                    -> ArgumentType(type, { it.length == 1 }, { it[0] }, { emptyList() }, 0.toChar())
 
                     TypeInfo.of(Byte::class.java),
                     TypeInfo.of(Byte::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toByteOrNull() != null }, String::toByte, emptyList(), 0)
+                    -> ArgumentType(type, { it.toByteOrNull() != null }, String::toByte, { emptyList() }, 0)
 
                     TypeInfo.of(Int::class.java),
                     TypeInfo.of(Int::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toIntOrNull() != null }, String::toInt, emptyList(), 0)
+                    -> ArgumentType(type, { it.toIntOrNull() != null }, String::toInt, { emptyList() }, 0)
 
                     TypeInfo.of(Float::class.java),
                     TypeInfo.of(Float::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toFloatOrNull() != null }, String::toFloat, emptyList(), 0.0F)
+                    -> ArgumentType(type, { it.toFloatOrNull() != null }, String::toFloat, { emptyList() }, 0.0F)
 
                     TypeInfo.of(Double::class.java),
                     TypeInfo.of(Double::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toDoubleOrNull() != null }, String::toDouble, emptyList(), 0.0)
+                    -> ArgumentType(type, { it.toDoubleOrNull() != null }, String::toDouble, { emptyList() }, 0.0)
 
                     TypeInfo.of(Long::class.java),
                     TypeInfo.of(Long::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toLongOrNull() != null }, String::toLong, emptyList(), 0L)
+                    -> ArgumentType(type, { it.toLongOrNull() != null }, String::toLong, { emptyList() }, 0L)
 
                     TypeInfo.of(Boolean::class.java),
                     TypeInfo.of(Boolean::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it == "true" || it == "false" }, String::toBoolean, emptyList(), false)
+                    -> ArgumentType(type, { it == "true" || it == "false" }, String::toBoolean, { emptyList() }, false)
 
-                    TypeInfo.of(String::class.java) -> ArgumentType({ true }, { it }, emptyList(), "")
+                    TypeInfo.of(String::class.java) -> ArgumentType({ true }, { it }, { emptyList() }, "")
                     else -> null
                 }?.cast(type)
 
@@ -800,7 +807,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     return ArgumentType(type,
                             ListValidator(storage, component),
                             ListTransform(storage, component),
-                            emptyList(),
+                            { emptyList() },
                             mutableListOf<Any?>()).cast(type)
 
                 return null

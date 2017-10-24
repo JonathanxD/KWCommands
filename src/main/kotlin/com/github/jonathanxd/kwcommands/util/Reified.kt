@@ -53,9 +53,9 @@ inline fun <reified T> Argument(id: Any,
                                 name: String,
                                 isOptional: Boolean,
                                 defaultValue: T?,
-                                noinline validator: (String) -> Boolean,
-                                noinline transformer: (String) -> T,
-                                possibilities: List<String>,
+                                noinline validator: Validator,
+                                noinline transformer: Transformer<T>,
+                                noinline possibilities: PossibilitiesFunc,
                                 requirements: List<Requirement<*, *>>,
                                 requiredInfo: Set<RequiredInformation>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
@@ -71,9 +71,9 @@ inline fun <reified T> Argument(id: Any,
                 requiredInfo,
                 handler)
 
-inline fun <reified T> ArgumentType(noinline validator: (String) -> Boolean,
-                                    noinline transformer: (String) -> T,
-                                    possibilities: List<String>,
+inline fun <reified T> ArgumentType(noinline validator: Validator,
+                                    noinline transformer: Transformer<T>,
+                                    noinline possibilities: PossibilitiesFunc,
                                     defaultValue: T?): ArgumentType<T> =
         ArgumentType(object : AbstractTypeInfo<T>() {}, validator, transformer, possibilities, defaultValue)
 

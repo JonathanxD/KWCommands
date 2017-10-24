@@ -42,6 +42,7 @@ import com.github.jonathanxd.kwcommands.reflect.env.EnumValidator
 import com.github.jonathanxd.kwcommands.reflect.env.enumPossibilities
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
 import com.github.jonathanxd.kwcommands.util.Transformer
 import com.github.jonathanxd.kwcommands.util.Validator
 
@@ -53,7 +54,7 @@ class BuildingArgument<T> {
     var defaultValue: T? = null
     lateinit var validator: Validator
     lateinit var transformer: Transformer<T>
-    val possibilities = UList<String>()
+    var possibilities: PossibilitiesFunc = { emptyList() }
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     var handler: ArgumentHandler<out T>? = null
@@ -88,8 +89,9 @@ class BuildingArgument<T> {
         this.defaultValue = f()
     }
 
-    inline fun possibilities(f: UList<String>.() -> Unit) {
-        f(this.possibilities)
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun possibilities(noinline possibilities: PossibilitiesFunc) {
+        this.possibilities = possibilities
     }
 
     inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) {
@@ -124,7 +126,7 @@ class BuildingArgument<T> {
             defaultValue = this.defaultValue,
             validator = this.validator,
             transformer = this.transformer,
-            possibilities = this.possibilities.coll.toList(),
+            possibilities = this.possibilities,
             requirements = this.requirements.coll.toList(),
             requiredInfo = this.requiredInfo.coll.toSet(),
             handler = this.handler
@@ -266,7 +268,7 @@ inline fun <reified T> requireInfo(f: BuildingRequiredInfo<T>.() -> Unit): Requi
     return building.toRequiredInformation()
 }
 
-inline fun <T> requireInfoPlain(type: TypeInfo<T>, f: BuildingRequiredInfo<T>.() -> Unit): RequiredInformation {
+inline fun <T> requireInfoPlain(f: BuildingRequiredInfo<T>.() -> Unit): RequiredInformation {
     val building = BuildingRequiredInfo<T>()
 
     f(building)
@@ -337,14 +339,14 @@ inline fun doubleArg(f: BuildingArgument<Double>.() -> Unit): Argument<Double> =
 inline fun booleanArg(f: BuildingArgument<Boolean>.() -> Unit): Argument<Boolean> = argument {
     validator = booleanValidator
     transformer = booleanTransformer
-    possibilities += booleanPossibilities
+    possibilities = { booleanPossibilities.toList() }
     f(this)
 }
 
 inline fun <reified T> enumArg(f: BuildingArgument<T>.() -> Unit): Argument<T> = argument {
     validator = EnumValidator(T::class.java)
     transformer = EnumTransformer(T::class.java)
-    possibilities += enumPossibilities(T::class.java)
+    possibilities = { enumPossibilities(T::class.java).toList() }
     f(this)
 }
 
@@ -354,7 +356,7 @@ inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argum
     this.type { TypeInfo.of(type) }
     validator = EnumValidator(type)
     transformer = EnumTransformer(type)
-    possibilities += enumPossibilities(type)
+    possibilities = { enumPossibilities(type).toList() }
     f(this)
 } as Argument<T>
 

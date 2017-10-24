@@ -109,7 +109,7 @@ fun MapTypeResolver.registerDefaults() {
         ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.transformer
     }
     this.possibilitiesResolvers.add {
-        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.possibilities?.let { p -> {p} }
+        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.possibilities
     }
     this.validatorResolvers.add {
         ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.validator

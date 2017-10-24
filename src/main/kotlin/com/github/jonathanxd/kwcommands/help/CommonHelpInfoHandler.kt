@@ -93,8 +93,10 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain("Argument type: ${argument.typeStr}")
 
-                if (argument.possibilities.isNotEmpty())
-                    printer.printPlain("Argument possibilities: ${argument.possibilities.joinToString()}")
+                val poss = argument.possibilities.invoke()
+
+                if (poss.isNotEmpty())
+                    printer.printPlain("Argument possibilities: ${poss.joinToString()}")
 
                 printer.printPlain("")
                 printer.printPlain("Command specification:")

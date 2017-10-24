@@ -199,9 +199,8 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
                         ?: this.typeResolver.resolveValidator(type))
                 .transformer(jsonObject.getAsSingleton<Transformer<Any?>>("transformer", this.typeResolver)
                         ?: this.typeResolver.resolveTransformer(type))
-                .addPossibilities(
-                        (jsonObject.getAsSingleton<PossibilitiesFunc>("possibilities", this.typeResolver)
-                                ?: this.typeResolver.resolvePossibilitiesFunc(type)).invoke())
+                .possibilities(jsonObject.getAsSingleton<PossibilitiesFunc>("possibilities", this.typeResolver)
+                        ?: this.typeResolver.resolvePossibilitiesFunc(type))
                 .defaultValue(this.typeResolver.resolveDefaultValue(type))
                 .handler(jsonObject.getArgumentHandler("handler", this))
                 .addRequirements(jsonObject.getAsArrayOfObj("requirements") { this.parseReq(it) })
@@ -246,7 +245,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
             this.parseId(this.parser.parse(json) as JSONObject)
 
     override fun parseInfo(json: String): Information<*> =
-             this.parseInfo(this.parser.parse(json) as JSONObject)
+            this.parseInfo(this.parser.parse(json) as JSONObject)
 
     override fun parseReq(json: String): Requirement<*, *> =
             this.parseReq(this.parser.parse(json) as JSONObject)

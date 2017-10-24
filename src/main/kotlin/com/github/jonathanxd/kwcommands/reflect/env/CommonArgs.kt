@@ -74,5 +74,6 @@ class EnumTransformer<T>(val type: Class<T>) : (String) -> T {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 fun enumPossibilities(type: Class<*>): List<String> =
     (type.enumConstants as Array<Enum<*>>).map { it.name }

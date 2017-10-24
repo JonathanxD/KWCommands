@@ -140,7 +140,7 @@ class CommandTest {
                                 transformer = { it },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = emptyList())
+                                possibilities = { emptyList() })
 
                 ),
                 requiredInfo = emptySet(),
@@ -174,14 +174,14 @@ class CommandTest {
                                 transformer = { it },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = emptyList()),
+                                possibilities = { emptyList() }),
                         Argument(id = "amount",
                                 name = "",
                                 isOptional = true,
                                 defaultValue = null,
                                 validator = { it.toIntOrNull() != null },
                                 transformer = String::toInt,
-                                possibilities = emptyList(),
+                                possibilities = { emptyList() },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
@@ -195,7 +195,7 @@ class CommandTest {
                                 transformer = String::toDouble,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = emptyList())
+                                possibilities = { emptyList() })
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList()

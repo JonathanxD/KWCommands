@@ -119,7 +119,7 @@ class ReflectionTest {
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
                 if (type == TypeInfo.of(SimplePlayer::class.java)) {
-                    return ArgumentType({ true }, { SimplePlayer(it) }, emptyList(), null).cast(type)
+                    return ArgumentType({ true }, { SimplePlayer(it) }, { emptyList() }, null).cast(type)
                 }
 
                 return null

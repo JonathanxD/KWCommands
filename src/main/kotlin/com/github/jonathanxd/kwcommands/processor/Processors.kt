@@ -256,7 +256,8 @@ object Processors {
 
                         if (requiredCount != requiredArgsCount) {
                             val missing = arguments.filter { !it.isOptional }.joinToString {
-                                if (it.possibilities.isNotEmpty()) "${it.id}{possibilities=${it.possibilities}}"
+                                val poss = it.possibilities.invoke()
+                                if (poss.isNotEmpty()) "${it.id}{possibilities=${poss}}"
                                 else it.id.toString()
                             }
                             throw ArgumentsMissingException(command,

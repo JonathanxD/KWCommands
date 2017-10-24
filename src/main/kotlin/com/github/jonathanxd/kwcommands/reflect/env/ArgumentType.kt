@@ -28,6 +28,9 @@
 package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
 
 /**
  * Specification of a argument type.
@@ -39,7 +42,7 @@ import com.github.jonathanxd.iutils.type.TypeInfo
  * [ReflectionEnvironment.registerProvider].
  */
 data class ArgumentType<out T>(val type: TypeInfo<out T>,
-                               val validator: (String) -> Boolean,
-                               val transformer: (String) -> T,
-                               val possibilities: List<String>,
+                               val validator: Validator,
+                               val transformer: Transformer<T>,
+                               val possibilities: PossibilitiesFunc,
                                val defaultValue: T?)
