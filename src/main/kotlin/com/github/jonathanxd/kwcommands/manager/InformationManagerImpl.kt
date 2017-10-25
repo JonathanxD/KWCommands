@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.manager
 import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.collection.Comparators3
 import com.github.jonathanxd.iutils.type.TypeInfoSortComparator
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
 import java.util.*
@@ -45,6 +46,10 @@ class InformationManagerImpl : InformationManager {
 
     override val informationSet: Set<Information<*>> = Collections.unmodifiableSet(this.informationSet_)
     override val informationProviders: Set<InformationProvider> = Collections.unmodifiableSet(this.informationProviders_)
+
+    init {
+        this.registerInformation(INFORMATION_MANAGER_ID, this, "Information manager")
+    }
 
     override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean {
         return this.informationSet_.add(Information(id, value, description))
@@ -92,7 +97,7 @@ class InformationManagerImpl : InformationManager {
             return null
 
         this.informationProviders_.forEach {
-            it.provide(id)?.let {
+            it.provide(id, this)?.let {
                 return it
             }
         }

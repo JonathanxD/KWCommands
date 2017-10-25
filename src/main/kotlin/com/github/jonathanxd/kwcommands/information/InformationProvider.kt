@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.manager.InformationManager
 
 /**
  * Information provider, a provider is able to provide different types of information,
@@ -46,17 +47,18 @@ interface InformationProvider {
      * @param id Id of requested information
      * @return Information or null if this provider cannot provide a information of [id].
      */
-    fun <T> provide(id: Information.Id<T>): Information<T>?
+    fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>?
 
     companion object {
         /**
          * Creates unsafe [InformationProvider]. `null` is provided to [type] when a information is requested only by [id].
          */
         @Suppress("UNCHECKED_CAST")
-        fun unsafe(provider: (id: Information.Id<*>) -> Information<*>?): InformationProvider =
+        fun unsafe(provider: (id: Information.Id<*>,
+                              manager: InformationManager) -> Information<*>?): InformationProvider =
                 object : InformationProvider {
-                    override fun <T> provide(id: Information.Id<T>): Information<T>? {
-                        return provider(id) as Information<T>?
+                    override fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>? {
+                        return provider(id, manager) as Information<T>?
                     }
 
                 }
@@ -65,11 +67,13 @@ interface InformationProvider {
          * Creates a safe [InformationProvider] that is safe for [stype].
          */
         @Suppress("UNCHECKED_CAST")
-        fun <U> safeFor(stype: TypeInfo<U>, provider: (id: Information.Id<U>) -> Information<U>?): InformationProvider =
+        fun <U> safeFor(stype: TypeInfo<U>,
+                        provider: (id: Information.Id<U>,
+                                   manager: InformationManager) -> Information<U>?): InformationProvider =
                 object : InformationProvider {
-                    override fun <T> provide(id: Information.Id<T>): Information<T>? {
+                    override fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>? {
                         if (stype == id.type)
-                            return provider(id as Information.Id<U>) as Information<T>?
+                            return provider(id as Information.Id<U>, manager) as Information<T>?
 
                         return null
                     }

@@ -96,11 +96,12 @@ public class Basic {
 
         InformationManager manager = new InformationManagerImpl();
 
-        manager.registerInformationProvider(InformationProvider.Companion.safeFor(TypeInfo.of(Speaker.class), id -> {
-            if (id.getType().equals(TypeInfo.of(Speaker.class)))
-                return new Information<>(id, (Speaker) System.out::println, null);
-            return null;
-        }));
+        manager.registerInformationProvider(InformationProvider.Companion.safeFor(TypeInfo.of(Speaker.class),
+                (id, imanager) -> {
+                    if (id.getType().equals(TypeInfo.of(Speaker.class)))
+                        return new Information<>(id, (Speaker) System.out::println, null);
+                    return null;
+                }));
 
         processor.handle(processor.process(Collections3.listOf("play", "A"), null), manager);
 

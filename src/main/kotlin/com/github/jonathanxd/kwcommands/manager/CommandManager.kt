@@ -27,7 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.information.Information
+
+val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
 
 /**
  * Manages and register commands. Only top-level commands can be registered.

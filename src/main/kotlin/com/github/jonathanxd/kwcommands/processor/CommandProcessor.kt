@@ -28,11 +28,15 @@
 package com.github.jonathanxd.kwcommands.processor
 
 import com.github.jonathanxd.iutils.option.Options
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid
+
+val COMMAND_PROCESSOR_ID = Information.Id(typeInfo<InformationManager>(), arrayOf("command_processor"))
 
 interface CommandProcessor {
 
@@ -78,7 +82,8 @@ interface CommandProcessor {
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun processWithOwnerFunction(stringList: List<String>, ownerProvider: (commandName: String) -> Any?): List<CommandContainer>
+    fun processWithOwnerFunction(stringList: List<String>,
+                                 ownerProvider: (commandName: String) -> Any?): List<CommandContainer>
 
     /**
      * Handle [commands] and returns [result list][CommandResult] of command executions.

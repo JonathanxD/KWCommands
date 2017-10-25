@@ -38,6 +38,7 @@ import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.util.MissingInformation
 import com.github.jonathanxd.kwcommands.util.checkRequiredInfo
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.manager.COMMAND_MANAGER_ID
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManager
@@ -287,6 +288,9 @@ object Processors {
         override fun handle(commands: List<CommandContainer>, informationManager: InformationManager): List<CommandResult> {
             val results = mutableListOf<CommandResult>()
             val perCommandResults = mutableListOf<CommandResult>()
+
+            informationManager.registerInformation(COMMAND_MANAGER_ID, this.commandManager, "Command manager")
+            informationManager.registerInformation(COMMAND_PROCESSOR_ID, this, "Command processor")
 
             commands.forEach { command ->
                 perCommandResults.clear()
