@@ -39,6 +39,7 @@ import com.github.jonathanxd.kwcommands.json.JsonCommandParser;
 import com.github.jonathanxd.kwcommands.json.MapTypeResolver;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -88,8 +89,25 @@ public class JsonAnnotationTest {
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
+        this.handle(Collections3.listOf("register", pname, pemail), processor, informationManager);
+
+        Assert.assertEquals(pname, this.name);
+        Assert.assertEquals(pemail, this.email);
+        Assert.assertEquals(1, this.called);
+
+        this.handle(Collections3.listOf("register", "any", pname), processor, informationManager);
+
+        Assert.assertEquals(pname, this.name);
+        Assert.assertEquals(null, this.email);
+        Assert.assertEquals(2, this.called);
+    }
+
+    private List<CommandResult> handle(List<String> commands,
+                                       CommandProcessor processor,
+                                       InformationManager informationManager) {
+
         List<CommandResult> commandResults = processor.processAndHandle(
-                Collections3.listOf("register", pname, pemail),
+                commands,
                 this, informationManager);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
@@ -99,14 +117,18 @@ public class JsonAnnotationTest {
             return Unit.INSTANCE;
         }, false));
 
-        Assert.assertEquals(pname, this.name);
-        Assert.assertEquals(pemail, this.email);
-        Assert.assertEquals(1, this.called);
+        return commandResults;
     }
 
     public void register(@Arg("name") String name, @Arg("email") String email) {
         this.called++;
         this.name = name;
         this.email = email;
+    }
+
+    public void any(@Arg("name") String name) {
+        this.called++;
+        this.name = name;
+        this.email = null;
     }
 }

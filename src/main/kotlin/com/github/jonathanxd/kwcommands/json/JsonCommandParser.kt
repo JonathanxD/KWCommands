@@ -175,36 +175,53 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
     override fun parseCommand(jsonObject: JSONObject, superCommand: Command?): Command =
             CommandBuilder()
                     .parent(superCommand)
-                    .name(CommandName.name(jsonObject.getRequired("name")))
-                    .description(jsonObject.getRequired("description"))
-                    .addAlias(jsonObject.getAs<JSONArray>("alias")?.map { CommandName.name(it as String) }.orEmpty())
-                    .handler(jsonObject.getCommandHandler("handler", this))
-                    .addArguments(jsonObject.getAsArrayOfObj("arguments") { this.parseArgument(it) })
-                    .addRequirements(jsonObject.getAsArrayOfObj("requirements") { this.parseReq(it) })
-                    .addRequiredInfo(jsonObject.getAsArrayOfObj("requiredInfo") { this.parseReqInfo(it) })
+                    .name(CommandName.name(jsonObject.getRequired(NAME_KEY)))
+                    .description(jsonObject.getRequired(DESCRIPTION_KEY))
+                    .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { CommandName.name(it as String) }.orEmpty())
+                    .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
+                    .addArguments(jsonObject.getAsArrayOfObj(ARGUMENTS_KEY) { this.parseArgument(it) })
+                    .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
+                    .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
                     .build()
                     .also { sup ->
-                        sup.addSubCommands(jsonObject.getAsArrayOfObj("subcommands") { this.parseCommand(it, sup) })
+                        val subcommands = jsonObject.getAs<JSONArray>(SUB_COMMANDS_KEY)
+
+                        if (subcommands?.isNotEmpty() == true) {
+                            val allString = subcommands.all { it is String }
+                            val allObj = subcommands.all { it is JSONObject }
+
+                            when {
+                                allString -> sup.addSubCommands(jsonObject.getAsArrayOfStr(SUB_COMMANDS_KEY).map {
+                                    val res = this.typeResolver.resolveResource(it)
+                                            ?: throw IllegalArgumentException("Resource cannot be found: $it.")
+                                    return@map this.parseCommand(res, sup)
+                                })
+                                allObj -> sup.addSubCommands(jsonObject.getAsArrayOfObj(SUB_COMMANDS_KEY) {
+                                    this.parseCommand(it, sup)
+                                })
+                                else -> throw IllegalArgumentException("Sub commands can be either array of string (resources) or array of json objects (command json)")
+                            }
+                        }
                     }
 
     override fun parseArgument(jsonObject: JSONObject): Argument<*> {
-        val type = this.typeResolver.resolve(jsonObject.getRequired("type"))
+        val type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY))
 
         return ArgumentBuilder<Any?>()
                 .type(type as TypeInfo<out Any?>)
-                .id(jsonObject.getRequired<String>("id"))
-                .name(jsonObject.getAs("name") ?: jsonObject.getRequired("id"))
-                .optional(jsonObject.getAs("optional") ?: false)
-                .validator(jsonObject.getAsSingleton<Validator>("validator", this.typeResolver)
+                .id(jsonObject.getRequired<String>(ID_KEY))
+                .name(jsonObject.getAs(NAME_KEY) ?: jsonObject.getRequired(ID_KEY))
+                .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
+                .validator(jsonObject.getAsSingleton<Validator>(VALIDATOR_KEY, this.typeResolver)
                         ?: this.typeResolver.resolveValidator(type))
-                .transformer(jsonObject.getAsSingleton<Transformer<Any?>>("transformer", this.typeResolver)
+                .transformer(jsonObject.getAsSingleton<Transformer<Any?>>(TRANSFORMER_KEY, this.typeResolver)
                         ?: this.typeResolver.resolveTransformer(type))
-                .possibilities(jsonObject.getAsSingleton<PossibilitiesFunc>("possibilities", this.typeResolver)
+                .possibilities(jsonObject.getAsSingleton<PossibilitiesFunc>(POSSIBILITIES_KEY, this.typeResolver)
                         ?: this.typeResolver.resolvePossibilitiesFunc(type))
                 .defaultValue(this.typeResolver.resolveDefaultValue(type))
-                .handler(jsonObject.getArgumentHandler("handler", this))
-                .addRequirements(jsonObject.getAsArrayOfObj("requirements") { this.parseReq(it) })
-                .addRequiredInfo(jsonObject.getAsArrayOfObj("requiredInfo") { this.parseReqInfo(it) })
+                .handler(jsonObject.getArgumentHandler(HANDLER_KEY, this))
+                .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
+                .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
                 .build()
 
     }
@@ -212,27 +229,27 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
     override fun parseReq(jsonObject: JSONObject): Requirement<*, *> =
             RequirementBuilder<Any?, String>()
                     .type(TypeInfo.of(String::class.java))
-                    .subject(this.parseId(jsonObject.getRequired<JSONObject>("info")))
-                    .tester(jsonObject.getAsSingletonReq("tester", this.typeResolver))
-                    .required(jsonObject.getRequired("data"))
+                    .subject(this.parseId(jsonObject.getRequired<JSONObject>(INFO_KEY)))
+                    .tester(jsonObject.getAsSingletonReq(TESTER_KEY, this.typeResolver))
+                    .required(jsonObject.getRequired(DATA_KEY))
                     .build()
 
     override fun parseReqInfo(jsonObject: JSONObject): RequiredInformation =
             RequiredInformation(
-                    id = this.parseId(jsonObject.getRequired<JSONObject>("id")),
-                    useProviders = jsonObject.getAs<Boolean>("useProviders") ?: true
+                    id = this.parseId(jsonObject.getRequired<JSONObject>(ID_KEY)),
+                    useProviders = jsonObject.getAs<Boolean>(USE_PROVIDERS_KEY) ?: true
             )
 
     override fun parseId(jsonObject: JSONObject): Information.Id<*> =
             Information.Id(
-                    tags = jsonObject.getAsArrayOfStr("tags").toTypedArray(),
-                    type = this.typeResolver.resolve(jsonObject.getRequired("type")) as TypeInfo<out Any?>
+                    tags = jsonObject.getAsArrayOfStr(TAGS_KEY).toTypedArray(),
+                    type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY)) as TypeInfo<out Any?>
             )
 
     override fun parseInfo(jsonObject: JSONObject): Information<*> = Information(
-            this.parseId(jsonObject.getRequired<JSONObject>("id")),
-            jsonObject.getAsSingletonReq<() -> Any?>("provider", this.typeResolver).invoke(),
-            jsonObject.getRequired<String>("description")
+            this.parseId(jsonObject.getRequired<JSONObject>(ID_KEY)),
+            jsonObject.getAsSingletonReq<() -> Any?>(PROVIDER_KEY, this.typeResolver).invoke(),
+            jsonObject.getRequired<String>(DESCRIPTION_KEY)
     )
 
     override fun parseCommand(json: String): Command =
@@ -256,4 +273,28 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
     override fun parseArgumentHandler(input: String): ArgumentHandler<*>? =
             resolveArgumentHandler(input, this.typeResolver)
 
+    companion object {
+        const val ID_KEY = "id"
+        const val DESCRIPTION_KEY = "description"
+        const val ALIAS_KEY = "alias"
+        const val TYPE_KEY = "type"
+        const val PROVIDER_KEY = "provider"
+        const val USE_PROVIDERS_KEY = "useProviders"
+        const val ARGUMENTS_KEY = "arguments"
+        const val SUB_COMMANDS_KEY = "subCommands"
+
+        const val INFO_KEY = "info"
+        const val TESTER_KEY = "tester"
+        const val DATA_KEY = "data"
+        const val TAGS_KEY = "tags"
+
+        const val HANDLER_KEY = "handler"
+        const val NAME_KEY = "name"
+        const val OPTIONAL_KEY = "optional"
+        const val TRANSFORMER_KEY = "transformer"
+        const val VALIDATOR_KEY = "validator"
+        const val POSSIBILITIES_KEY = "possibilities"
+        const val REQUIREMENTS_KEY = "requirements"
+        const val REQUIRED_INFO_KEY = "requiredInfo"
+    }
 }

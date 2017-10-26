@@ -1,16 +1,11 @@
 {
-  "name": "register",
-  "description": "Registers the user",
-  "handler": "method:register",
+  "name": "any",
+  "description": "Sub command test",
+  "handler": "method:any",
   "arguments": [
     {
       "id": "name",
       "type": "String"
-    },
-    {
-      "id": "email",
-      "type": "String",
-      "validator": "EmailValidator"
     }
   ],
   "requiredInfo": [
@@ -24,6 +19,5 @@
       "tester": "ReqTester",
       "data": "perm.register"
     }
-  ],
-  "subCommands": ["any.json"]
+  ]
 }

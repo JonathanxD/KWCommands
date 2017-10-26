@@ -45,6 +45,12 @@ interface TypeResolver {
     fun <T> getSingletonInstance(type: Class<T>): T
 
     /**
+     * Resolves the [resource] content. The way this is resolved is determined by the implementation,
+     * this behavior should be explained in implementation documentation.
+     */
+    fun resolveResource(resource: String): String?
+
+    /**
      * Resolves the [TypeInfo] that [input] refers to.
      *
      * This function may be called with class name, aliases to classes, [TypeInfo] literals (See [TypeInfoUtil]).
@@ -124,6 +130,8 @@ fun MapTypeResolver.registerDefaults() {
  * insertion and removal of custom resolvers, custom class resolvers, aliases, and class loaders. This also implements
  * a logic to resolve singleton instances, through [Reflection.getInstance], and ability to resolve
  * java classes of `java.lang` package without qualified name.
+ *
+ * The resolution of resource is made through [loaders].
  */
 class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = true) :
         TypeResolver, Function<String, Class<*>?> {
@@ -150,6 +158,16 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
         return (singletonInstances[type] as? T) ?: Reflection.getInstance(type).also {
             singletonInstances[type] = it
         }
+    }
+
+    override fun resolveResource(resource: String): String? {
+        this.loaders.forEach {
+            it.getResourceAsStream(resource)?.readBytes()?.toString(Charsets.UTF_8)?.let {
+                return@resolveResource it
+            }
+        }
+
+        return null
     }
 
     override fun resolve(input: String): TypeInfo<*>? =

@@ -53,6 +53,11 @@ internal class ReflectTypeResolver(val type: Class<*>,
                                   val reflectionEnvironment: ReflectionEnvironment,
                                   delegate: TypeResolver): DelegatedTypeResolver(delegate) {
 
+    override fun resolveResource(resource: String): String? =
+        type.getResourceAsStream(resource)?.let {
+            it.readBytes().toString(Charsets.UTF_8)
+        } ?: super.resolveResource(resource)
+
     override fun resolveCommandHandler(input: String): Handler? {
         val (handlerType, sub) = this.getSub(input)
 
