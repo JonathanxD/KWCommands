@@ -134,6 +134,7 @@ class CommandTest {
                 arguments = listOf(
                         Argument(id = "name",
                                 name = "",
+                                description = "",
                                 isOptional = false,
                                 defaultValue = null,
                                 validator = { true },
@@ -168,6 +169,7 @@ class CommandTest {
                 arguments = listOf(
                         Argument(id = "name",
                                 name = "",
+                                description = "",
                                 isOptional = false,
                                 defaultValue = null,
                                 validator = { true },
@@ -177,6 +179,7 @@ class CommandTest {
                                 possibilities = { emptyList() }),
                         Argument(id = "amount",
                                 name = "",
+                                description = "",
                                 isOptional = true,
                                 defaultValue = null,
                                 validator = { it.toIntOrNull() != null },
@@ -189,6 +192,7 @@ class CommandTest {
                                 }),
                         Argument(id = "double",
                                 name = "",
+                                description = "",
                                 isOptional = false,
                                 defaultValue = null,
                                 validator = { it.toDoubleOrNull() != null },

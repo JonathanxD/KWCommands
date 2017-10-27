@@ -483,6 +483,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
             val argumentType = this.getOrNull(type)
 
+            val description = argumentAnnotation?.description ?: ""
             val possibilities = argumentAnnotation?.possibilities?.get() ?: argumentType?.possibilities ?: { emptyList() }
             val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.require(type).transformer
             val validator = argumentAnnotation?.validator?.get() ?: argumentType.require(type).validator
@@ -499,6 +500,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             karg = Argument(
                     id = id,
                     name = "",
+                    description = description,
                     isOptional = isOptional,
                     possibilities = possibilities,
                     transformer = transformer,
@@ -634,6 +636,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                         else arg
                     }
 
+                    val description = argumentAnnotation.description
+
                     val isOptional = argumentAnnotation.optional
 
                     val argumentType = this.getOrNull(type)
@@ -654,6 +658,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val argument = Argument(
                             id = id,
                             name = "",
+                            description = description,
                             isOptional = isOptional,
                             possibilities = possibilities,
                             transformer = transformer,

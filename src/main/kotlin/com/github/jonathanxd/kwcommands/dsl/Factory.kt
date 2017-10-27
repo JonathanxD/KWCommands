@@ -49,6 +49,7 @@ import com.github.jonathanxd.kwcommands.util.Validator
 class BuildingArgument<T> {
     lateinit var id: Any
     var name: String = ""
+    var description: String = ""
     var isOptional: Boolean = false
     lateinit var type: TypeInfo<out T>
     var defaultValue: T? = null
@@ -65,6 +66,10 @@ class BuildingArgument<T> {
 
     inline fun name(f: () -> String) {
         this.name = f()
+    }
+
+    inline fun description(f: () -> String) {
+        this.description = f()
     }
 
     inline fun optional(f: () -> Boolean) {
@@ -121,6 +126,7 @@ class BuildingArgument<T> {
     inline fun toArgument(): Argument<T> = Argument(
             id = this.id,
             name = this.name,
+            description = this.description,
             isOptional = this.isOptional,
             type = this.type,
             defaultValue = this.defaultValue,

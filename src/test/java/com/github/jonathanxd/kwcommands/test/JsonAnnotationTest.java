@@ -42,11 +42,13 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
+import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.PrinterKt;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -100,6 +102,15 @@ public class JsonAnnotationTest {
         Assert.assertEquals(pname, this.name);
         Assert.assertEquals(null, this.email);
         Assert.assertEquals(2, this.called);
+
+        Printer printer = new CommonPrinter(s -> {System.out.println(s); return Unit.INSTANCE;}, true);
+
+        for (Command command : commands) {
+            PrinterKt.printAll(printer, command);
+        }
+
+        printer.flush();
+
     }
 
     private List<CommandResult> handle(List<String> commands,

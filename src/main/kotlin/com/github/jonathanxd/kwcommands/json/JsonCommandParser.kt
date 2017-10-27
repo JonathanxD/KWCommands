@@ -211,6 +211,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
                 .type(type as TypeInfo<out Any?>)
                 .id(jsonObject.getRequired<String>(ID_KEY))
                 .name(jsonObject.getAs(NAME_KEY) ?: jsonObject.getRequired(ID_KEY))
+                .description(jsonObject.getAs(DESCRIPTION_KEY) ?: "")
                 .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
                 .validator(jsonObject.getAsSingleton<Validator>(VALIDATOR_KEY, this.typeResolver)
                         ?: this.typeResolver.resolveValidator(type))

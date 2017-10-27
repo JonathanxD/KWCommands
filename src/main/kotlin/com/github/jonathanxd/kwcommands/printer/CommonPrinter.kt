@@ -34,6 +34,7 @@ import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.append
 import com.github.jonathanxd.kwcommands.util.level
+import com.github.jonathanxd.kwcommands.util.nameOrId
 
 /**
  * Common implementation of command printer backing to a print function
@@ -93,14 +94,15 @@ class CommonPrinter(val out: (String) -> Unit,
                 "-------- Commands --------",
                 "",
                 "--------   Label  --------",
-                " [ ] = Required",
-                " < > = Optional",
-                "  ?  = Optional",
-                "  -> = Main command",
-                " -'> = Sub command",
-                "  -  = Description",
-                "  *  = Information Requirement",
-                "  ** = Requirement",
+                " [ ]  = Required",
+                " < >  = Optional",
+                "  ?   = Optional",
+                "  ->  = Main command",
+                " -'>  = Sub command",
+                "  -   = Description",
+                " - x: = Description of argument x",
+                "  *   = Information Requirement",
+                "  **  = Requirement",
                 "--------   Label  --------",
                 "")
 
@@ -202,8 +204,14 @@ class CommonPrinter(val out: (String) -> Unit,
         }
 
         fun flushTo(out: (String) -> Unit, commands: List<Command>, buffer: List<String>) {
+            fun ((String) -> Unit).flushAndClean(builder: StringBuilder) =
+                    this(builder.toString().also {
+                        builder.setLength(0)
+                    })
+
             if (commands.any { it !== DummyCommand }) {
-                val maxSize = buffer.maxBy(String::length)!!.length + 5
+                val maxSize = buffer.filterIndexed { index, _ -> commands[index] !== DummyCommand }
+                        .maxBy(String::length)!!.length + 5
 
                 require(commands.size == buffer.size) { "Command size and buffer size is not equal. Commands: <$commands>. Buffer: <$buffer>" }
 
@@ -218,28 +226,41 @@ class CommonPrinter(val out: (String) -> Unit,
 
                     val builder = StringBuilder(buff)
 
-                    builder.append(' ', remaining)
+                    val cmdDescNotBlank = command.description.isNotBlank()
 
-                    if (command.description.isNotBlank())
+                    if (cmdDescNotBlank) {
+                        builder.append(' ', remaining)
                         builder.append(" - ${command.description}")
+                        out.flushAndClean(builder)
+                    } else {
+                        out.flushAndClean(builder)
+                    }
 
-                    out(builder.toString())
+                    val to = buff.indexOf(">")
+
+                    if (command.arguments.any { it.description.isNotBlank() }) {
+                        builder.append(' ', to + 1)
+                        builder.append("Arguments description:")
+                        out.flushAndClean(builder)
+
+                        command.arguments.forEach {
+                            if (it.description.isNotBlank()) {
+                                builder.append(' ', to + 1)
+                                builder.append(" - ${it.nameOrId}: ${it.description}")
+                                out.flushAndClean(builder)
+                            }
+                        }
+                    }
 
                     val anyReq = command.requirements.isNotEmpty() || command.arguments.any { it.requirements.isNotEmpty() }
                     val anyInfoReq = command.requiredInfo.isNotEmpty() || command.arguments.any { it.requiredInfo.isNotEmpty() }
 
                     if (anyReq || anyInfoReq) {
-                        builder.setLength(0)
-
-                        val to = buff.indexOf(">")
-
                         builder.append(' ', to + 1)
 
                         builder.append("Requirements:")
 
-                        out(builder.toString())
-
-                        builder.setLength(0)
+                        out.flushAndClean(builder)
 
                         val requirementPrinter: (Requirement<*, *>) -> Unit = {
                             builder.setLength(0)
@@ -247,9 +268,7 @@ class CommonPrinter(val out: (String) -> Unit,
                             builder.append(' ', to + 3)
 
                             builder.append("** Requires value '${it.required}' of subject '${it.subject.type}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
-                            out(builder.toString())
-                            builder.setLength(0)
-
+                            out.flushAndClean(builder)
                         }
 
                         val infoRequirementPrinter: (RequiredInformation) -> Unit = {
@@ -258,8 +277,7 @@ class CommonPrinter(val out: (String) -> Unit,
                             builder.append(' ', to + 3)
 
                             builder.append("* Requires information '${it.id}' of type '${it.id.type}'.")
-                            out(builder.toString())
-                            builder.setLength(0)
+                            out.flushAndClean(builder)
                         }
 
                         command.arguments.forEach { arg ->
@@ -267,8 +285,7 @@ class CommonPrinter(val out: (String) -> Unit,
                             if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
                                 builder.append(' ', to + 2)
                                 builder.append("Argument(${arg.id}):")
-                                out(builder.toString())
-                                builder.setLength(0)
+                                out.flushAndClean(builder)
                             }
 
                             if (arg.requiredInfo.isNotEmpty()) {
@@ -283,8 +300,7 @@ class CommonPrinter(val out: (String) -> Unit,
                         if (command.requirements.isNotEmpty() || command.requiredInfo.isNotEmpty()) {
                             builder.append(' ', to + 2)
                             builder.append("Command:")
-                            out(builder.toString())
-                            builder.setLength(0)
+                            out.flushAndClean(builder)
                         }
 
                         if (command.requiredInfo.isNotEmpty()) {
@@ -297,8 +313,9 @@ class CommonPrinter(val out: (String) -> Unit,
 
 
                         out("")
+                    } else {
+                        out("")
                     }
-
                 }
 
             } else {

@@ -5,6 +5,7 @@
   "arguments": [
     {
       "id": "name",
+      "description": "Description of name argument",
       "type": "String"
     }
   ],

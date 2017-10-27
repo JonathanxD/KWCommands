@@ -46,6 +46,7 @@ import kotlin.reflect.KClass
  * the specified [validator] instead of the determined one.
  *
  * @property value Identification and name of argument
+ * @property description Argument description.
  * @property optional Whether this argument is optional.
  * @property requirements Requirements of the argument.
  * @property validator Custom validator to use for argument.
@@ -57,6 +58,7 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
 annotation class Arg(val value: String = "",
+                     val description: String = "",
                      val optional: Boolean = false,
                      val requirements: Array<Require> = arrayOf(),
                      val validator: KClass<out Validator> = NoneValidator::class,

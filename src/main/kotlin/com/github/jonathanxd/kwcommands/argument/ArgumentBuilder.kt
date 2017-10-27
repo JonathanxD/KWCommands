@@ -42,6 +42,7 @@ class ArgumentBuilder<T> {
 
     private lateinit var id: Any
     private var name: String = ""
+    private var description: String = ""
     private var isOptional: Boolean = false
     private lateinit var type: TypeInfo<out T>
     private var defaultValue: T? = null
@@ -65,6 +66,14 @@ class ArgumentBuilder<T> {
      */
     fun name(name: String): ArgumentBuilder<T> {
         this.name = name
+        return this
+    }
+
+    /**
+     * Sets [Argument.description]
+     */
+    fun description(description: String): ArgumentBuilder<T> {
+        this.description = description
         return this
     }
 
@@ -195,6 +204,7 @@ class ArgumentBuilder<T> {
     fun build(): Argument<T> = Argument(
             id = this.id,
             name = this.name,
+            description = this.description,
             isOptional = this.isOptional,
             type = this.type,
             defaultValue = this.defaultValue,

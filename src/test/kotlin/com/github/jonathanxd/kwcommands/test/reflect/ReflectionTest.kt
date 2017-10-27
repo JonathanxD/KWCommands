@@ -66,6 +66,7 @@ class ReflectionTest {
         val printer = CommonPrinter(::println)
 
         printer.printAll(manager)
+        printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
@@ -84,6 +85,7 @@ class ReflectionTest {
         val printer = CommonPrinter(::println)
 
         printer.printAll(manager)
+        printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
@@ -110,6 +112,7 @@ class ReflectionTest {
         val printer = CommonPrinter(::println)
 
         printer.printAll(manager)
+        printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
@@ -156,6 +159,7 @@ class ReflectionTest {
         val printer = CommonPrinter(::println)
 
         printer.printAll(manager)
+        printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
@@ -181,6 +185,7 @@ class ReflectionTest {
         val printer = CommonPrinter(::println)
 
         printer.printAll(manager)
+        printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 

@@ -69,10 +69,12 @@ class DslTest {
             arguments {
                 +stringArg {
                     id { "userId" }
+                    description { "Identification of user to promote" }
                     transformer { it.toLowerCase() }
                 }
                 +enumArg<Group> {
                     id {"group"}
+                    description { "Group to add user to" }
                 }
             }
         }

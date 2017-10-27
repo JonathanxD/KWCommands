@@ -51,6 +51,7 @@ inline fun <reified T> InformationId(tags: Array<String>): Information.Id<T> =
  */
 inline fun <reified T> Argument(id: Any,
                                 name: String,
+                                description: String,
                                 isOptional: Boolean,
                                 defaultValue: T?,
                                 noinline validator: Validator,
@@ -61,6 +62,7 @@ inline fun <reified T> Argument(id: Any,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
         Argument(id,
                 name,
+                description,
                 isOptional,
                 object : AbstractTypeInfo<T>() {},
                 defaultValue,

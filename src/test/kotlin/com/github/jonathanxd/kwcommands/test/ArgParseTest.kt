@@ -48,6 +48,7 @@ class ArgParseTest {
 
         val cmd = command {
             stringName { "example" }
+            description { "Test command" }
             arguments {
                 +intArg {
                     id { "value" }
@@ -56,6 +57,7 @@ class ArgParseTest {
                 +stringArg {
                     id { "name" }
                     name { "name" }
+                    description { "String argument" }
                 }
             }
             handlerWithContext {

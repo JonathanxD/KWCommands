@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.printer.Printer
 
@@ -39,6 +40,12 @@ fun Printer.printAll(manager: CommandManager) {
         }
     }
 
-    this.flush()
+}
+
+fun Printer.printAll(command: Command) {
+    this.printCommand(command, 0)
+    command.consumeAllSubCommands { lcommand, level ->
+        this.printCommand(lcommand, level)
+    }
 
 }

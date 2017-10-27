@@ -40,6 +40,7 @@ import com.github.jonathanxd.kwcommands.util.Validator
  *
  * @property id Id of the argument.
  * @property name Argument name to be used in definition, empty string means that argument cannot be defined by name.
+ * @property description Argument description.
  * @property isOptional Is optional argument.
  * @property type Type of argument value.
  * @property validator Argument value validator.
@@ -50,6 +51,7 @@ import com.github.jonathanxd.kwcommands.util.Validator
  */
 data class Argument<out T>(val id: Any,
                            val name: String,
+                           val description: String,
                            val isOptional: Boolean,
                            val type: TypeInfo<out T>,
                            val defaultValue: T?,
