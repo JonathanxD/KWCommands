@@ -713,7 +713,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>): ArgumentType<T>? =
                 (this.getFirstOrNull({ it.provide(type) }, { it != null }) ?: this.let {
                     it.filterIsInstance<ConcreteProvider>().forEach {
-                        if (it.argumentType.type.related.isEmpty() && it.argumentType.type.classLiteral == type.classLiteral)
+                        if (it.argumentType.type.typeParameters.isEmpty()
+                                && it.argumentType.type.classLiteral == type.classLiteral)
                             return@let it.argumentType as? ArgumentType<T>
                     }
                     null
@@ -806,7 +807,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
         class CollectionProvider(val storage: ArgumentTypeStorage) : ArgumentTypeProvider {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
-                val component = type.related.singleOrNull() ?: TypeInfo.of(String::class.java)
+                val component = type.typeParameters.singleOrNull() ?: TypeInfo.of(String::class.java)
 
                 if (type.typeClass == List::class.java)
                     return ArgumentType(type,

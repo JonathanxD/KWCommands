@@ -47,7 +47,7 @@ class ConcreteProviders : ArgumentTypeProvider {
     override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
 
         return (this.list.find { it.type == type } ?: this.list.find {
-            it.type.related.isEmpty() && it.type.classLiteral == type.classLiteral
+            it.type.typeParameters.isEmpty() && it.type.classLiteral == type.classLiteral
         }) as? ArgumentType<T>
 
     }

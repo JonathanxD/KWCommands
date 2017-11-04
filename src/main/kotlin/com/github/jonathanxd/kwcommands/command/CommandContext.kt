@@ -29,8 +29,8 @@
 
 package com.github.jonathanxd.kwcommands.command
 
-import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.exception.ArgumentMissingException
 import com.github.jonathanxd.kwcommands.exception.InfoMissingException
 import com.github.jonathanxd.kwcommands.information.Information
@@ -97,22 +97,22 @@ data class CommandContext(val commandContainer: CommandContainer,
     // inline
 
     inline fun <reified T> getArg(id: Any): T =
-            (object : AbstractTypeInfo<T>() {}).let { type ->
+            typeInfo<T>().let { type ->
                 commandContainer.getArgument(id, type)?.value
                         ?: throw ArgumentMissingException("Argument with id $id of type $type is missing!")
             }
 
     inline fun <reified T> getOptArg(id: Any): T? =
-            commandContainer.getArgument(id, object : AbstractTypeInfo<T>() {})?.value
+            commandContainer.getArgument(id, typeInfo<T>())?.value
 
     inline fun <reified T> getInfo(tags: Array<String>): Information<T> =
-            Information.Id(object : AbstractTypeInfo<T>() {}, tags).let { infoId ->
+            Information.Id(typeInfo<T>(), tags).let { infoId ->
                 this.informationManager.find(infoId)
                         ?: throw InfoMissingException("Information with id $infoId is missing!")
             }
 
     inline fun <reified T> getOptInfo(tags: Array<String>): Information<T>? =
-            this.informationManager.find(Information.Id(object : AbstractTypeInfo<T>() {}, tags))
+            this.informationManager.find(Information.Id(typeInfo<T>(), tags))
 
     inline fun <reified T> getInfoValue(tags: Array<String>): T =
             this.getInfo<T>(tags).value

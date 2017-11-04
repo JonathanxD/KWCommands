@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 
 /**
@@ -49,11 +49,11 @@ data class Requirement<T, R>(val required: R,
 
     companion object {
         inline fun <reified T, reified R> create(required: R, subject: Information.Id<T>, tester: RequirementTester<T, R>) =
-                Requirement(required, subject, object : AbstractTypeInfo<R>() {}, tester)
+                Requirement(required, subject, typeInfo(), tester)
 
         inline fun <reified T, reified R> create(required: R, tags: Array<String>, tester: RequirementTester<T, R>) =
-                Requirement(required, Information.Id(object : AbstractTypeInfo<T>() {}, tags),
-                        object : AbstractTypeInfo<R>() {}, tester)
+                Requirement(required, Information.Id(typeInfo(), tags),
+                        typeInfo(), tester)
 
         @JvmStatic
         fun <T, R> builder() = RequirementBuilder<T, R>()

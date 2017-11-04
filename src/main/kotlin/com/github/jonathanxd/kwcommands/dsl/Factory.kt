@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.dsl
 
-import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -216,7 +216,7 @@ class BuildingRequiredInfo<T> {
 inline fun <reified T> informationId(f: BuildingInfoId<T>.() -> Unit): Information.Id<T> {
     val building = BuildingInfoId<T>()
 
-    building.type = object : AbstractTypeInfo<T>() {}
+    building.type = typeInfo<T>()
 
     f(building)
 
@@ -226,7 +226,7 @@ inline fun <reified T> informationId(f: BuildingInfoId<T>.() -> Unit): Informati
 inline fun <reified T> argument(f: BuildingArgument<T>.() -> Unit): Argument<T> {
     val building = BuildingArgument<T>()
 
-    building.type = object : AbstractTypeInfo<T>() {}
+    building.type = typeInfo<T>()
 
     f(building)
 
@@ -247,7 +247,7 @@ inline fun <T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<T>.() -> Uni
 inline fun <reified T, reified R> requirement(required: R, f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
-    building.type = object : AbstractTypeInfo<R>() {}
+    building.type = typeInfo<T>()
 
     f(building)
 

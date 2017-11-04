@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.type.AbstractTypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.information.Information
@@ -38,13 +38,13 @@ import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 inline fun <reified T> InformationManager.registerInformation(tags: Array<String>, value: T, description: String? = null)
-        = this.registerInformation(Information.Id(object : AbstractTypeInfo<T>() {}, tags), value, description)
+        = this.registerInformation(Information.Id(typeInfo(), tags), value, description)
 
 inline fun <reified T> Information(tags: Array<String>, value: T, description: String?): Information<T> =
-        Information<T>(Information.Id(object : AbstractTypeInfo<T>() {}, tags), value, description)
+        Information(Information.Id(typeInfo(), tags), value, description)
 
 inline fun <reified T> InformationId(tags: Array<String>): Information.Id<T> =
-        Information.Id(object : AbstractTypeInfo<T>() {}, tags)
+        Information.Id(typeInfo(), tags)
 
 /**
  * Reified function to create argument with a implicit [TypeInfo] of type [T].
@@ -64,7 +64,7 @@ inline fun <reified T> Argument(id: Any,
                 name,
                 description,
                 isOptional,
-                object : AbstractTypeInfo<T>() {},
+                typeInfo(),
                 defaultValue,
                 validator,
                 transformer,
@@ -77,7 +77,7 @@ inline fun <reified T> ArgumentType(noinline validator: Validator,
                                     noinline transformer: Transformer<T>,
                                     noinline possibilities: PossibilitiesFunc,
                                     defaultValue: T?): ArgumentType<T> =
-        ArgumentType(object : AbstractTypeInfo<T>() {}, validator, transformer, possibilities, defaultValue)
+        ArgumentType(typeInfo(), validator, transformer, possibilities, defaultValue)
 
 
 /**
@@ -92,4 +92,4 @@ inline fun <reified T> TypeInfo<*>.whenIs(type: TypeInfo<T>, exec: (TypeInfo<T>)
 }
 
 
-inline fun <reified T> type(): TypeInfo<T> = object : AbstractTypeInfo<T>() {}
+inline fun <reified T> type(): TypeInfo<T> = typeInfo()

@@ -69,6 +69,6 @@ sealed class Parameter<T>(val type: TypeInfo<T>) {
 
 val TypeInfo<*>.infoComponent: TypeInfo<*>
     get() =
-        if (this.typeClass == Information::class.java && this.related.size == 1)
-            this.related.first()
+        if (this.typeClass == Information::class.java && this.typeParameters.size == 1)
+            this.typeParameters.first()
         else this
