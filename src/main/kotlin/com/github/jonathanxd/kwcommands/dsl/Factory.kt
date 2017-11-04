@@ -247,7 +247,7 @@ inline fun <T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<T>.() -> Uni
 inline fun <reified T, reified R> requirement(required: R, f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
-    building.type = typeInfo<T>()
+    building.type = typeInfo<R>()
 
     f(building)
 
