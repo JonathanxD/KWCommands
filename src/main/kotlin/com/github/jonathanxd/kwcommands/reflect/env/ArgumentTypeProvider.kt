@@ -66,8 +66,8 @@ class ConcreteProvider(val argumentType: ArgumentType<*>) : ArgumentTypeProvider
 
 fun <T> TypeInfo<T>.isCompatible(type: TypeInfo<*>) =
         this.classLiteral == type.classLiteral // Avoid resolution
-                && (type.typeParameters.isEmpty() && this.typeParameters.all { it == TypeInfo.of(Any::class.java) })
-                || (this.typeParameters.isEmpty() && type.typeParameters.all { it == TypeInfo.of(Any::class.java) })
+                && ((type.typeParameters.isEmpty() && this.typeParameters.all { it == TypeInfo.of(Any::class.java) })
+                || (this.typeParameters.isEmpty() && type.typeParameters.all { it == TypeInfo.of(Any::class.java) }))
 
 /**
  * Cast [ArgumentType] to [ArgumentType] of [type] [T].
