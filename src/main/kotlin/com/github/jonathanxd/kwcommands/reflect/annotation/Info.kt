@@ -62,6 +62,6 @@ fun Info.createId(inferredType: TypeInfo<*>): Information.Id<*> = this.value.let
     if (it.value.java == Default::class.java && it.typeLiter.isEmpty() && it.tags.isEmpty())
         Information.Id(inferredType.infoComponent, emptyArray())
     else
-        Information.Id(it.typeInfo, it.tags)
+        Information.Id(it.idTypeInfo(inferredType.infoComponent), it.tags)
 }
 

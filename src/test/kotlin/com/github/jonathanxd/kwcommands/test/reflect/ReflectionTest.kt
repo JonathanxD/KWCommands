@@ -221,14 +221,11 @@ class World {
                  @Arg("z") z: Int,
                  @Arg(value = "block", requirements = arrayOf(
                          Require(subject = Id(Player::class, "player"), data = "world.modify.block", testerType = PermissionRequirementTest::class)
-                 )) block: Block): Any {
-        return "setted block $block at $x, $y, $z"
-    }
+                 )) block: Block): Any = "setted block $block at $x, $y, $z"
 
     @Cmd(name = "tpto", description = "Teleport [players] to [target] player")
-    fun tpTo(@Arg("target") target: String, @Arg("players") players: List<SimplePlayer>): Any {
-        return "teleported ${players.map { it.name }.joinToString()} to $target!"
-    }
+    fun tpTo(@Arg("target") target: String, @Arg("players") players: List<SimplePlayer>): Any =
+            "teleported ${players.map { it.name }.joinToString()} to $target!"
 }
 
 
@@ -246,9 +243,8 @@ enum class Block {
 class TpCommand {
 
     @Cmd(name = "tp", description = "Teleport a player to another")
-    fun execute(@Arg("player") player: String, @Arg("target") target: String): Any {
-        return "Teleported $player to $target!"
-    }
+    fun execute(@Arg("player") player: String, @Arg("target") target: String): Any =
+            "Teleported $player to $target!"
 
 }
 
@@ -257,9 +253,8 @@ val permissionRequirement = Requirement.create("world.modify", informationId { t
 
 
 object PermissionRequirementTest : RequirementTester<Player, String> {
-    override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean {
-        return information.value.hasPermission(requirement.required)
-    }
+    override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean =
+            information.value.hasPermission(requirement.required)
 }
 
 
@@ -282,7 +277,8 @@ class InnerCommands {
 @Cmd(name = "getName", description = "Gets player name.")
 class TestOptInfo {
     @CmdHandler
-    fun handle(@Info player: SimplePlayer, @Info playerInfo: Information<SimplePlayer>): String {
+    fun handle(@Info(Id(tags = "player")) player: SimplePlayer,
+               @Info playerInfo: Information<SimplePlayer>): String {
         Assert.assertEquals(player.name, playerInfo.value.name) // Ensure correctness?
         return playerInfo.value.name
     }

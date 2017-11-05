@@ -36,11 +36,20 @@ annotation class Id(val value: KClass<*> = Default::class,
                     val typeLiter: String = "",
                     vararg val tags: String = arrayOf())
 
-val Id.typeInfo: TypeInfo<*>
+fun Id.idTypeInfo(inferred: TypeInfo<*>): TypeInfo<*> =
+        this.typeInfoOrNull ?: inferred
+
+val Id.typeInfoOrNull: TypeInfo<*>?
     get() =
         if (this.value.java != Default::class.java)
             TypeInfo.of(this.value.java)
         else if (this.value.java == Default::class.java && this.typeLiter.isNotEmpty())
             TypeInfoUtil.fromFullString(this.typeLiter).single()
-        else
-            throw IllegalStateException("Neither type literal nor value class was defined in annotation $this.")
+        else null
+
+val Id.typeInfo: TypeInfo<*>
+    get () =
+        this.typeInfoOrNull ?:
+                throw IllegalStateException("Neither type literal nor value class was defined in annotation $this.")
+
+
