@@ -765,35 +765,35 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 }
 
                 return when (type) {
-                    TypeInfo.of(Short::class.java),
+                    TypeInfo.of(Short::class.javaObjectType),
                     TypeInfo.of(Short::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.toShortOrNull() != null }, String::toShort, { emptyList() }, 0)
 
-                    TypeInfo.of(Char::class.java),
+                    TypeInfo.of(Char::class.javaObjectType),
                     TypeInfo.of(Char::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.length == 1 }, { it[0] }, { emptyList() }, 0.toChar())
 
-                    TypeInfo.of(Byte::class.java),
+                    TypeInfo.of(Byte::class.javaObjectType),
                     TypeInfo.of(Byte::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.toByteOrNull() != null }, String::toByte, { emptyList() }, 0)
 
-                    TypeInfo.of(Int::class.java),
+                    TypeInfo.of(Int::class.javaObjectType),
                     TypeInfo.of(Int::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.toIntOrNull() != null }, String::toInt, { emptyList() }, 0)
 
-                    TypeInfo.of(Float::class.java),
+                    TypeInfo.of(Float::class.javaObjectType),
                     TypeInfo.of(Float::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.toFloatOrNull() != null }, String::toFloat, { emptyList() }, 0.0F)
 
-                    TypeInfo.of(Double::class.java),
+                    TypeInfo.of(Double::class.javaObjectType),
                     TypeInfo.of(Double::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.toDoubleOrNull() != null }, String::toDouble, { emptyList() }, 0.0)
 
-                    TypeInfo.of(Long::class.java),
+                    TypeInfo.of(Long::class.javaObjectType),
                     TypeInfo.of(Long::class.javaPrimitiveType)
                     -> ArgumentType(type, { it.toLongOrNull() != null }, String::toLong, { emptyList() }, 0L)
 
-                    TypeInfo.of(Boolean::class.java),
+                    TypeInfo.of(Boolean::class.javaObjectType),
                     TypeInfo.of(Boolean::class.javaPrimitiveType)
                     -> ArgumentType(type, { it == "true" || it == "false" }, String::toBoolean, { emptyList() }, false)
 
