@@ -58,11 +58,16 @@ class ConcreteProvider(val argumentType: ArgumentType<*>) : ArgumentTypeProvider
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? =
-            if (this.argumentType.type == type)
+            if (this.argumentType.type == type || this.argumentType.type.isCompatible(type))
                 this.argumentType as? ArgumentType<T>
             else null
 
 }
+
+fun <T> TypeInfo<T>.isCompatible(type: TypeInfo<*>) =
+        this.classLiteral == type.classLiteral // Avoid resolution
+                && (type.typeParameters.isEmpty() && this.typeParameters.all { it == TypeInfo.of(Any::class.java) })
+                || (this.typeParameters.isEmpty() && type.typeParameters.all { it == TypeInfo.of(Any::class.java) })
 
 /**
  * Cast [ArgumentType] to [ArgumentType] of [type] [T].
