@@ -112,8 +112,36 @@ class DynamicHandler(val name: String,
                 sameName.firstOrNull { it.parameterCount >= command.arguments.size } ?: fail()
             }
 
-            this.reflectionEnvironment.createHandler(this.instanceProvider(method.declaringClass), method)
+            validate(command,
+                    this.reflectionEnvironment.createHandler(this.instanceProvider(method.declaringClass), method))
         }
+    }
+
+    private fun validate(command: Command, handler: Handler): Handler {
+        if (handler is ReflectionHandler) {
+            val names = handler.element.parameters
+                    .filterIsInstance<Parameter.ArgumentParameter<*>>()
+                    .joinToString { it.argument.nameOrId }
+
+            handler.element.parameters.forEach {
+                when (it) {
+                    is Parameter.ArgumentParameter<*> -> {
+                        if (!it.argument.isOptional
+                                && command.arguments.none { arg -> arg.nameOrId == it.argument.nameOrId }) {
+                            throw IllegalArgumentException("Argument '${it.argument.nameOrId}' of method" +
+                                    " '${type.simpleName}.$name'" +
+                                    " wasn't specified in json of command '${command.fullname}'." +
+                                    " Json arguments:" +
+                                    " ${command.arguments.joinToString { it.nameOrId }}." +
+                                    " Method arguments:" +
+                                    " $names.")
+                        }
+                    }
+                }
+            }
+        }
+
+        return handler
     }
 
     override fun handle(argumentContainer: ArgumentContainer<Any?>,
