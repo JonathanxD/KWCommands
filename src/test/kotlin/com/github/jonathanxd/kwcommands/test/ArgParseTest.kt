@@ -71,7 +71,7 @@ class ArgParseTest {
         val infoManager = InformationManagerImpl()
         val manager = CommandManagerImpl()
         val processor = Processors.createCommonProcessor(manager)
-        processor.options[KWParserOptions.ORDER] = true
+        processor.parser.options[KWParserOptions.ORDER] = true
 
         manager.registerCommand(cmd, this)
 

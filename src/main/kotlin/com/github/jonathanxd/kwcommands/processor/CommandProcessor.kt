@@ -27,38 +27,36 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
-import com.github.jonathanxd.iutils.option.Options
-import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.information.Information
+import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid
-
-val COMMAND_PROCESSOR_ID = Information.Id(typeInfo<InformationManager>(), arrayOf("command_processor"))
+import com.github.jonathanxd.kwcommands.parse.CommandParser
 
 interface CommandProcessor {
 
     /**
-     * Command manager.
+     * Parser of command
      */
-    val commandManager: CommandManager
+    val parser: CommandParser
 
     /**
-     * Processor options
+     * Dispatcher of command
      */
-    val options: Options
+    val dispatcher: CommandDispatcher
 
     /**
      * Register a [command interceptor][CommandInterceptor].
      */
-    fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean
+    fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
+            this.dispatcher.registerInterceptor(commandInterceptor)
 
     /**
      * Unregister a [command interceptor][CommandInterceptor].
      */
-    fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean
+    fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean =
+            this.dispatcher.unregisterInterceptor(commandInterceptor)
 
     /**
      * Process command string list.
@@ -69,7 +67,7 @@ interface CommandProcessor {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun process(stringList: List<String>, owner: Any?): List<CommandContainer> =
-            processWithOwnerFunction(stringList, { owner })
+            this.parser.parse(stringList, owner)
 
     /**
      * Process command string list.
@@ -83,7 +81,8 @@ interface CommandProcessor {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun processWithOwnerFunction(stringList: List<String>,
-                                 ownerProvider: (commandName: String) -> Any?): List<CommandContainer>
+                                 ownerProvider: (commandName: String) -> Any?): List<CommandContainer> =
+            this.parser.parseWithOwnerFunction(stringList, ownerProvider)
 
     /**
      * Handle [commands] and returns [result list][CommandResult] of command executions.
@@ -96,7 +95,9 @@ interface CommandProcessor {
      * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
      * each command.
      */
-    fun handle(commands: List<CommandContainer>, informationManager: InformationManager = InformationManagerVoid): List<CommandResult>
+    fun handle(commands: List<CommandContainer>,
+               informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
+            this.dispatcher.dispatch(commands, informationManager)
 
     /**
      * Calls [process] and then [handle] to handle result of [process].
@@ -112,5 +113,5 @@ interface CommandProcessor {
     fun processAndHandleWithOwnerFunc(stringList: List<String>,
                                       ownerProvider: (commandName: String) -> Any?,
                                       informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            processWithOwnerFunction(stringList, ownerProvider).let { handle(it, informationManager) }
+            processWithOwnerFunction(stringList, ownerProvider).let { this.handle(it, informationManager) }
 }

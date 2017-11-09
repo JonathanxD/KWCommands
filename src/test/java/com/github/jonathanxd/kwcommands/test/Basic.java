@@ -92,7 +92,7 @@ public class Basic {
                         .build())
                 .build();
 
-        processor.getCommandManager().registerCommand(command, this);
+        processor.getParser().getCommandManager().registerCommand(command, this);
 
         InformationManager manager = new InformationManagerImpl();
 

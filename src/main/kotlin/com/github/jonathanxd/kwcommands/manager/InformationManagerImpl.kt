@@ -51,25 +51,20 @@ class InformationManagerImpl : InformationManager {
         this.registerInformation(INFORMATION_MANAGER_ID, this, "Information manager")
     }
 
-    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean {
-        return this.informationSet_.add(Information(id, value, description))
-    }
+    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean =
+            this.informationSet_.add(Information(id, value, description))
 
-    override fun registerInformation(information: Information<*>): Boolean {
-        return this.informationSet_.add(information)
-    }
+    override fun registerInformation(information: Information<*>): Boolean =
+            this.informationSet_.add(information)
 
-    override fun unregisterInformation(id: Information.Id<*>): Boolean {
-        return this.informationSet_.removeIf { it.id == id }
-    }
+    override fun unregisterInformation(id: Information.Id<*>): Boolean =
+            this.informationSet_.removeIf { it.id == id }
 
-    override fun registerInformationProvider(informationProvider: InformationProvider): Boolean {
-        return this.informationProviders_.add(informationProvider)
-    }
+    override fun registerInformationProvider(informationProvider: InformationProvider): Boolean =
+            this.informationProviders_.add(informationProvider)
 
-    override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean {
-        return this.informationProviders_.remove(informationProvider)
-    }
+    override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean =
+            this.informationProviders_.remove(informationProvider)
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> find(id: Information.Id<T>, useProviders: Boolean): Information<T>? {
@@ -125,34 +120,13 @@ class InformationManagerImpl : InformationManager {
  */
 object InformationManagerVoid : InformationManager {
 
-    override val informationSet: Set<Information<*>>
-        get() = emptySet()
-
-    override val informationProviders: Set<InformationProvider>
-        get() = emptySet()
-
-    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean {
-        return false
-    }
-
-    override fun registerInformation(information: Information<*>): Boolean {
-        return true
-    }
-
-    override fun unregisterInformation(id: Information.Id<*>): Boolean {
-        return true
-    }
-
-    override fun registerInformationProvider(informationProvider: InformationProvider): Boolean {
-        return true
-    }
-
-    override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean {
-        return true
-    }
-
+    override val informationSet: Set<Information<*>> get() = emptySet()
+    override val informationProviders: Set<InformationProvider> get() = emptySet()
+    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean = false
+    override fun registerInformation(information: Information<*>): Boolean = true
+    override fun unregisterInformation(id: Information.Id<*>): Boolean = true
+    override fun registerInformationProvider(informationProvider: InformationProvider): Boolean = true
+    override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean = true
     override fun <T> find(id: Information.Id<T>, useProviders: Boolean): Information<T>? = null
-
     override fun copy(): InformationManager = this
-
 }

@@ -40,7 +40,7 @@ class BasicReflectionTest {
     fun test() {
         val processor = Processors.createCommonProcessor()
 
-        val reflect = ReflectionEnvironment(processor.commandManager)
+        val reflect = ReflectionEnvironment(processor.parser.commandManager)
 
         reflect.registerCommands(reflect.fromClass(Gun::class.java, { it.newInstance() }, this), this)
 

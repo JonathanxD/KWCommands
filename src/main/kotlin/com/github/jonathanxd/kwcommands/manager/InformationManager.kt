@@ -28,10 +28,15 @@
 package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
+import com.github.jonathanxd.kwcommands.parse.CommandParser
 
+val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
 val INFORMATION_MANAGER_ID = Information.Id(typeInfo<InformationManager>(), arrayOf("information_manager"))
+val COMMAND_PARSER_ID = Information.Id(typeInfo<CommandParser>(), arrayOf("command_parser"))
+val COMMAND_DISPATCHER_ID = Information.Id(typeInfo<CommandDispatcher>(), arrayOf("command_dispatcher"))
 
 /**
  * Register and provide information.
@@ -47,6 +52,25 @@ interface InformationManager {
      * Information providers.
      */
     val informationProviders: Set<InformationProvider>
+
+    /**
+     * Register recommended information.
+     */
+    fun registerRecommendations(manager: CommandManager?,
+                                parser: CommandParser?,
+                                dispatcher: CommandDispatcher?) {
+        manager?.let {
+            this.registerInformation(COMMAND_MANAGER_ID, it, "Recommended manager")
+        }
+
+        parser?.let {
+            this.registerInformation(COMMAND_PARSER_ID, it, "Recommended parser")
+        }
+
+        dispatcher?.let {
+            this.registerInformation(COMMAND_DISPATCHER_ID, it, "Recommended dispatcher")
+        }
+    }
 
     /**
      * Register a [static information][Information] with [id] and [description] with [value].

@@ -205,7 +205,7 @@ class CommandTest {
 
         val processor = Processors.createCommonProcessor()
 
-        processor.commandManager.registerCommand(command, this)
+        processor.parser.commandManager.registerCommand(command, this)
 
 
         processor.handle(processor.process(listOf("open", "house"), this))

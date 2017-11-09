@@ -47,12 +47,12 @@ class ListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) 
 
         return list.all {
             val parsedArgs = parsed + currentArgs
-            val res = get.validator(parsedArgs, current, value)
+            val res = get.validator(parsedArgs, current, it)
             if (res) {
                 currentArgs += ArgumentContainer(
                         current as Argument<Any>,
                         it,
-                        value,
+                        res,
                         current.handler as ArgumentHandler<Any>?
                 )
             }
@@ -69,19 +69,18 @@ class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E
             value.split(',').toList()
         else listOf(value)
 
-        val currentArgs = mutableListOf<ArgumentContainer<*>>()
+        val currentArgs = parsed.toMutableList()
         val mut = mutableListOf<E>()
 
         val get = storage.getArgumentType(subType)
 
         return list.mapTo(mut) {
-            val parsedArgs = parsed + currentArgs
-            val res = get.transformer(parsedArgs, current, value)
+            val res = get.transformer(currentArgs, current, it)
             currentArgs += ArgumentContainer(
-                    current as Argument<Any>,
+                    current as Argument<E>,
                     it,
-                    value,
-                    current.handler as ArgumentHandler<Any>?
+                    res,
+                    current.handler as ArgumentHandler<E>?
             )
             res
         }
