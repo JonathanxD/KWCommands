@@ -25,7 +25,7 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.parse
+package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.command.CommandContainer

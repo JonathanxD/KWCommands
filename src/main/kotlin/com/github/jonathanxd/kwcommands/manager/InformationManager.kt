@@ -31,7 +31,7 @@ import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
-import com.github.jonathanxd.kwcommands.parse.CommandParser
+import com.github.jonathanxd.kwcommands.parser.CommandParser
 
 val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
 val INFORMATION_MANAGER_ID = Information.Id(typeInfo<InformationManager>(), arrayOf("information_manager"))

@@ -33,7 +33,7 @@ import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid
-import com.github.jonathanxd.kwcommands.parse.CommandParser
+import com.github.jonathanxd.kwcommands.parser.CommandParser
 
 interface CommandProcessor {
 

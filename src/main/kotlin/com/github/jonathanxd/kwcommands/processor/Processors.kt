@@ -31,8 +31,8 @@ import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.parse.CommandParser
-import com.github.jonathanxd.kwcommands.parse.CommandParserImpl
+import com.github.jonathanxd.kwcommands.parser.CommandParser
+import com.github.jonathanxd.kwcommands.parser.CommandParserImpl
 
 object Processors {
 
