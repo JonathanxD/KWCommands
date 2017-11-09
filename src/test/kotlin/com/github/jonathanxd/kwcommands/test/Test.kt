@@ -37,9 +37,7 @@ import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.processor.ValueResult
-import com.github.jonathanxd.kwcommands.util.Argument
-import com.github.jonathanxd.kwcommands.util.Mode
-import com.github.jonathanxd.kwcommands.util.toCommandStringList
+import com.github.jonathanxd.kwcommands.util.*
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import org.junit.Test
@@ -137,11 +135,11 @@ class CommandTest {
                                 description = "",
                                 isOptional = false,
                                 defaultValue = null,
-                                validator = { true },
-                                transformer = { it },
+                                validator = validator { _, _, _ -> true },
+                                transformer = transformer { _, _, it -> it },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = { emptyList() })
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
 
                 ),
                 requiredInfo = emptySet(),
@@ -172,19 +170,19 @@ class CommandTest {
                                 description = "",
                                 isOptional = false,
                                 defaultValue = null,
-                                validator = { true },
-                                transformer = { it },
+                                validator = validator { _, _, _ ->  true },
+                                transformer = transformer { _, _, it -> it },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = { emptyList() }),
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() }),
                         Argument(id = "amount",
                                 name = "",
                                 description = "",
                                 isOptional = true,
                                 defaultValue = null,
-                                validator = { it.toIntOrNull() != null },
-                                transformer = String::toInt,
-                                possibilities = { emptyList() },
+                                validator = validator { _, _, it ->  it.toIntOrNull() != null },
+                                transformer = transformer { _, _, it -> it.toInt() },
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
@@ -195,11 +193,11 @@ class CommandTest {
                                 description = "",
                                 isOptional = false,
                                 defaultValue = null,
-                                validator = { it.toDoubleOrNull() != null },
-                                transformer = String::toDouble,
+                                validator = validator { _, _, it -> it.toDoubleOrNull() != null },
+                                transformer = transformer { _, _, it -> it.toDouble() },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = { emptyList() })
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList()

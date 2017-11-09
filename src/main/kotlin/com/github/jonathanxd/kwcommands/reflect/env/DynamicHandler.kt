@@ -53,6 +53,7 @@ class DynamicHandler(val name: String,
                      val type: Class<*>,
                      val reflectionEnvironment: ReflectionEnvironment) : Handler, ArgumentHandler<Any?> {
 
+    private val checkedInstanceProvider: ReflectInstanceProvider = instanceProvider.checked
     private var handler: OptObject<Handler> = none()
     private var argumentHandler: OptObject<ArgumentHandler<Any?>> = none()
 
@@ -99,8 +100,11 @@ class DynamicHandler(val name: String,
         return if (handlerType == Type.FIELD_SETTER) {
             val field = type.declaredFields.firstOrNull { it.name == name } ?: fail()
 
+            val requestType = field.declaringClass
+            val instance = this.checkedInstanceProvider(requestType)
+
             this.reflectionEnvironment
-                    .createSetterHandler(this.instanceProvider(field.declaringClass), field)
+                    .createSetterHandler(instance, field)
         } else {
             val sameName = type.declaredMethods.filter { it.name == name }
 
@@ -113,7 +117,7 @@ class DynamicHandler(val name: String,
             }
 
             validate(command,
-                    this.reflectionEnvironment.createHandler(this.instanceProvider(method.declaringClass), method))
+                    this.reflectionEnvironment.createHandler(this.checkedInstanceProvider(method.declaringClass), method))
         }
     }
 

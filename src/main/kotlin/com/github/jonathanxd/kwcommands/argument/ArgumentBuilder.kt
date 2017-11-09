@@ -29,11 +29,12 @@ package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandBuilder
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
+import com.github.jonathanxd.kwcommands.util.possibilitiesFunc
 
 /**
  * Builder of [Argument].
@@ -46,9 +47,9 @@ class ArgumentBuilder<T> {
     private var isOptional: Boolean = false
     private lateinit var type: TypeInfo<out T>
     private var defaultValue: T? = null
-    private lateinit var validator: (String) -> Boolean
-    private lateinit var transformer: (String) -> T
-    private var possibilities: PossibilitiesFunc = { emptyList() }
+    private lateinit var validator: Validator
+    private lateinit var transformer: Transformer<T>
+    private var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private var handler: ArgumentHandler<out T>? = null
@@ -105,7 +106,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.validator]
      */
-    fun validator(validator: (String) -> Boolean): ArgumentBuilder<T> {
+    fun validator(validator: Validator): ArgumentBuilder<T> {
         this.validator = validator
         return this
     }
@@ -113,7 +114,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.transformer]
      */
-    fun transformer(transformer: (String) -> T): ArgumentBuilder<T> {
+    fun transformer(transformer: Transformer<T>): ArgumentBuilder<T> {
         this.transformer = transformer
         return this
     }

@@ -70,7 +70,7 @@ class DslTest {
                 +stringArg {
                     id { "userId" }
                     description { "Identification of user to promote" }
-                    transformer { it.toLowerCase() }
+                    transformer { _, _, it -> it.toLowerCase() }
                 }
                 +enumArg<Group> {
                     id {"group"}

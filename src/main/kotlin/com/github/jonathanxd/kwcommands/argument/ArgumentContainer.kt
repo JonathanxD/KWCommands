@@ -36,7 +36,7 @@ import com.github.jonathanxd.kwcommands.command.Container
  * @property input Input argument value(s).
  * @property value Value of argument.
  */
-data class ArgumentContainer<T>(val argument: Argument<T>,
+data class ArgumentContainer<T> constructor(val argument: Argument<T>,
                                 val input: String?,
                                 val value: T?,
                                 var handler: ArgumentHandler<T>?): Container {

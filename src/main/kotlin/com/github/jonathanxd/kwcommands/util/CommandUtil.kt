@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 
 /**
@@ -54,7 +55,15 @@ val Argument<*>.nameOrIdWithType
 val Argument<*>.typeStr: String
     get() = if (this.type.canResolve()) this.type.toString() else this.type.classLiteral
 
+@Deprecated(message = "Use is boolean function")
 val Argument<*>.isBoolean: Boolean
     get() = this.type.canResolve()
             && (this.type.typeClass == Boolean::class.javaObjectType || this.type.typeClass == Boolean::class.javaPrimitiveType)
-            && this.validator("true")
+            && this.validator(emptyList(), this, "true")
+
+fun Argument<*>.isBoolean(parsedArgs: List<ArgumentContainer<*>>): Boolean =
+        this.type.canResolve()
+                && (this.type.typeClass == Boolean::class.javaObjectType
+                || this.type.typeClass == Boolean::class.javaPrimitiveType
+                )
+                && this.validator(parsedArgs, this, "true")

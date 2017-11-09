@@ -1,4 +1,4 @@
-/**
+/*
  *      KWCommands - New generation of WCommands written in Kotlin <https://github.com/JonathanxD/KWCommands>
  *
  *         The MIT License (MIT)
@@ -25,32 +25,25 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-{
-  "name": "register",
-  "description": "Registers the user",
-  "handler": "method:register",
-  "arguments": [
-    {
-      "id": "name",
-      "type": "String"
-    },
-    {
-      "id": "email",
-      "type": "String",
-      "validator": "EmailValidator"
+package com.github.jonathanxd.kwcommands.test.welcome;
+
+import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
+import com.github.jonathanxd.kwcommands.reflect.annotation.Id;
+import com.github.jonathanxd.kwcommands.reflect.annotation.Info;
+import com.github.jonathanxd.kwcommands.reflect.annotation.Require;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class Welcome10 {
+    @Cmd(description = "Welcome to KWCommands", requirements =
+    @Require(
+            subject = @Id(User.class),
+            data = "repo.kwcommands.access",
+            testerType = PermissionTester.class)
+    )
+    public void welcome(@Info Logger logger, @Info User user) {
+        logger.log(Level.INFO, "Welcome {0} to KWCommands", user.getName());
     }
-  ],
-  "requiredInfo": [
-    {
-      "id": { "tags": ["player"], "type": "Player" }
-    }
-  ],
-  "requirements": [
-    {
-      "info": { "tags": ["player"], "type": "Player" },
-      "tester": "ReqTester",
-      "data": "perm.register"
-    }
-  ],
-  "subCommands": ["any.json"]
+
 }

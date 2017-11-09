@@ -1,4 +1,4 @@
-/**
+/*
  *      KWCommands - New generation of WCommands written in Kotlin <https://github.com/JonathanxD/KWCommands>
  *
  *         The MIT License (MIT)
@@ -25,32 +25,11 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-{
-  "name": "register",
-  "description": "Registers the user",
-  "handler": "method:register",
-  "arguments": [
-    {
-      "id": "name",
-      "type": "String"
-    },
-    {
-      "id": "email",
-      "type": "String",
-      "validator": "EmailValidator"
-    }
-  ],
-  "requiredInfo": [
-    {
-      "id": { "tags": ["player"], "type": "Player" }
-    }
-  ],
-  "requirements": [
-    {
-      "info": { "tags": ["player"], "type": "Player" },
-      "tester": "ReqTester",
-      "data": "perm.register"
-    }
-  ],
-  "subCommands": ["any.json"]
+package com.github.jonathanxd.kwcommands.test.welcome;
+
+public interface User {
+
+    boolean hasPermission(String permission);
+
+    String getName();
 }

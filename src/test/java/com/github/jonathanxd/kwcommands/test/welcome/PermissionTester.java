@@ -1,4 +1,4 @@
-/**
+/*
  *      KWCommands - New generation of WCommands written in Kotlin <https://github.com/JonathanxD/KWCommands>
  *
  *         The MIT License (MIT)
@@ -25,32 +25,21 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-{
-  "name": "register",
-  "description": "Registers the user",
-  "handler": "method:register",
-  "arguments": [
-    {
-      "id": "name",
-      "type": "String"
-    },
-    {
-      "id": "email",
-      "type": "String",
-      "validator": "EmailValidator"
+package com.github.jonathanxd.kwcommands.test.welcome;
+
+import com.github.jonathanxd.kwcommands.information.Information;
+import com.github.jonathanxd.kwcommands.requirement.Requirement;
+import com.github.jonathanxd.kwcommands.requirement.RequirementTester;
+
+import org.jetbrains.annotations.NotNull;
+
+public class PermissionTester implements RequirementTester<User, String> {
+
+    public static final PermissionTester INSTANCE = new PermissionTester();
+
+    @Override
+    public boolean test(@NotNull Requirement<User, String> requirement,
+                        @NotNull Information<? extends User> information) {
+        return information.getValue().hasPermission(requirement.getRequired());
     }
-  ],
-  "requiredInfo": [
-    {
-      "id": { "tags": ["player"], "type": "Player" }
-    }
-  ],
-  "requirements": [
-    {
-      "info": { "tags": ["player"], "type": "Player" },
-      "tester": "ReqTester",
-      "data": "perm.register"
-    }
-  ],
-  "subCommands": ["any.json"]
 }

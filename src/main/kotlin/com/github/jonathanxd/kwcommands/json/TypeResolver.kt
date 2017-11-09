@@ -33,9 +33,7 @@ import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
-import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.Transformer
-import com.github.jonathanxd.kwcommands.util.Validator
+import com.github.jonathanxd.kwcommands.util.*
 import java.util.function.Function
 
 interface TypeResolver {
@@ -206,11 +204,11 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             }
         }
 
-        return { emptyList() }
+        return possibilitiesFunc { _, _ -> emptyList() }
     }
 
     override fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?> {
-        fun transformer(): Transformer<Any?> {
+        fun localTransformer(): Transformer<Any?> {
             this.transformerResolvers.forEach {
                 it(type)?.let {
                     return it
@@ -220,11 +218,11 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             throw IllegalArgumentException("Can't resolve transformer of type '$type'!")
         }
 
-        return { transformer().invoke(it) }
+        return transformer { parsed, current, value -> localTransformer().invoke(parsed, current, value) }
     }
 
     override fun resolveValidator(type: TypeInfo<*>): Validator {
-        fun validator(): Validator {
+        fun localValidator(): Validator {
             this.validatorResolvers.forEach {
                 it(type)?.let {
                     return it
@@ -234,7 +232,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             throw IllegalArgumentException("Can't resolve validator of type '$type'!")
         }
 
-        return { validator().invoke(it) }
+        return validator { parsed, current, value -> localValidator().invoke(parsed, current, value) }
     }
 
     override fun resolveDefaultValue(type: TypeInfo<*>): Any? {

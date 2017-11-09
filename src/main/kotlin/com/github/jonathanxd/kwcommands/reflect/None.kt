@@ -27,42 +27,43 @@
  */
 package com.github.jonathanxd.kwcommands.reflect
 
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
+import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
 
 
 sealed class None
 
-object NoneValidator : None(), (String) -> Boolean {
-    override fun invoke(p1: String): Boolean {
-        throw IllegalStateException("NONE")
-    }
+object NoneValidator : None(), Validator {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: String): Boolean =
+            true
 }
 
-object NoneTransformer : None(), (String) -> Any {
-    override fun invoke(p1: String): Any {
-        throw IllegalStateException("NONE")
-    }
+object NoneTransformer : None(), Transformer<Any> {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: String): Any =
+        value
 }
 
-object NonePossibilities : None(), () -> List<String> {
-    override fun invoke(): List<String> {
-        return emptyList()
-    }
+object NonePossibilities : None(), PossibilitiesFunc {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<String> =
+            emptyList()
 }
 
 object NoneHandler : None(), Handler {
-    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler): Any {
-        return Unit
-    }
+    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager,
+                        resultHandler: ResultHandler): Any =
+            Unit
 }
 
 object NoneArgumentHandler : None(), ArgumentHandler<Any?> {
-    override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler): Any {
-        return Unit
-    }
+    override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer,
+                        informationManager: InformationManager, resultHandler: ResultHandler): Any =
+            Unit
 }

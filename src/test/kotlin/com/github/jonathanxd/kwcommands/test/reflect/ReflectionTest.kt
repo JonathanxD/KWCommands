@@ -46,8 +46,7 @@ import com.github.jonathanxd.kwcommands.requirement.Reason
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.test.assertAll
-import com.github.jonathanxd.kwcommands.util.ArgumentType
-import com.github.jonathanxd.kwcommands.util.printAll
+import com.github.jonathanxd.kwcommands.util.*
 import org.junit.Assert
 import org.junit.Test
 
@@ -122,7 +121,10 @@ class ReflectionTest {
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
                 if (type == TypeInfo.of(SimplePlayer::class.java)) {
-                    return ArgumentType({ true }, { SimplePlayer(it) }, { emptyList() }, null).cast(type)
+                    return ArgumentType(
+                            validator {_, _, _ -> true },
+                            transformer {_, _, it -> SimplePlayer(it) },
+                            possibilitiesFunc { _, _ -> emptyList() }, null).cast(type)
                 }
 
                 return null

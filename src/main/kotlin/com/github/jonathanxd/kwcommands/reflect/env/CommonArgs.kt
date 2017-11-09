@@ -28,49 +28,79 @@
 package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.util.Transformer
+import com.github.jonathanxd.kwcommands.util.Validator
 
-class ListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : (String) -> Boolean {
-    override fun invoke(p1: String): Boolean {
-        val list = if (p1.contains(','))
-            p1.split(',').toList()
-        else listOf(p1)
+@Suppress("UNCHECKED_CAST")
+class ListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : Validator {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: String): Boolean {
+        val list = if (value.contains(','))
+            value.split(',').toList()
+        else listOf(value)
+
+        val currentArgs = mutableListOf<ArgumentContainer<*>>()
 
         val get = storage.getArgumentType(subType)
 
-        return list.all { get.validator(it) }
+        return list.all {
+            val parsedArgs = parsed + currentArgs
+            val res = get.validator(parsedArgs, current, value)
+            if (res) {
+                currentArgs += ArgumentContainer(
+                        current as Argument<Any>,
+                        it,
+                        value,
+                        current.handler as ArgumentHandler<Any>?
+                )
+            }
+            res
+        }
     }
 
 }
 
-class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>) : (String) -> List<E> {
-    override fun invoke(p1: String): List<E> {
-        val list = if (p1.contains(','))
-            p1.split(',').toList()
-        else listOf(p1)
+@Suppress("UNCHECKED_CAST")
+class ListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>) : Transformer<List<E>> {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: String): List<E> {
+        val list = if (value.contains(','))
+            value.split(',').toList()
+        else listOf(value)
 
+        val currentArgs = mutableListOf<ArgumentContainer<*>>()
         val mut = mutableListOf<E>()
 
         val get = storage.getArgumentType(subType)
 
-        return list.mapTo(mut) { get.transformer(it) }
+        return list.mapTo(mut) {
+            val parsedArgs = parsed + currentArgs
+            val res = get.transformer(parsedArgs, current, value)
+            currentArgs += ArgumentContainer(
+                    current as Argument<Any>,
+                    it,
+                    value,
+                    current.handler as ArgumentHandler<Any>?
+            )
+            res
+        }
     }
-
 }
 
 @Suppress("UNCHECKED_CAST")
-class EnumValidator<T>(val type: Class<T>) : (String) -> Boolean {
-    override fun invoke(p1: String): Boolean {
+class EnumValidator<T>(val type: Class<T>) : Validator {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: String): Boolean {
         val consts = type.enumConstants as Array<Enum<*>>
-        return consts.any { it.name.equals(p1, true) }
+        return consts.any { it.name.equals(value, true) }
     }
-
 }
 
 @Suppress("UNCHECKED_CAST")
-class EnumTransformer<T>(val type: Class<T>) : (String) -> T {
-    override fun invoke(p1: String): T {
+class EnumTransformer<T>(val type: Class<T>) : Transformer<T> {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: String): T {
         val consts = type.enumConstants as Array<Enum<*>>
-        return (consts.firstOrNull { it.name == p1 } ?: consts.first { it.name.equals(p1, true) }) as T
+        return (consts.firstOrNull { it.name == value } ?: consts.first { it.name.equals(value, true) }) as T
     }
 }
 

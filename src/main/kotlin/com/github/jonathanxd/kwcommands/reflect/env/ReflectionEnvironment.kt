@@ -218,16 +218,20 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         val parser = jsonCommandParserResolver(jsonObj.parser).let {
             it.factory.create(ReflectTypeResolver(klass, instanceProvider, this, it.typeResolver))
         }
+        try {
+            val cmd = parser.parseCommand(jsonObj.resolveJsonString(klass))
 
-        val cmd = parser.parseCommand(jsonObj.resolveJsonString(klass))
 
-        (cmd.handler as? DynamicHandler)?.resolveHandlers(cmd)
+            (cmd.handler as? DynamicHandler)?.resolveHandlers(cmd)
 
-        cmd.arguments.forEach {
-            (it.handler as? DynamicHandler)?.resolveHandlers(it, cmd)
+            cmd.arguments.forEach {
+                (it.handler as? DynamicHandler)?.resolveHandlers(it, cmd)
+            }
+
+            return listOf(cmd)
+        }catch (e: Exception) {
+            throw IllegalArgumentException("Exception occurred while parsing json of obj '$jsonObj'", e)
         }
-
-        return listOf(cmd)
     }
 
     /**
@@ -246,18 +250,17 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      *
      * @see fromClass
      */
-    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?): List<Command> {
-        return this.fromClass(klass.java, instanceProvider, owner)
-    }
+    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?): List<Command> =
+            this.fromClass(klass.java, instanceProvider, owner)
 
     /**
      * Create command list from commands of class [klass]
      *
      * @see fromClass
      */
-    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, queue: CommandFactoryQueue): List<Command> {
-        return this.fromClass(klass.java, instanceProvider, owner, queue, true)
-    }
+    fun <T : Any> fromClass(klass: KClass<T>, instanceProvider: (Class<*>) -> Any?,
+                            owner: Any?, queue: CommandFactoryQueue): List<Command> =
+            this.fromClass(klass.java, instanceProvider, owner, queue, true)
 
     /**
      * Create command list from commands of class [klass]
@@ -277,7 +280,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      *
      * @see fromClass
      */
-    fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?, owner: Any?, includeInner: Boolean): List<Command> {
+    fun <T> fromClass(klass: Class<T>, instanceProvider: (Class<*>) -> Any?,
+                      owner: Any?, includeInner: Boolean): List<Command> {
         val queue = CommandFactoryQueue()
 
         fromClass(klass, instanceProvider, owner, queue, includeInner)
@@ -344,7 +348,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                              queue: CommandFactoryQueue,
                              includeInner: Boolean) {
 
-        val instance = klass.cast(instanceProvider(klass))
+        val instance = klass.cast(instanceProvider.checked(klass))
 
         val command = klass.getDeclaredAnnotation(Cmd::class.java)
 
@@ -484,7 +488,9 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             val argumentType = this.getOrNull(type)
 
             val description = argumentAnnotation?.description ?: ""
-            val possibilities = argumentAnnotation?.possibilities?.get() ?: argumentType?.possibilities ?: { emptyList() }
+            val possibilities = argumentAnnotation?.possibilities?.get()
+                    ?: argumentType?.possibilities
+                    ?: possibilitiesFunc { _, _ -> emptyList() }
             val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.require(type).transformer
             val validator = argumentAnnotation?.validator?.get() ?: argumentType.require(type).validator
             val defaultValue: Any? = when {
@@ -644,7 +650,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                     val possibilities = argumentAnnotation.possibilities.get()
                             ?: argumentType?.possibilities
-                            ?: { emptyList() }
+                            ?: possibilitiesFunc { _, _ -> emptyList() }
 
                     val transformer = argumentAnnotation.transformer.get()
                             ?: argumentType.require(type).transformer
@@ -756,48 +762,77 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                         @Suppress("UNCHECKED_CAST")
                         val constants: Array<Enum<*>> = typeClass.enumConstants as Array<Enum<*>>
 
-                        return ArgumentType(type, { name ->
+                        return ArgumentType(type, validator { _, _, name ->
                             constants.any { it.name.toLowerCase() == name }
-                        }, { name ->
+                        }, transformer { _, _, name ->
                             constants.first { it.name.toLowerCase() == name }
-                        }, { constants.map { it.name.toLowerCase() } }, null).cast(type)
+                        }, possibilitiesFunc { _, _ ->
+                            constants.map { it.name.toLowerCase() } }, null).cast(type)
                     }
                 }
 
                 return when (type) {
                     TypeInfo.of(Short::class.javaObjectType),
                     TypeInfo.of(Short::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toShortOrNull() != null }, String::toShort, { emptyList() }, 0)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.toShortOrNull() != null },
+                            transformer { _, _, v -> v.toShort() },
+                            possibilitiesFunc { _, _ -> emptyList() },
+                            0)
 
                     TypeInfo.of(Char::class.javaObjectType),
                     TypeInfo.of(Char::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.length == 1 }, { it[0] }, { emptyList() }, 0.toChar())
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.length == 1 },
+                            transformer { _, _, v -> v[0] },
+                            possibilitiesFunc { _, _ -> emptyList() }, 0.toChar())
 
                     TypeInfo.of(Byte::class.javaObjectType),
                     TypeInfo.of(Byte::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toByteOrNull() != null }, String::toByte, { emptyList() }, 0)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.toByteOrNull() != null },
+                            transformer { _, _, v -> v.toByte() },
+                            possibilitiesFunc { _, _ -> emptyList() }, 0)
 
                     TypeInfo.of(Int::class.javaObjectType),
                     TypeInfo.of(Int::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toIntOrNull() != null }, String::toInt, { emptyList() }, 0)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.toIntOrNull() != null },
+                            transformer { _, _, v -> v.toInt() },
+                            possibilitiesFunc { _, _ -> emptyList() }, 0)
 
                     TypeInfo.of(Float::class.javaObjectType),
                     TypeInfo.of(Float::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toFloatOrNull() != null }, String::toFloat, { emptyList() }, 0.0F)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.toFloatOrNull() != null },
+                            transformer { _, _, v -> v.toFloat() },
+                            possibilitiesFunc { _, _ -> emptyList() }, 0.0F)
 
                     TypeInfo.of(Double::class.javaObjectType),
                     TypeInfo.of(Double::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toDoubleOrNull() != null }, String::toDouble, { emptyList() }, 0.0)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.toDoubleOrNull() != null },
+                            transformer { _, _, v -> v.toDouble()},
+                            possibilitiesFunc { _, _ -> emptyList() }, 0.0)
 
                     TypeInfo.of(Long::class.javaObjectType),
                     TypeInfo.of(Long::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it.toLongOrNull() != null }, String::toLong, { emptyList() }, 0L)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it.toLongOrNull() != null },
+                            transformer { _, _, v -> v.toLong() },
+                            possibilitiesFunc { _, _ -> emptyList() }, 0L)
 
                     TypeInfo.of(Boolean::class.javaObjectType),
                     TypeInfo.of(Boolean::class.javaPrimitiveType)
-                    -> ArgumentType(type, { it == "true" || it == "false" }, String::toBoolean, { emptyList() }, false)
+                    -> ArgumentType(type,
+                            validator { _, _, it -> it == "true" || it == "false" },
+                            transformer { _, _, v -> v.toBoolean() },
+                            possibilitiesFunc { _, _ -> emptyList() }, false)
 
-                    TypeInfo.of(String::class.java) -> ArgumentType({ true }, { it }, { emptyList() }, "")
+                    TypeInfo.of(String::class.java) -> ArgumentType(
+                            validator { _, _, _ -> true },
+                            transformer { _, _, v -> v },
+                            possibilitiesFunc { _, _ -> emptyList() }, "")
                     else -> null
                 }?.cast(type)
 
@@ -813,7 +848,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     return ArgumentType(type,
                             ListValidator(storage, component),
                             ListTransform(storage, component),
-                            { emptyList() },
+                            possibilitiesFunc { _, _ -> emptyList() },
                             mutableListOf<Any?>()).cast(type)
 
                 return null
@@ -849,4 +884,20 @@ interface ArgumentTypeStorage {
      * @param type Type of argument value.
      */
     fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T>
+}
+
+val ReflectInstanceProvider.checked: ReflectInstanceProvider
+    get() = (this as? CheckedInstanceProvider) ?: CheckedInstanceProvider(this)
+
+internal class CheckedInstanceProvider(private val original: ReflectInstanceProvider) : ReflectInstanceProvider {
+    override fun invoke(p1: Class<*>): Any? {
+        val instance = original(p1)
+
+        if (!p1.isInstance(instance))
+            throw IllegalArgumentException("Provided value '$instance' is not an instance of base input type" +
+                    " '${p1.canonicalName}'. Value provided by '$original'.")
+
+        return instance
+    }
+
 }

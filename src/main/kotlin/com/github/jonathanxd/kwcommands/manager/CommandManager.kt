@@ -51,6 +51,14 @@ interface CommandManager {
     fun registerCommand(command: Command, owner: Any): Boolean
 
     /**
+     * Register all [commands]
+     *
+     * @return `true` if any command was registered with success.
+     */
+    fun registerAll(commands: Iterable<Command>, owner: Any): Boolean =
+        commands.map { this.registerCommand(it, owner) }.any { it }
+
+    /**
      * Unregister [command].
      *
      * @param command Command to unregister.

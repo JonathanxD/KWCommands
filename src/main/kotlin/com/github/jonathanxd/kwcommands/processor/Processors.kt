@@ -170,7 +170,7 @@ object Processors {
                                 arg = arguments.first { it.name == argName }
 
                                 if (it + 1 > size) {
-                                    if (arg.isBoolean)
+                                    if (arg.isBoolean(args))
                                         argInput = "true"
                                     else
                                         throw NoInputForArgumentException(command,
@@ -182,10 +182,10 @@ object Processors {
 
                                     val input = getStr(it + 1)
 
-                                    if (isName(it + 1) && arg.isBoolean) {
+                                    if (isName(it + 1) && arg.isBoolean(args)) {
                                         argInput = "true"
                                     } else {
-                                        if (!arg.validator(input))
+                                        if (!arg.validator(args, arg, input))
                                             throw InvalidInputForArgumentException(
                                                     command,
                                                     args.toList(),
@@ -202,7 +202,7 @@ object Processors {
                             } else {
 
                                 if (!order)
-                                    arg = arguments.find { it.validator(argStr) }
+                                    arg = arguments.find { it.validator(args, it, argStr) }
                                 else {
                                     if (argPos >= arguments.size)
                                         arg = null
@@ -210,7 +210,7 @@ object Processors {
                                         var any = false
                                         while (argPos < arguments.size) {
                                             val atPos = arguments[argPos]
-                                            if (!atPos.validator(argStr)) {
+                                            if (!atPos.validator(args, atPos, argStr)) {
                                                 if (!atPos.isOptional)
                                                     throw InvalidInputForArgumentException(
                                                             command,
@@ -245,7 +245,7 @@ object Processors {
                                 args.add(ArgumentContainer(
                                         arg,
                                         argInput,
-                                        arg.transformer(argInput),
+                                        arg.transformer(args, arg, argInput),
                                         arg.handler as? ArgumentHandler<Any?>
                                 ))
                                 arguments.remove(arg)
@@ -257,8 +257,8 @@ object Processors {
 
                         if (requiredCount != requiredArgsCount) {
                             val missing = arguments.filter { !it.isOptional }.joinToString {
-                                val poss = it.possibilities.invoke()
-                                if (poss.isNotEmpty()) "${it.id}{possibilities=${poss}}"
+                                val poss = it.possibilities.invoke(args, it)
+                                if (poss.isNotEmpty()) "${it.id}{possibilities=$poss}"
                                 else it.id.toString()
                             }
                             throw ArgumentsMissingException(command,

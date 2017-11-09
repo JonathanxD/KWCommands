@@ -93,7 +93,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain("Argument type: ${argument.typeStr}")
 
-                val poss = argument.possibilities.invoke()
+                val poss = argument.possibilities.invoke(parsed, argument)
 
                 if (poss.isNotEmpty())
                     printer.printPlain("Argument possibilities: ${poss.joinToString()}")
@@ -152,46 +152,50 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
     override fun handleResults(commandResults: List<CommandResult>, printer: Printer) {
         commandResults.forEach {
-            when (it) {
-                is UnsatisfiedRequirementsResult -> {
-                    val unsatisfied = it.unsatisfiedRequirements
-
-                    printer.printPlain("Unsatisfied requirements of '${it.str()}':")
-
-                    if (unsatisfied.isNotEmpty())
-                        unsatisfied.forEach {
-                            printer.printPlain("  Information identification:" +
-                                    " Type: ${it.informationId.type}." +
-                                    " Tags: ${it.informationId.tags.joinToString()}.")
-                            printer.printPlain("  Present: ${it.information != null}.${
-                            if (it.information != null) ". Value: ${it.information.value}" else ""
-                            }")
-                            printer.printPlain("  Required: ${it.requirement.required}")
-                            printer.printPlain("  Tester: ${it.requirement.tester}")
-                            printer.printPlain("  Reason: ${it.reason.name}")
-                        }
-
-                    printer.flush()
-                }
-                is MissingInformationResult -> {
-                    val missing = it.missingInformationList
-
-                    printer.printPlain("Missing information of '${it.str()}':")
-
-                    if (missing.isNotEmpty())
-                        missing.forEach {
-                            printer.printPlain("  " +
-                                    " Type: ${it.requiredInfo.id.type}." +
-                                    " Tags: ${it.requiredInfo.id.tags.joinToString()}." +
-                                    " Include provided: ${it.requiredInfo.useProviders}.")
-                        }
-
-                    printer.flush()
-                }
-            }
+            this.handleResult(it, printer)
 
             if (commandResults.size > 1) {
                 printer.printPlain("")
+                printer.flush()
+            }
+        }
+    }
+
+    override fun handleResult(commandResult: CommandResult, printer: Printer) {
+        when (commandResult) {
+            is UnsatisfiedRequirementsResult -> {
+                val unsatisfied = commandResult.unsatisfiedRequirements
+
+                printer.printPlain("Unsatisfied requirements of '${commandResult.str()}':")
+
+                if (unsatisfied.isNotEmpty())
+                    unsatisfied.forEach {
+                        printer.printPlain("  Information identification:" +
+                                " Type: ${it.informationId.type}." +
+                                " Tags: ${it.informationId.tags.joinToString()}.")
+                        printer.printPlain("  Present: ${it.information != null}.${
+                        if (it.information != null) ". Value: ${it.information.value}" else ""
+                        }")
+                        printer.printPlain("  Required: ${it.requirement.required}")
+                        printer.printPlain("  Tester: ${it.requirement.tester}")
+                        printer.printPlain("  Reason: ${it.reason.name}")
+                    }
+
+                printer.flush()
+            }
+            is MissingInformationResult -> {
+                val missing = commandResult.missingInformationList
+
+                printer.printPlain("Missing information of '${commandResult.str()}':")
+
+                if (missing.isNotEmpty())
+                    missing.forEach {
+                        printer.printPlain("  " +
+                                " Type: ${it.requiredInfo.id.type}." +
+                                " Tags: ${it.requiredInfo.id.tags.joinToString()}." +
+                                " Include provided: ${it.requiredInfo.useProviders}.")
+                    }
+
                 printer.flush()
             }
         }

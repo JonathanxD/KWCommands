@@ -35,5 +35,6 @@ interface HelpInfoHandler {
 
     fun handleCommandException(commandException: CommandException, printer: Printer)
     fun handleResults(commandResults: List<CommandResult>, printer: Printer)
+    fun handleResult(commandResult: CommandResult, printer: Printer)
 
 }

@@ -42,9 +42,7 @@ import com.github.jonathanxd.kwcommands.reflect.env.EnumValidator
 import com.github.jonathanxd.kwcommands.reflect.env.enumPossibilities
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
-import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.Transformer
-import com.github.jonathanxd.kwcommands.util.Validator
+import com.github.jonathanxd.kwcommands.util.*
 
 class BuildingArgument<T> {
     lateinit var id: Any
@@ -55,7 +53,7 @@ class BuildingArgument<T> {
     var defaultValue: T? = null
     lateinit var validator: Validator
     lateinit var transformer: Transformer<T>
-    var possibilities: PossibilitiesFunc = { emptyList() }
+    var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     var handler: ArgumentHandler<out T>? = null
@@ -81,13 +79,13 @@ class BuildingArgument<T> {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun validate(noinline validator: Validator) {
-        this.validator = validator
+    inline fun validate(crossinline validator: ValidatorAlias) {
+        this.validator = validator(validator)
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun transformer(noinline transformer: Transformer<T>) {
-        this.transformer = transformer
+    inline fun transformer(crossinline transformer: TransformerAlias<T>) {
+        this.transformer = com.github.jonathanxd.kwcommands.util.transformer(transformer)
     }
 
     inline fun defaultValue(f: () -> T?) {
@@ -95,8 +93,8 @@ class BuildingArgument<T> {
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun possibilities(noinline possibilities: PossibilitiesFunc) {
-        this.possibilities = possibilities
+    inline fun possibilities(crossinline possibilities: PossibilitiesFuncAlias) {
+        this.possibilities = possibilitiesFunc(possibilities)
     }
 
     inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) {
@@ -297,20 +295,20 @@ inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContai
 
 // Additionals
 
-val stringValidator: Validator = { true }
-val stringTransformer: Transformer<String> = { it }
+val stringValidator: Validator = validator { _, _, _ -> true }
+val stringTransformer: Transformer<String> = transformer { _, _, it -> it }
 
-val intValidator: Validator = { it.toIntOrNull() != null }
-val intTransformer: Transformer<Int> = { it.toInt() }
+val intValidator: Validator = validator { _, _, it -> it.toIntOrNull() != null }
+val intTransformer: Transformer<Int> = transformer { _, _, it -> it.toInt() }
 
-val longValidator: Validator = { it.toLongOrNull() != null }
-val longTransformer: Transformer<Long> = { it.toLong() }
+val longValidator: Validator = validator { _, _, it -> it.toLongOrNull() != null }
+val longTransformer: Transformer<Long> = transformer { _, _, it -> it.toLong() }
 
-val doubleValidator: Validator = { it.toDoubleOrNull() != null }
-val doubleTransformer: Transformer<Double> = { it.toDouble() }
+val doubleValidator: Validator = validator { _, _, it -> it.toDoubleOrNull() != null }
+val doubleTransformer: Transformer<Double> = transformer { _, _, it -> it.toDouble() }
 
-val booleanValidator: Validator = { it == "yes" || it == "no" || it == "true" || it == "false" }
-val booleanTransformer: Transformer<Boolean> = {
+val booleanValidator: Validator = validator { _, _, it -> it == "yes" || it == "no" || it == "true" || it == "false" }
+val booleanTransformer: Transformer<Boolean> = transformer { _, _, it ->
     when (it) {
         "yes", "true" -> true
         else -> false
@@ -345,14 +343,14 @@ inline fun doubleArg(f: BuildingArgument<Double>.() -> Unit): Argument<Double> =
 inline fun booleanArg(f: BuildingArgument<Boolean>.() -> Unit): Argument<Boolean> = argument {
     validator = booleanValidator
     transformer = booleanTransformer
-    possibilities = { booleanPossibilities.toList() }
+    possibilities = possibilitiesFunc { _, _ -> booleanPossibilities.toList() }
     f(this)
 }
 
 inline fun <reified T> enumArg(f: BuildingArgument<T>.() -> Unit): Argument<T> = argument {
     validator = EnumValidator(T::class.java)
     transformer = EnumTransformer(T::class.java)
-    possibilities = { enumPossibilities(T::class.java).toList() }
+    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(T::class.java).toList() }
     f(this)
 }
 
@@ -362,7 +360,7 @@ inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argum
     this.type { TypeInfo.of(type) }
     validator = EnumValidator(type)
     transformer = EnumTransformer(type)
-    possibilities = { enumPossibilities(type).toList() }
+    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(type).toList() }
     f(this)
 } as Argument<T>
 
