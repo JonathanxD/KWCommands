@@ -30,11 +30,18 @@ package com.github.jonathanxd.kwcommands.processor
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid
 import com.github.jonathanxd.kwcommands.parse.CommandParser
 
 interface CommandProcessor {
+
+    /**
+     * Command manager (the command manager of parser)
+     */
+    val commandManager: CommandManager
+        get() = this.parser.commandManager
 
     /**
      * Parser of command
