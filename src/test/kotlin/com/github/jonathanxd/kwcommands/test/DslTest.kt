@@ -35,6 +35,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
+import org.junit.Assert
 import org.junit.Test
 
 class DslTest {
@@ -70,16 +71,21 @@ class DslTest {
                 +stringArg {
                     id { "userId" }
                     description { "Identification of user to promote" }
-                    transformer { _, _, it -> it.toLowerCase() }
+                    transformer { _, _, it -> it.value.toLowerCase() }
                 }
-                +enumArg<Group> {
-                    id {"group"}
-                    description { "Group to add user to" }
-                }
+                +listArg(enumArg<Group> {
+                    id {"groupList"}
+                    description { "Groups to add user to" }
+                })
+            }
+
+            handlerWithContext {
+                println("Promoted ${it.getArg<String>("userId")} to ${it.getArg<List<Group>>("groupList")}")
             }
         }
 
         val infoManager = InformationManagerImpl()
+        infoManager.registerInformation(informationId<Group> { tags { +"group" } }, Group.ADMIN, "")
         val manager = CommandManagerImpl()
         val processor = Processors.createCommonProcessor(manager)
 
@@ -87,7 +93,30 @@ class DslTest {
         manager.registerCommand(runCommand, this)
 
         try {
-            processor.processAndHandle(listOf("hello", "KWCommands", "x"), this, infoManager)
+            processor.processAndHandle(listOf("hello", "KWCommands"), this, infoManager).let {
+                handler.handleResults(it, printer)
+                Assert.assertTrue(it.isEmpty())
+            }
+        } catch (ex: CommandException) {
+            handler.handleCommandException(ex, printer)
+            throw AssertionError()
+        }
+
+        try {
+            processor.processAndHandle(listOf("promote", "KWCommands", "ADMIN", "USER"), this, infoManager).let {
+                handler.handleResults(it, printer)
+                Assert.assertTrue(it.isEmpty())
+            }
+        } catch (ex: CommandException) {
+            handler.handleCommandException(ex, printer)
+            throw AssertionError()
+        }
+
+        try {
+            processor.processAndHandle(listOf("promote", "KWCommands", "x"), this, infoManager).let {
+                handler.handleResults(it, printer)
+                Assert.assertTrue(it.isEmpty())
+            }
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
         }

@@ -29,17 +29,15 @@ package com.github.jonathanxd.kwcommands.dsl
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
-import com.github.jonathanxd.kwcommands.reflect.env.EnumTransformer
-import com.github.jonathanxd.kwcommands.reflect.env.EnumValidator
-import com.github.jonathanxd.kwcommands.reflect.env.enumPossibilities
+import com.github.jonathanxd.kwcommands.util.EnumTransformer
+import com.github.jonathanxd.kwcommands.util.EnumValidator
+import com.github.jonathanxd.kwcommands.util.enumPossibilities
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.util.*
@@ -49,6 +47,7 @@ class BuildingArgument<T> {
     var name: String = ""
     var description: String = ""
     var isOptional: Boolean = false
+    var isVarargs: Boolean = false
     lateinit var type: TypeInfo<out T>
     var defaultValue: T? = null
     lateinit var validator: Validator
@@ -76,6 +75,10 @@ class BuildingArgument<T> {
 
     inline fun type(f: () -> TypeInfo<T>) {
         this.type = f()
+    }
+
+    inline fun varargs(f: () -> Boolean) {
+        this.isVarargs = f()
     }
 
     @Suppress("NOTHING_TO_INLINE")
@@ -127,6 +130,7 @@ class BuildingArgument<T> {
             description = this.description,
             isOptional = this.isOptional,
             type = this.type,
+            isVarargs = this.isVarargs,
             defaultValue = this.defaultValue,
             validator = this.validator,
             transformer = this.transformer,
@@ -295,20 +299,22 @@ inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContai
 
 // Additionals
 
-val stringValidator: Validator = validator { _, _, _ -> true }
-val stringTransformer: Transformer<String> = transformer { _, _, it -> it }
+val stringValidator: Validator = validator { _, _, _: String -> true }
+val stringTransformer: Transformer<String> = transformer { _, _, it: String -> it }
 
-val intValidator: Validator = validator { _, _, it -> it.toIntOrNull() != null }
-val intTransformer: Transformer<Int> = transformer { _, _, it -> it.toInt() }
+val intValidator: Validator = validator { _, _, it: String -> it.toIntOrNull() != null }
+val intTransformer: Transformer<Int> = transformer { _, _, it: String -> it.toInt() }
 
-val longValidator: Validator = validator { _, _, it -> it.toLongOrNull() != null }
-val longTransformer: Transformer<Long> = transformer { _, _, it -> it.toLong() }
+val longValidator: Validator = validator { _, _, it: String -> it.toLongOrNull() != null }
+val longTransformer: Transformer<Long> = transformer { _, _, it: String -> it.toLong() }
 
-val doubleValidator: Validator = validator { _, _, it -> it.toDoubleOrNull() != null }
-val doubleTransformer: Transformer<Double> = transformer { _, _, it -> it.toDouble() }
+val doubleValidator: Validator = validator { _, _, it: String -> it.toDoubleOrNull() != null }
+val doubleTransformer: Transformer<Double> = transformer { _, _, it: String -> it.toDouble() }
 
-val booleanValidator: Validator = validator { _, _, it -> it == "yes" || it == "no" || it == "true" || it == "false" }
-val booleanTransformer: Transformer<Boolean> = transformer { _, _, it ->
+val booleanValidator: Validator = validator { _, _, it: String ->
+    it == "yes" || it == "no" || it == "true" || it == "false"
+}
+val booleanTransformer: Transformer<Boolean> = transformer { _, _, it: String ->
     when (it) {
         "yes", "true" -> true
         else -> false
@@ -364,6 +370,24 @@ inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argum
     f(this)
 } as Argument<T>
 
+inline fun <reified T> listArg(base: Argument<T>): Argument<List<T>> =
+        listArg(base, {})
+
+inline fun <reified T> listArg(base: Argument<T>,
+                               f: BuildingArgument<List<T>>.() -> Unit): Argument<List<T>> = argument {
+    id = base.id
+    name = base.name
+    type = TypeInfo.builderOf(List::class.java).of(base.type).buildGeneric()
+    isOptional = base.isOptional
+    isVarargs = true
+    validator = base.validator
+    transformer = ListTransformer(base.transformer)
+    possibilities = base.possibilities
+    requirements { +base.requirements }
+    requiredInfo { +base.requiredInfo }
+    f(this)
+}
+
 // Command
 
 @Suppress("NOTHING_TO_INLINE")
@@ -372,6 +396,10 @@ abstract class UColl<E> {
 
     inline fun clear() {
         coll.clear()
+    }
+
+    inline operator fun Iterable<E>.unaryPlus() {
+        coll += this
     }
 
     inline operator fun E.unaryPlus() {

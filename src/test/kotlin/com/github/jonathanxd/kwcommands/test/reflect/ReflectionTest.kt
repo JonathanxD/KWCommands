@@ -122,8 +122,8 @@ class ReflectionTest {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
                 if (type == TypeInfo.of(SimplePlayer::class.java)) {
                     return ArgumentType(
-                            validator {_, _, _ -> true },
-                            transformer {_, _, it -> SimplePlayer(it) },
+                            validator {_, _, _: String -> true },
+                            transformer {_, _, it: String -> SimplePlayer(it) },
                             possibilitiesFunc { _, _ -> emptyList() }, null).cast(type)
                 }
 

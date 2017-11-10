@@ -32,9 +32,9 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.json.DelegatedTypeResolver
 import com.github.jonathanxd.kwcommands.json.TypeResolver
-import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.Transformer
-import com.github.jonathanxd.kwcommands.util.Validator
+import com.github.jonathanxd.kwcommands.argument.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.argument.Transformer
+import com.github.jonathanxd.kwcommands.argument.Validator
 
 /**
  * Adds support to method handler, example:

@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.util
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.parser.Input
 
 /**
  * This property provides the "inheritance" level of this command.
@@ -47,6 +48,9 @@ val Command.level: Int
         return count
     }
 
+fun Argument<*>.isValidVarargs() =
+    this.isVarargs && MutableCollection::class.java.isAssignableFrom(this.type.typeClass)
+
 val Argument<*>.nameOrId get() = if (this.name.isEmpty()) this.id.toString() else this.name
 val Argument<*>.nameOrIdWithType
     get() =
@@ -59,11 +63,11 @@ val Argument<*>.typeStr: String
 val Argument<*>.isBoolean: Boolean
     get() = this.type.canResolve()
             && (this.type.typeClass == Boolean::class.javaObjectType || this.type.typeClass == Boolean::class.javaPrimitiveType)
-            && this.validator(emptyList(), this, "true")
+            && this.validator(emptyList(), this, Input("true"))
 
 fun Argument<*>.isBoolean(parsedArgs: List<ArgumentContainer<*>>): Boolean =
         this.type.canResolve()
                 && (this.type.typeClass == Boolean::class.javaObjectType
                 || this.type.typeClass == Boolean::class.javaPrimitiveType
                 )
-                && this.validator(parsedArgs, this, "true")
+                && this.validator(parsedArgs, this, Input("true"))

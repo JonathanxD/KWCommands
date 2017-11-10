@@ -134,6 +134,21 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 printer.flush()
             }
 
+            is ArgumentNotFoundException -> {
+                val command = commandException.command
+                val parsed = commandException.parsedArgs
+                val input = commandException.input
+                printer.printPlain("No argument found with name '$input' in command '${command.fullname}'")
+
+                if (parsed.isNotEmpty())
+                    printer.printPlain("  Successfully parsed args: ${parsed.joinToString { it.argument.id.toString() }}")
+
+                printer.printPlain("")
+                printer.printPlain("Command specification:")
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
             else -> throw commandException
         }
 

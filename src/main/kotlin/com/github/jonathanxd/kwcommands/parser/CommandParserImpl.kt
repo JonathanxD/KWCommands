@@ -27,7 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
+import com.github.jonathanxd.iutils.collection.wrapper.WrapperCollections
 import com.github.jonathanxd.iutils.option.Options
+import com.github.jonathanxd.jwiutils.kt.none
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -38,6 +40,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.processor.KWParserOptions
 import com.github.jonathanxd.kwcommands.util.escape
 import com.github.jonathanxd.kwcommands.util.isBoolean
+import com.github.jonathanxd.kwcommands.util.nameOrId
 import com.github.jonathanxd.kwcommands.util.nameOrIdWithType
 import java.util.*
 
@@ -46,7 +49,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
     override fun parseWithOwnerFunction(stringList: List<String>,
                                         ownerProvider: (commandName: String) -> Any?): List<CommandContainer> {
-        val order = this.options[KWParserOptions.ORDER]
+        val orderOption = this.options[KWParserOptions.ORDER]
         val commands = mutableListOf<CommandContainer>()
         val deque: Deque<Command> = LinkedList()
         val getStr: (Int) -> String = { stringList[it].escape('\\') }
@@ -55,7 +58,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val isName: (Int) -> Boolean = { stringList[it].startsWith("--") }
         val getName: (Int) -> String = { stringList[it].substring(2).escape('\\') }
 
-        var index = 0
+        var index = 0 // Current index in string list
 
         while (index < stringList.size) {
             var command: Command? = null
@@ -93,8 +96,10 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                             && (stringList[index + 1].isAndOp()
                             || this.commandManager.getSubCommand(command, getStr(index + 1)) == null))) {
 
+                val order = orderOption || command.arguments.any { it.isVarargs }
                 val arguments = command.arguments.toMutableList()
                 val args = mutableListOf<ArgumentContainer<*>>()
+                val immutableArgs = WrapperCollections.immutableList(args)
 
                 if (!arguments.isEmpty()) {
                     val requiredArgsCount = arguments.count { !it.isOptional }
@@ -122,27 +127,90 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                             ++names
                     }
 
-                    val size = (index + names + arguments.size).let {
-                        if (it >= stringList.size)
-                            stringList.size - 1
-                        else
-                            it
-                    }
-
+                    val size = stringList.size - 1
                     var argPos = 0
-                    var searchPos = index + 1
+                    var searchPos = index + 1 // Index to search argument value or name
 
-                    while(searchPos <= size) {
+                    while (searchPos <= size) {
                         val it = searchPos
                         val argStr = getStr(it)
                         var argInput = argStr
+
+                        fun parseVarargs(arg: Argument<*>): ArgumentContainer<*> {
+                            var container: ArgumentContainer<*>? = null
+                            val inputs = mutableListOf<String>()
+                            var values: Collection<Any?>? = null
+                            var lindex = if (isName(it)) it + 1 else it // Offset add to argument value index
+
+                            val cArgs = args.toMutableList()
+                            var input = getStr(lindex)
+
+                            while (!isName(lindex) && arg.validator(immutableArgs, arg, Input(input))) {
+                                val inputObj = Input(input)
+                                inputs += input
+                                ++searchPos
+                                ++index
+                                ++lindex
+
+                                container?.let { cArgs.add(it) }
+
+                                @Suppress("UNCHECKED_CAST")
+                                val converted = arg.transformer(cArgs, arg, inputObj)
+                                        as MutableCollection<Any?>
+
+                                if (values == null) values = converted
+                                else (values as MutableCollection<Any?>).addAll(converted)
+
+                                container?.let { cArgs.removeAt(cArgs.lastIndex) }
+
+                                @Suppress("UNCHECKED_CAST")
+                                container = ArgumentContainer(
+                                        arg,
+                                        input,
+                                        values,
+                                        arg.handler as? ArgumentHandler<Any?>
+                                )
+
+                                if (lindex <= size) {
+                                    input = getStr(lindex)
+                                } else
+                                    break
+                            }
+
+                            if (inputs.isEmpty()) {
+                                @Suppress("UNCHECKED_CAST")
+                                values = arg.transformer(cArgs, arg, Input(none()))
+                                        as Collection<Any?>
+                            }
+
+                            @Suppress("UNCHECKED_CAST")
+                            val argContainer = ArgumentContainer(
+                                    arg,
+                                    inputs.joinToString(" "),
+                                    values ?: emptyList<Any?>(),
+                                    arg.handler as? ArgumentHandler<Any?>
+                            )
+
+                            if (!arg.isOptional)
+                                requiredCount++
+
+                            arguments.remove(arg)
+                            args.add(argContainer)
+
+                            return argContainer
+                        }
 
                         var arg: Argument<*>? = null
 
                         if (isName(it)) {
                             val argName = getName(it)
 
-                            arg = arguments.first { it.name == argName }
+                            arg = arguments.firstOrNull { it.nameOrId == argName }
+                                    ?: throw ArgumentNotFoundException(command,
+                                    args.toList(),
+                                    argName,
+                                    this.commandManager,
+                                    "No argument found for input name '$argName' of command $command")
 
                             if (it + 1 > size) {
                                 if (arg.isBoolean(args))
@@ -154,52 +222,77 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                             this.commandManager,
                                             "No input for specified named argument '${arg.nameOrIdWithType}' of command $command")
                             } else {
-
-                                val input = getStr(it + 1)
-
                                 if (isName(it + 1) && arg.isBoolean(args)) {
                                     argInput = "true"
                                 } else {
-                                    if (!arg.validator(args, arg, input))
-                                        throw InvalidInputForArgumentException(
-                                                command,
-                                                args.toList(),
-                                                input,
-                                                arg,
-                                                this.commandManager,
-                                                "Invalid input $input for required argument " +
-                                                        "'${arg.nameOrIdWithType}' of command $command.")
-                                    argInput = input
-                                    ++searchPos
-                                    ++index
+                                    if (arg.isVarargs) {
+                                        parseVarargs(arg)
+                                        arg = null
+                                    } else {
+                                        val input = getStr(it + 1)
+                                        val inputObj = Input(input)
+
+                                        if (!arg.validator(args, arg, inputObj))
+                                            throw InvalidInputForArgumentException(
+                                                    command,
+                                                    args.toList(),
+                                                    input,
+                                                    arg,
+                                                    this.commandManager,
+                                                    "Invalid input $input for required argument " +
+                                                            "'${arg.nameOrIdWithType}' of command $command.")
+                                        argInput = input
+                                        ++searchPos
+                                        ++index
+                                    }
                                 }
                             }
                         } else {
+                            val inputObj = Input(argStr)
 
-                            if (!order)
-                                arg = arguments.find { it.validator(args, it, argStr) }
-                            else {
-                                if (argPos >= arguments.size)
+                            if (!order) {
+                                arg = arguments.find { it.validator(args, it, inputObj) }
+
+                                if (arg == null && requiredCount == requiredArgsCount)
+                                    break
+                                else if (arg == null)
+                                    throw NoArgumentForInputException(command,
+                                            args.toList(),
+                                            argStr,
+                                            this.commandManager,
+                                            "No argument for input string $argStr for command $command")
+                            } else {
+                                if (argPos >= arguments.size) {
                                     arg = null
-                                else {
+                                } else {
                                     var any = false
                                     while (argPos < arguments.size) {
                                         val atPos = arguments[argPos]
-                                        if (!atPos.validator(args, atPos, argStr)) {
-                                            if (!atPos.isOptional)
-                                                throw InvalidInputForArgumentException(
-                                                        command,
-                                                        args.toList(),
-                                                        argStr,
-                                                        atPos,
-                                                        this.commandManager,
-                                                        "Invalid input $argStr for required argument " +
-                                                                "'${atPos.nameOrIdWithType}' of command $command.")
 
-                                        } else {
+                                        if (atPos.isVarargs) {
+                                            parseVarargs(atPos)
+                                            arg = null
                                             any = true
-                                            arg = atPos
+                                            break
+                                        } else {
+                                            if (!atPos.validator(args, atPos, inputObj)) {
+                                                if (!atPos.isOptional)
+                                                    throw InvalidInputForArgumentException(
+                                                            command,
+                                                            args.toList(),
+                                                            argStr,
+                                                            atPos,
+                                                            this.commandManager,
+                                                            "Invalid input $argStr for required argument " +
+                                                                    "'${atPos.nameOrIdWithType}' of command $command.")
+
+                                            } else {
+                                                any = true
+                                                arg = atPos
+                                                break
+                                            }
                                         }
+
                                         ++argPos
                                     }
 
@@ -220,14 +313,13 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                             args.add(ArgumentContainer(
                                     arg,
                                     argInput,
-                                    arg.transformer(args, arg, argInput),
+                                    arg.transformer(args, arg, Input(argInput)),
                                     arg.handler as? ArgumentHandler<Any?>
                             ))
                             arguments.remove(arg)
-                            ++index
                         }
+                        ++index
                         ++searchPos
-
                     }
 
                     if (requiredCount != requiredArgsCount) {

@@ -25,20 +25,22 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.processor
+package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.iutils.option.Option
+import com.github.jonathanxd.iutils.opt.specialized.OptObject
+import com.github.jonathanxd.jwiutils.kt.some
 
 /**
- * Options for the parser of processor
+ * Holds the input of argument. Holds and empty [OptObject] when the argument is varargs
+ * and no value was provided to it.
  */
-object KWParserOptions {
-    /**
-     * Sometimes, order matters. When enabled, parsers should not ignore arguments order when parsing commands. Some implementations
-     * may have this behavior enabled by default, others should ignore. Implementations provided by KWCommands always
-     * consider this option.
-     *
-     * Since 1.2, KWCommands implementation will ignore this option if command have varargs argument, and order will matter always.
-     */
-    val ORDER = Option(false)
+data class Input(val input: OptObject<String>) {
+    constructor(input: String) : this(some(input))
+
+    val value: String get() = input.orElse(EMPTY)
+
+    companion object {
+        @JvmStatic
+        val EMPTY = "\uFFFF"
+    }
 }

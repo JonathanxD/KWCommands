@@ -31,7 +31,11 @@ import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.argument.Transformer
+import com.github.jonathanxd.kwcommands.argument.Validator
 import com.github.jonathanxd.kwcommands.command.Handler
+import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.util.*
 import java.util.function.Function
@@ -218,7 +222,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             throw IllegalArgumentException("Can't resolve transformer of type '$type'!")
         }
 
-        return transformer { parsed, current, value -> localTransformer().invoke(parsed, current, value) }
+        return transformer { parsed, current, value: Input -> localTransformer().invoke(parsed, current, value) }
     }
 
     override fun resolveValidator(type: TypeInfo<*>): Validator {
@@ -232,7 +236,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             throw IllegalArgumentException("Can't resolve validator of type '$type'!")
         }
 
-        return validator { parsed, current, value -> localValidator().invoke(parsed, current, value) }
+        return validator { parsed, current, value: Input -> localValidator().invoke(parsed, current, value) }
     }
 
     override fun resolveDefaultValue(type: TypeInfo<*>): Any? {

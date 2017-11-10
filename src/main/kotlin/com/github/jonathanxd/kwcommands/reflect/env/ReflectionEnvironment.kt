@@ -484,7 +484,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             val typeIsOptDouble = type.classLiteral == TypeInfo.of(OptionalDouble::class.java).classLiteral
             val typeIsOptLong = type.classLiteral == TypeInfo.of(OptionalLong::class.java).classLiteral
             val isOptional = argumentAnnotation?.optional ?: typeIsOpt || typeIsOptInt || typeIsOptDouble || typeIsOptLong
-
+            val isVarargs = argumentAnnotation?.varargs ?: false
             val argumentType = this.getOrNull(type)
 
             val description = argumentAnnotation?.description ?: ""
@@ -508,6 +508,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     name = "",
                     description = description,
                     isOptional = isOptional,
+                    isVarargs = isVarargs,
                     possibilities = possibilities,
                     transformer = transformer,
                     validator = validator,
@@ -643,8 +644,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     }
 
                     val description = argumentAnnotation.description
-
                     val isOptional = argumentAnnotation.optional
+                    val isVarargs = argumentAnnotation.varargs
 
                     val argumentType = this.getOrNull(type)
 
@@ -666,6 +667,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                             name = "",
                             description = description,
                             isOptional = isOptional,
+                            isVarargs = isVarargs,
                             possibilities = possibilities,
                             transformer = transformer,
                             validator = validator,
@@ -758,13 +760,29 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                 if (type.isResolved || type.canResolve()) {
                     val typeClass = type.typeClass
+
+                    if (typeClass == TypeInfo.of(List::class.java)
+                            && type.typeParameters.size == 1) {
+                        val component = type.typeParameters.single()
+
+                        provide(component)?.let { provided ->
+                            @Suppress("UNCHECKED_CAST")
+                            return ArgumentType(
+                                    provided.validator,
+                                    ListTransformer(provided.transformer),
+                                    provided.possibilities,
+                                    listOf(provided.defaultValue)
+                            ) as ArgumentType<T>
+                        }
+                    }
+
                     if (typeClass.isEnum) {
                         @Suppress("UNCHECKED_CAST")
                         val constants: Array<Enum<*>> = typeClass.enumConstants as Array<Enum<*>>
 
-                        return ArgumentType(type, validator { _, _, name ->
+                        return ArgumentType(type, validator { _, _, name: String ->
                             constants.any { it.name.toLowerCase() == name }
-                        }, transformer { _, _, name ->
+                        }, transformer { _, _, name: String ->
                             constants.first { it.name.toLowerCase() == name }
                         }, possibilitiesFunc { _, _ ->
                             constants.map { it.name.toLowerCase() } }, null).cast(type)
@@ -775,63 +793,63 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     TypeInfo.of(Short::class.javaObjectType),
                     TypeInfo.of(Short::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.toShortOrNull() != null },
-                            transformer { _, _, v -> v.toShort() },
+                            validator { _, _, it: String -> it.toShortOrNull() != null },
+                            transformer { _, _, v: String -> v.toShort() },
                             possibilitiesFunc { _, _ -> emptyList() },
                             0)
 
                     TypeInfo.of(Char::class.javaObjectType),
                     TypeInfo.of(Char::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.length == 1 },
-                            transformer { _, _, v -> v[0] },
+                            validator { _, _, it: String -> it.length == 1 },
+                            transformer { _, _, v: String -> v[0] },
                             possibilitiesFunc { _, _ -> emptyList() }, 0.toChar())
 
                     TypeInfo.of(Byte::class.javaObjectType),
                     TypeInfo.of(Byte::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.toByteOrNull() != null },
-                            transformer { _, _, v -> v.toByte() },
+                            validator { _, _, it: String -> it.toByteOrNull() != null },
+                            transformer { _, _, v: String -> v.toByte() },
                             possibilitiesFunc { _, _ -> emptyList() }, 0)
 
                     TypeInfo.of(Int::class.javaObjectType),
                     TypeInfo.of(Int::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.toIntOrNull() != null },
-                            transformer { _, _, v -> v.toInt() },
+                            validator { _, _, it: String -> it.toIntOrNull() != null },
+                            transformer { _, _, v: String -> v.toInt() },
                             possibilitiesFunc { _, _ -> emptyList() }, 0)
 
                     TypeInfo.of(Float::class.javaObjectType),
                     TypeInfo.of(Float::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.toFloatOrNull() != null },
-                            transformer { _, _, v -> v.toFloat() },
+                            validator { _, _, it: String -> it.toFloatOrNull() != null },
+                            transformer { _, _, v: String -> v.toFloat() },
                             possibilitiesFunc { _, _ -> emptyList() }, 0.0F)
 
                     TypeInfo.of(Double::class.javaObjectType),
                     TypeInfo.of(Double::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.toDoubleOrNull() != null },
-                            transformer { _, _, v -> v.toDouble()},
+                            validator { _, _, it: String -> it.toDoubleOrNull() != null },
+                            transformer { _, _, v: String -> v.toDouble()},
                             possibilitiesFunc { _, _ -> emptyList() }, 0.0)
 
                     TypeInfo.of(Long::class.javaObjectType),
                     TypeInfo.of(Long::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it.toLongOrNull() != null },
-                            transformer { _, _, v -> v.toLong() },
+                            validator { _, _, it: String -> it.toLongOrNull() != null },
+                            transformer { _, _, v: String -> v.toLong() },
                             possibilitiesFunc { _, _ -> emptyList() }, 0L)
 
                     TypeInfo.of(Boolean::class.javaObjectType),
                     TypeInfo.of(Boolean::class.javaPrimitiveType)
                     -> ArgumentType(type,
-                            validator { _, _, it -> it == "true" || it == "false" },
-                            transformer { _, _, v -> v.toBoolean() },
+                            validator { _, _, it: String -> it == "true" || it == "false" },
+                            transformer { _, _, v: String -> v.toBoolean() },
                             possibilitiesFunc { _, _ -> emptyList() }, false)
 
                     TypeInfo.of(String::class.java) -> ArgumentType(
-                            validator { _, _, _ -> true },
-                            transformer { _, _, v -> v },
+                            validator { _, _, _: String -> true },
+                            transformer { _, _, v: String -> v },
                             possibilitiesFunc { _, _ -> emptyList() }, "")
                     else -> null
                 }?.cast(type)
@@ -846,8 +864,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                 if (type.typeClass == List::class.java)
                     return ArgumentType(type,
-                            ListValidator(storage, component),
-                            ListTransform(storage, component),
+                            ReflectListValidator(storage, component),
+                            ReflectListTransform(storage, component),
                             possibilitiesFunc { _, _ -> emptyList() },
                             mutableListOf<Any?>()).cast(type)
 

@@ -25,20 +25,11 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.processor
+package com.github.jonathanxd.kwcommands.argument
 
-import com.github.jonathanxd.iutils.option.Option
+import com.github.jonathanxd.kwcommands.parser.Input
 
-/**
- * Options for the parser of processor
- */
-object KWParserOptions {
-    /**
-     * Sometimes, order matters. When enabled, parsers should not ignore arguments order when parsing commands. Some implementations
-     * may have this behavior enabled by default, others should ignore. Implementations provided by KWCommands always
-     * consider this option.
-     *
-     * Since 1.2, KWCommands implementation will ignore this option if command have varargs argument, and order will matter always.
-     */
-    val ORDER = Option(false)
+@FunctionalInterface
+interface Transformer<out T> {
+    operator fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): T
 }

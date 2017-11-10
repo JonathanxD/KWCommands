@@ -28,9 +28,9 @@
 package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.Transformer
-import com.github.jonathanxd.kwcommands.util.Validator
+import com.github.jonathanxd.kwcommands.argument.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.argument.Transformer
+import com.github.jonathanxd.kwcommands.argument.Validator
 
 /**
  * Specification of a argument type.

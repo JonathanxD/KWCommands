@@ -47,8 +47,8 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.annotation.CmdHandler;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Info;
-import com.github.jonathanxd.kwcommands.reflect.env.EnumTransformer;
-import com.github.jonathanxd.kwcommands.reflect.env.EnumValidator;
+import com.github.jonathanxd.kwcommands.util.EnumTransformer;
+import com.github.jonathanxd.kwcommands.util.EnumValidator;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 
 import org.junit.Test;
@@ -58,7 +58,7 @@ import kotlin.jvm.functions.Function1;
 
 public class Basic {
 
-    private static final Information.Id SPEAKER_INFO_ID =
+    private static final Information.Id<Speaker> SPEAKER_INFO_ID =
             new Information.Id<Speaker>(TypeInfo.of(Speaker.class), new String[]{"speaker"});
 
     @Test

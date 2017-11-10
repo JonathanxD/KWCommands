@@ -190,7 +190,7 @@ class CommonPrinter(val out: (String) -> Unit,
                 builder.apply {
                     this.append(if (it.isOptional) "<" else "[")
 
-                    this.append(if (it.name.isEmpty()) it.id.toString() else it.name)
+                    this.append(it.nameOrId)
 
                     this.append(": ").append(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)
 

@@ -28,12 +28,8 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
-import com.github.jonathanxd.kwcommands.util.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.Transformer
-import com.github.jonathanxd.kwcommands.util.Validator
 
 /**
  * A command argument.
@@ -43,6 +39,9 @@ import com.github.jonathanxd.kwcommands.util.Validator
  * @property description Argument description.
  * @property isOptional Is optional argument.
  * @property type Type of argument value.
+ * @property isVarargs Whether the argument is a varargs argument or not. Varargs arguments takes values until
+ * [validator] returns `false` to a value, the transformer should return mutable collection, there is a predefined
+ * [Transformer] for lists: [com.github.jonathanxd.kwcommands.util.ListTransformer].
  * @property validator Argument value validator.
  * @property transformer Transformer of argument to a object of type [T].
  * @property requirements Requirements of this argument.
@@ -55,6 +54,7 @@ data class Argument<out T>(val id: Any,
                            val isOptional: Boolean,
                            val type: TypeInfo<out T>,
                            val defaultValue: T?,
+                           val isVarargs: Boolean,
                            val validator: Validator,
                            val transformer: Transformer<T>,
                            val possibilities: PossibilitiesFunc,

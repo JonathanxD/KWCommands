@@ -29,8 +29,7 @@ package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
@@ -54,6 +53,7 @@ inline fun <reified T> Argument(id: Any,
                                 description: String,
                                 isOptional: Boolean,
                                 defaultValue: T?,
+                                isVarargs: Boolean,
                                 validator: Validator,
                                 transformer: Transformer<T>,
                                 possibilities: PossibilitiesFunc,
@@ -66,6 +66,7 @@ inline fun <reified T> Argument(id: Any,
                 isOptional,
                 typeInfo(),
                 defaultValue,
+                isVarargs,
                 validator,
                 transformer,
                 possibilities,
