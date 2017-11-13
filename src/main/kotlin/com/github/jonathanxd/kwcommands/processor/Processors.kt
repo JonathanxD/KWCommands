@@ -33,6 +33,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 import com.github.jonathanxd.kwcommands.parser.CommandParserImpl
+import com.github.jonathanxd.kwcommands.parser.CommandParserV2
 
 object Processors {
 
@@ -43,6 +44,10 @@ object Processors {
     @JvmStatic
     fun createCommonProcessor(manager: CommandManager): CommandProcessor =
             CommonCommandProcessor(manager)
+
+    @JvmStatic
+    fun createCommonProcessorWithNewParser(manager: CommandManager): CommandProcessor =
+            CommonCommandProcessor(manager, CommandParserV2(manager))
 
     private class CommonCommandProcessor(
             manager: CommandManager,

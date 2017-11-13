@@ -27,10 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.iutils.opt.Opt.some
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 
 /**
  * This property provides the "inheritance" level of this command.
@@ -48,8 +49,13 @@ val Command.level: Int
         return count
     }
 
+fun Command.toStr() = this.fullname
+
+fun Iterable<Argument<*>>.toStr() = this.joinToString { it.toStr() }
+fun Argument<*>.toStr() = this.nameOrId
+
 fun Argument<*>.isValidVarargs() =
-    this.isVarargs && MutableCollection::class.java.isAssignableFrom(this.type.typeClass)
+    this.isMultiple && MutableCollection::class.java.isAssignableFrom(this.type.typeClass)
 
 val Argument<*>.nameOrId get() = if (this.name.isEmpty()) this.id.toString() else this.name
 val Argument<*>.nameOrIdWithType
@@ -59,15 +65,8 @@ val Argument<*>.nameOrIdWithType
 val Argument<*>.typeStr: String
     get() = if (this.type.canResolve()) this.type.toString() else this.type.classLiteral
 
-@Deprecated(message = "Use is boolean function")
-val Argument<*>.isBoolean: Boolean
-    get() = this.type.canResolve()
-            && (this.type.typeClass == Boolean::class.javaObjectType || this.type.typeClass == Boolean::class.javaPrimitiveType)
-            && this.validator(emptyList(), this, Input("true"))
-
 fun Argument<*>.isBoolean(parsedArgs: List<ArgumentContainer<*>>): Boolean =
         this.type.canResolve()
                 && (this.type.typeClass == Boolean::class.javaObjectType
-                || this.type.typeClass == Boolean::class.javaPrimitiveType
-                )
-                && this.validator(parsedArgs, this, Input("true"))
+                || this.type.typeClass == Boolean::class.javaPrimitiveType)
+                && this.validator(parsedArgs, this, SingleInput("true"))

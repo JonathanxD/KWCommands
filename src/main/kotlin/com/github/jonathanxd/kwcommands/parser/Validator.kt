@@ -25,11 +25,22 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.argument
+package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 
 @FunctionalInterface
-interface Transformer<out T> {
-    operator fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): T
+interface Validator {
+    operator fun invoke(parsed: List<ArgumentContainer<*>>,
+                        current: Argument<*>,
+                        value: Input): Boolean
+}
+
+/**
+ * Result of value validation. The [Int] value denotes the type parameter of value, and the [Boolean]
+ * value if the parameter value is valid or not.
+ */
+class Validation(val validation: Map<Int, Boolean>) {
+    val isValid: Boolean = validation.values.all { it }
 }

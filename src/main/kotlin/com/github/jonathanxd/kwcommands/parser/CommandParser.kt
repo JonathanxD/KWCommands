@@ -31,6 +31,8 @@ import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 
+typealias OwnerProvider = (commandName: String) -> Any?
+
 interface CommandParser {
     /**
      * Command manager.
@@ -65,6 +67,6 @@ interface CommandParser {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun parseWithOwnerFunction(stringList: List<String>,
-                               ownerProvider: (commandName: String) -> Any?): List<CommandContainer>
+                               ownerProvider: OwnerProvider): List<CommandContainer>
 
 }

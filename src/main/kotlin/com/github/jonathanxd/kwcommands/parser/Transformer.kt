@@ -25,9 +25,14 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.argument
+package com.github.jonathanxd.kwcommands.parser
+
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 
 @FunctionalInterface
-interface PossibilitiesFunc {
-    operator fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<String>
+interface Transformer<out T> {
+    operator fun invoke(parsed: List<ArgumentContainer<*>>,
+                        current: Argument<*>,
+                        value: Input): T
 }

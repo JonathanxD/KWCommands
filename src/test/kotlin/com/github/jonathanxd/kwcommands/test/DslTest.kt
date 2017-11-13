@@ -33,6 +33,7 @@ import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import org.junit.Assert
@@ -71,7 +72,7 @@ class DslTest {
                 +stringArg {
                     id { "userId" }
                     description { "Identification of user to promote" }
-                    transformer { _, _, it -> it.value.toLowerCase() }
+                    transformer { _, _, it -> (it as SingleInput).input.toLowerCase() }
                 }
                 +listArg(enumArg<Group> {
                     id {"groupList"}

@@ -47,8 +47,9 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
-public class VarargTest {
+public class MapTest {
     @Test
     public void varargTest() {
         CommandManager commandManager = new CommandManagerImpl();
@@ -56,8 +57,8 @@ public class VarargTest {
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
         InformationManager informationManager = new InformationManagerImpl();
 
-        List<Command> commands = reflectionEnvironment.fromClass(VarargTest.class,
-                aClass -> new VarargTest(), this);
+        List<Command> commands = reflectionEnvironment.fromClass(MapTest.class,
+                aClass -> new MapTest(), this);
 
         commandManager.registerAll(commands, this);
 
@@ -65,23 +66,27 @@ public class VarargTest {
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndHandle(
-                    Collections3.listOf("varargcmd", "1", "hey", "man", "--n2", "1"),
+            /*processor.processAndHandle(
+                    Collections3.listOf("mapcmd", "1", "hey", "man", "--n2", "1"),
                     this,
-                    informationManager);
+                    informationManager);*/
             processor.processAndHandle(
-                    Collections3.listOf("varargcmd", "1", "--names", "hey", "man", "--n2", "1"),
+                    Collections3.listOf("mapcmd",
+                            "1",
+                            "--values", "[a=\"man, i l u = [\",", "uhu=s]",
+                            "--n2", "1"),
                     this,
                     informationManager);
         } catch (CommandException e) {
             handler.handleCommandException(e, sysOutWHF);
+            e.printStackTrace();
         }
     }
 
     @Cmd(description = "Vararg test")
-    public void varargcmd(@Arg("n") int n,
-                          @Arg(value = "names", multiple = true) List<String> names,
-                          @Arg("n2") int n2) {
+    public void mapcmd(@Arg("n") int n,
+                       @Arg(value = "values", multiple = true) Map<String, String> names,
+                       @Arg("n2") int n2) {
         System.out.println("Number: " + n);
         System.out.println("Names: " + names);
         System.out.println("Number 2: " + n2);

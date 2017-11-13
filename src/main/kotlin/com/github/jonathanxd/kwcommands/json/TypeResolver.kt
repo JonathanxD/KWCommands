@@ -31,9 +31,9 @@ import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.argument.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.argument.Transformer
-import com.github.jonathanxd.kwcommands.argument.Validator
+import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Transformer
+import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
@@ -208,7 +208,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             }
         }
 
-        return possibilitiesFunc { _, _ -> emptyList() }
+        return possibilitiesFunc { _, _ -> emptyMap() }
     }
 
     override fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?> {

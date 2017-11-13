@@ -46,6 +46,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
 import com.github.jonathanxd.kwcommands.parser.Input;
+import com.github.jonathanxd.kwcommands.parser.SingleInput;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
@@ -55,7 +56,7 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.requirement.Requirement;
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester;
-import com.github.jonathanxd.kwcommands.argument.Validator;
+import com.github.jonathanxd.kwcommands.parser.Validator;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -211,7 +212,8 @@ public class JsonTest {
         public boolean invoke(@NotNull List<? extends ArgumentContainer<?>> parsed,
                               @NotNull Argument<?> current,
                               @NotNull Input value) {
-            return pred.test(value.getValue());
+            return value instanceof SingleInput && pred.test(((SingleInput) value).getInput());
+
         }
 
     }

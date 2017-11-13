@@ -53,6 +53,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val commands = mutableListOf<CommandContainer>()
         val deque: Deque<Command> = LinkedList()
         val getStr: (Int) -> String = { stringList[it].escape('\\') }
+        val getRawStr: (Int) -> String = { stringList[it] }
 
         // Checks if is argument name
         val isName: (Int) -> Boolean = { stringList[it].startsWith("--") }
@@ -96,7 +97,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                             && (stringList[index + 1].isAndOp()
                             || this.commandManager.getSubCommand(command, getStr(index + 1)) == null))) {
 
-                val order = orderOption || command.arguments.any { it.isVarargs }
+                val order = orderOption || command.arguments.any { it.isMultiple }
                 val arguments = command.arguments.toMutableList()
                 val args = mutableListOf<ArgumentContainer<*>>()
                 val immutableArgs = WrapperCollections.immutableList(args)
@@ -134,20 +135,20 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                     while (searchPos <= size) {
                         val it = searchPos
                         val argStr = getStr(it)
-                        var argInput = argStr
+                        var argInput = SingleInput(argStr)
 
                         fun parseVarargs(arg: Argument<*>): ArgumentContainer<*> {
                             var container: ArgumentContainer<*>? = null
-                            val inputs = mutableListOf<String>()
+                            val inputs = mutableListOf<Input>()
                             var values: Collection<Any?>? = null
                             var lindex = if (isName(it)) it + 1 else it // Offset add to argument value index
 
                             val cArgs = args.toMutableList()
                             var input = getStr(lindex)
 
-                            while (!isName(lindex) && arg.validator(immutableArgs, arg, Input(input))) {
-                                val inputObj = Input(input)
-                                inputs += input
+                            while (!isName(lindex) && arg.validator(immutableArgs, arg, SingleInput(input))) {
+                                val inputObj = SingleInput(input)
+                                inputs += inputObj
                                 ++searchPos
                                 ++index
                                 ++lindex
@@ -166,7 +167,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                 @Suppress("UNCHECKED_CAST")
                                 container = ArgumentContainer(
                                         arg,
-                                        input,
+                                        inputObj,
                                         values,
                                         arg.handler as? ArgumentHandler<Any?>
                                 )
@@ -179,14 +180,18 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
                             if (inputs.isEmpty()) {
                                 @Suppress("UNCHECKED_CAST")
-                                values = arg.transformer(cArgs, arg, Input(none()))
+                                values = arg.transformer(cArgs, arg, EmptyInput)
                                         as Collection<Any?>
                             }
+
+                            val filtered = inputs.filterIsInstance<SingleInput>()
+
+                            val inp = ListInput(filtered.map { SingleInput(it.input) })
 
                             @Suppress("UNCHECKED_CAST")
                             val argContainer = ArgumentContainer(
                                     arg,
-                                    inputs.joinToString(" "),
+                                    inp,
                                     values ?: emptyList<Any?>(),
                                     arg.handler as? ArgumentHandler<Any?>
                             )
@@ -214,7 +219,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
                             if (it + 1 > size) {
                                 if (arg.isBoolean(args))
-                                    argInput = "true"
+                                    argInput = SingleInput("true")
                                 else
                                     throw NoInputForArgumentException(command,
                                             args.toList(),
@@ -223,32 +228,32 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                             "No input for specified named argument '${arg.nameOrIdWithType}' of command $command")
                             } else {
                                 if (isName(it + 1) && arg.isBoolean(args)) {
-                                    argInput = "true"
+                                    argInput = SingleInput("true")
                                 } else {
-                                    if (arg.isVarargs) {
+                                    if (arg.isMultiple) {
                                         parseVarargs(arg)
                                         arg = null
                                     } else {
                                         val input = getStr(it + 1)
-                                        val inputObj = Input(input)
+                                        val inputObj = SingleInput(input)
 
                                         if (!arg.validator(args, arg, inputObj))
                                             throw InvalidInputForArgumentException(
                                                     command,
                                                     args.toList(),
-                                                    input,
+                                                    inputObj,
                                                     arg,
                                                     this.commandManager,
                                                     "Invalid input $input for required argument " +
                                                             "'${arg.nameOrIdWithType}' of command $command.")
-                                        argInput = input
+                                        argInput = inputObj
                                         ++searchPos
                                         ++index
                                     }
                                 }
                             }
                         } else {
-                            val inputObj = Input(argStr)
+                            val inputObj = SingleInput(argStr)
 
                             if (!order) {
                                 arg = arguments.find { it.validator(args, it, inputObj) }
@@ -269,7 +274,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                     while (argPos < arguments.size) {
                                         val atPos = arguments[argPos]
 
-                                        if (atPos.isVarargs) {
+                                        if (atPos.isMultiple) {
                                             parseVarargs(atPos)
                                             arg = null
                                             any = true
@@ -280,7 +285,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                                     throw InvalidInputForArgumentException(
                                                             command,
                                                             args.toList(),
-                                                            argStr,
+                                                            inputObj,
                                                             atPos,
                                                             this.commandManager,
                                                             "Invalid input $argStr for required argument " +
@@ -313,7 +318,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                             args.add(ArgumentContainer(
                                     arg,
                                     argInput,
-                                    arg.transformer(args, arg, Input(argInput)),
+                                    arg.transformer(args, arg, argInput),
                                     arg.handler as? ArgumentHandler<Any?>
                             ))
                             arguments.remove(arg)

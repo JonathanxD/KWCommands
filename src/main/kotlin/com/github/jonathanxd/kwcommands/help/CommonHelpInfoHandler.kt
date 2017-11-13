@@ -95,8 +95,17 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 val poss = argument.possibilities.invoke(parsed, argument)
 
-                if (poss.isNotEmpty())
-                    printer.printPlain("Argument possibilities: ${poss.joinToString()}")
+                if (poss.isNotEmpty()) {
+                    poss.forEach { k, v ->
+                        if (v.isNotEmpty()) {
+                            if (k.isEmpty()) {
+                                printer.printPlain("Argument possibilities: ${v.joinToString()}")
+                            } else {
+                                printer.printPlain("Argument possibilities for $k: ${v.joinToString()}")
+                            }
+                        }
+                    }
+                }
 
                 printer.printPlain("")
                 printer.printPlain("Command specification:")

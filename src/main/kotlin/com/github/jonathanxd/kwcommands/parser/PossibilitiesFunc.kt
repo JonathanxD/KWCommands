@@ -25,20 +25,18 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.processor
+package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.iutils.option.Option
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 
-/**
- * Options for the parser of processor
- */
-object KWParserOptions {
+@FunctionalInterface
+interface PossibilitiesFunc {
     /**
-     * Sometimes, order matters. When enabled, parsers should not ignore arguments order when parsing commands. Some implementations
-     * may have this behavior enabled by default, others should ignore. Implementations provided by KWCommands always
-     * consider this option.
-     *
-     * Since 1.2, KWCommands implementation will ignore this option if command have multiple argument, and order will matter always.
+     * Possibilities of arguments by name. For maps, names is generally `key` and `value`, for list, `element`,
+     * for single input, an empty string.
      */
-    val ORDER = Option(false)
+    operator fun invoke(parsed: List<ArgumentContainer<*>>,
+                        current: Argument<*>): Map<String, List<String>>
 }
+

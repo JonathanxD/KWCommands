@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.kwcommands.command.Container
+import com.github.jonathanxd.kwcommands.parser.Input
 
 /**
  * Container to hold parsed [argument][Argument].
@@ -37,9 +38,9 @@ import com.github.jonathanxd.kwcommands.command.Container
  * @property value Value of argument.
  */
 data class ArgumentContainer<T> constructor(val argument: Argument<T>,
-                                val input: String?,
-                                val value: T?,
-                                var handler: ArgumentHandler<T>?): Container {
+                                            val input: Input?,
+                                            val value: T?,
+                                            var handler: ArgumentHandler<T>?) : Container {
 
     /**
      * Returns true if this argument is defined.

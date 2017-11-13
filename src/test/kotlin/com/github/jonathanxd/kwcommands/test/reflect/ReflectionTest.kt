@@ -124,7 +124,7 @@ class ReflectionTest {
                     return ArgumentType(
                             validator {_, _, _: String -> true },
                             transformer {_, _, it: String -> SimplePlayer(it) },
-                            possibilitiesFunc { _, _ -> emptyList() }, null).cast(type)
+                            possibilitiesFunc { _, _ -> emptyMap() }, null).cast(type)
                 }
 
                 return null

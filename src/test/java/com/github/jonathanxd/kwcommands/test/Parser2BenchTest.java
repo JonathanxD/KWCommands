@@ -25,61 +25,42 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.parser;
+package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
+import com.github.jonathanxd.kwcommands.parser.CommandParser;
+import com.github.jonathanxd.kwcommands.parser.CommandParserV2;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
-@State(Scope.Benchmark)
-@Warmup(iterations = 5)
-@Fork(5)
-/*
-Result "com.github.jonathanxd.kwcommands.parser.ParserBenchmark.parserBench":
-  182565.789 ±(99.9%) 9526.945 ops/s [Average]
-  (min, avg, max) = (15250.503, 182565.789, 195310.003), stdev = 28090.414
-  CI (99.9%): [173038.844, 192092.734] (assumes normal distribution)
-
-
-# Run complete. Total time: 00:02:12
-
-Benchmark                     Mode  Cnt       Score      Error  Units
-ParserBenchmark.parserBench  thrpt  100  182565.789 ± 9526.945  ops/s
-
-On my machine
- */
-public class ParserBenchmark {
+public class Parser2BenchTest {
 
     private CommandManager manager;
     private ReflectionEnvironment environment;
     private CommandParser parser;
     private List<String> cmd;
 
-    @Setup
+    @Before
     public void setup() {
         this.manager = new CommandManagerImpl();
         this.environment = new ReflectionEnvironment(this.manager);
-        this.parser = new CommandParserImpl(this.manager);
+        this.parser = new CommandParserV2(this.manager);
         this.manager.registerAll(
-                this.environment.fromClass(ParserBenchmark.class, c -> new ParserBenchmark(), this),
+                this.environment.fromClass(Parser2BenchTest.class, c -> new Parser2BenchTest(), this),
                 this
         );
         this.cmd = Collections3.listOf("bench", "9", "a", "b", "c", "--types", "simple", "unknown");
     }
 
-    @Benchmark
+    @Test
     public void parserBench() {
         this.parser.parse(this.cmd, this);
     }
@@ -87,7 +68,7 @@ public class ParserBenchmark {
     @Cmd(description = "Bench test")
     public Integer bench(@Arg("n") int n,
                          @Arg(value = "names", multiple = true) List<String> names,
-                         @Arg(value = "type", multiple = true) List<Type> types) {
+                         @Arg(value = "types", multiple = true) List<Type> types) {
         return n + names.size() + types.size();
     }
 
@@ -96,5 +77,6 @@ public class ParserBenchmark {
         COMPLEX,
         UNKNOWN
     }
+
 
 }

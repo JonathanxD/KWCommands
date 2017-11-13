@@ -27,33 +27,144 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.iutils.`object`.Node
+import com.github.jonathanxd.iutils.function.collector.BiCollectors
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.biStreamJavaBacked
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.argument.Transformer
-import com.github.jonathanxd.kwcommands.argument.Validator
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeStorage
 
+class MapTransformer<K, out V>(val keyTransformer: Transformer<K>,
+                               val valueTransformer: Transformer<V>) : Transformer<Map<K, V>> {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Map<K, V> {
+
+        if (value is MapInput) {
+            return value.input.biStreamJavaBacked()
+                    .map { k, v -> Node(keyTransformer(parsed, current, k), keyTransformer(parsed, current, v)) }
+                    .collect(BiCollectors.toMap()) as Map<K, V>
+        }
+
+        val str = (value as SingleInput).input
+
+        val list = str.toCommandStringList(separator = '=')
+
+        if (list.size == 1) {
+            val input = SingleInput(list[0])
+            val key = keyTransformer.invoke(parsed, current, input)
+            return mutableMapOf<Any?, Any?>(key to null) as MutableMap<K, V>
+        } else if (list.size == 2) {
+            val kInput = SingleInput(list[0])
+            val vInput = SingleInput(list[1])
+
+            val key = keyTransformer.invoke(parsed, current, kInput)
+            val vValue = valueTransformer.invoke(parsed, current, vInput)
+            return mutableMapOf(key to vValue)
+        }
+
+        return mutableMapOf()
+    }
+}
+
+class MapValidator(val keyValidator: Validator,
+                   val valueValidator: Validator) : Validator {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean {
+
+        if (value is MapInput) {
+            val inputMap = value.input
+
+            return inputMap.all { (k, v) ->
+                keyValidator.invoke(parsed, current, k) && valueValidator.invoke(parsed, current, v)
+            }
+        } else {
+
+            val str = (value as? SingleInput)?.input ?: return false
+
+            val list = str.toCommandStringList(separator = '=')
+
+            if (list.size == 1) {
+                val input = SingleInput(list[0])
+                return keyValidator(parsed, current, input)
+            } else if (list.size == 2) {
+                val kInput = SingleInput(list[0])
+                val vInput = SingleInput(list[1])
+
+                return keyValidator(parsed, current, kInput)
+                        && valueValidator(parsed, current, vInput)
+            }
+
+            return false
+        }
+    }
+}
+
+class MapPossibilitiesFunc(val keyValidator: PossibilitiesFunc,
+                           val valueValidator: PossibilitiesFunc) : PossibilitiesFunc {
+
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): Map<String, List<String>> {
+        val list = mutableListOf<String>()
+
+        for (ks in keyValidator(parsed, current)) {
+            for (vs in valueValidator(parsed, current)) {
+                list += "$ks=$vs"
+            }
+        }
+
+        return mapOf("key" to keyValidator.invoke(parsed, current).values.flatMap { it }.toList(),
+                "value" to valueValidator.invoke(parsed, current).values.flatMap { it }.toList())
+    }
+}
+
 /**
- * Transformer of lists for varargs arguments.
+ * Transformer of lists for multiple arguments.
  *
  * @property transformer Transformer of list elements.
  */
 class ListTransformer<out T>(val transformer: Transformer<T>) : Transformer<List<T>> {
     override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): List<T> =
-            if (!value.input.isPresent) emptyList()
-            else mutableListOf(transformer(parsed, current, value))
+            when (value) {
+                is SingleInput -> mutableListOf(transformer(parsed, current, value))
+                is EmptyInput -> mutableListOf()
+                else -> (value as ListInput).input.map { transformer(parsed, current, it) }
+            }
+}
+
+/**
+ * Validator of lists for multiple arguments.
+ *
+ * @property transformer Transformer of list elements.
+ */
+class ListValidator(val validator: Validator) : Validator {
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean =
+        when (value) {
+            is SingleInput -> validator(parsed, current, value)
+            is EmptyInput -> true
+            else -> (value as ListInput).input.all { validator(parsed, current, it) }
+        }
 }
 
 @Suppress("UNCHECKED_CAST")
 class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : Validator {
     override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean {
-        if (!value.input.isPresent)
+        if (value is ListInput) {
+            val get = storage.getArgumentType(subType)
+
+            return value.input.all { get.validator(parsed, current, it) }
+        }
+
+        if (value !is SingleInput && value !is EmptyInput)
+            return false
+
+        if (value is EmptyInput)
             return true
 
-        val valueStr = value.value
+        val valueStr = (value as SingleInput).input
         val list = if (valueStr.contains(','))
             valueStr.split(',').toList()
         else listOf(valueStr)
@@ -64,11 +175,11 @@ class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeIn
 
         return list.all {
             val parsedArgs = parsed + currentArgs
-            val res = get.validator(parsedArgs, current, Input(it))
+            val res = get.validator(parsedArgs, current, SingleInput(it))
             if (res) {
                 currentArgs += ArgumentContainer(
                         current as Argument<Any>,
-                        it,
+                        SingleInput(it),
                         res,
                         current.handler as ArgumentHandler<Any>?
                 )
@@ -82,10 +193,19 @@ class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeIn
 @Suppress("UNCHECKED_CAST")
 class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>) : Transformer<List<E>> {
     override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): List<E> {
-        if (!value.input.isPresent)
+        if (value is ListInput) {
+            val get = storage.getArgumentType(subType)
+
+            return value.input.map { get.transformer(parsed, current, it) }
+        }
+
+        if (value !is SingleInput && value !is EmptyInput)
             return emptyList()
 
-        val valueStr = value.value
+        if (value is EmptyInput)
+            return emptyList()
+
+        val valueStr = (value as SingleInput).input
         val list = if (valueStr.contains(','))
             valueStr.split(',').toList()
         else listOf(valueStr)
@@ -97,10 +217,10 @@ class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: Typ
 
         return list.mapTo(mut) {
             val currentArgs = if (container != null) parsed + container!! else parsed
-            val res = get.transformer(currentArgs, current, Input(it))
+            val res = get.transformer(currentArgs, current, SingleInput(it))
             container = ArgumentContainer(
                     current as Argument<E>,
-                    valueStr,
+                    SingleInput(valueStr),
                     res,
                     current.handler as ArgumentHandler<E>?
             )
@@ -112,20 +232,25 @@ class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: Typ
 @Suppress("UNCHECKED_CAST")
 class EnumValidator<T>(val type: Class<T>) : Validator {
     override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean {
+        if (value !is SingleInput)
+            return false
         val consts = type.enumConstants as Array<Enum<*>>
-        return consts.any { it.name.equals(value.value, true) }
+        return consts.any { it.name.equals(value.input, true) }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
 class EnumTransformer<T>(val type: Class<T>) : Transformer<T> {
     override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): T {
+        if (value !is SingleInput)
+            throw IllegalStateException()
+
         val consts = type.enumConstants as Array<Enum<*>>
-        return (consts.firstOrNull { it.name == value.value }
-                ?: consts.first { it.name.equals(value.value, true) }) as T
+        return (consts.firstOrNull { it.name == value.input }
+                ?: consts.first { it.name.equals(value.input, true) }) as T
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-fun enumPossibilities(type: Class<*>): List<String> =
-    (type.enumConstants as Array<Enum<*>>).map { it.name }
+fun enumPossibilities(type: Class<*>): Map<String, List<String>> =
+        mapOf("" to (type.enumConstants as Array<Enum<*>>).map { it.name })

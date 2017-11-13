@@ -25,13 +25,6 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.argument
+package com.github.jonathanxd.kwcommands.exception
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.parser.Input
-
-@FunctionalInterface
-interface Validator {
-    operator fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean
-}
+class MapParseException(message: String) : RuntimeException(message)

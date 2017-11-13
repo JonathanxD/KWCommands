@@ -47,20 +47,20 @@ import java.util.List;
 @Warmup(iterations = 5)
 @Fork(5)
 /*
-Result "com.github.jonathanxd.kwcommands.parser.ParserBenchmark.parserBench":
-  182565.789 ±(99.9%) 9526.945 ops/s [Average]
-  (min, avg, max) = (15250.503, 182565.789, 195310.003), stdev = 28090.414
-  CI (99.9%): [173038.844, 192092.734] (assumes normal distribution)
+Result "com.github.jonathanxd.kwcommands.parser.Parser2Benchmark.parserBench":
+  215428.369 ±(99.9%) 4290.711 ops/s [Average]
+  (min, avg, max) = (125469.768, 215428.369, 228256.324), stdev = 12651.260
+  CI (99.9%): [211137.658, 219719.081] (assumes normal distribution)
 
 
-# Run complete. Total time: 00:02:12
+# Run complete. Total time: 00:02:13
 
-Benchmark                     Mode  Cnt       Score      Error  Units
-ParserBenchmark.parserBench  thrpt  100  182565.789 ± 9526.945  ops/s
+Benchmark                      Mode  Cnt       Score      Error  Units
+Parser2Benchmark.parserBench  thrpt  100  215428.369 ± 4290.711  ops/s
 
 On my machine
  */
-public class ParserBenchmark {
+public class Parser2Benchmark {
 
     private CommandManager manager;
     private ReflectionEnvironment environment;
@@ -71,9 +71,9 @@ public class ParserBenchmark {
     public void setup() {
         this.manager = new CommandManagerImpl();
         this.environment = new ReflectionEnvironment(this.manager);
-        this.parser = new CommandParserImpl(this.manager);
+        this.parser = new CommandParserV2(this.manager);
         this.manager.registerAll(
-                this.environment.fromClass(ParserBenchmark.class, c -> new ParserBenchmark(), this),
+                this.environment.fromClass(Parser2Benchmark.class, c -> new Parser2Benchmark(), this),
                 this
         );
         this.cmd = Collections3.listOf("bench", "9", "a", "b", "c", "--types", "simple", "unknown");
@@ -87,7 +87,7 @@ public class ParserBenchmark {
     @Cmd(description = "Bench test")
     public Integer bench(@Arg("n") int n,
                          @Arg(value = "names", multiple = true) List<String> names,
-                         @Arg(value = "type", multiple = true) List<Type> types) {
+                         @Arg(value = "types", multiple = true) List<Type> types) {
         return n + names.size() + types.size();
     }
 

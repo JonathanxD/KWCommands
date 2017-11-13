@@ -33,9 +33,9 @@ import com.github.jonathanxd.kwcommands.reflect.NonePossibilities
 import com.github.jonathanxd.kwcommands.reflect.NoneTransformer
 import com.github.jonathanxd.kwcommands.reflect.NoneValidator
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
-import com.github.jonathanxd.kwcommands.argument.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.argument.Transformer
-import com.github.jonathanxd.kwcommands.argument.Validator
+import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Transformer
+import com.github.jonathanxd.kwcommands.parser.Validator
 import kotlin.reflect.KClass
 
 /**
@@ -60,7 +60,7 @@ import kotlin.reflect.KClass
 annotation class Arg(val value: String = "",
                      val description: String = "",
                      val optional: Boolean = false,
-                     val varargs: Boolean = false,
+                     val multiple: Boolean = false,
                      val requirements: Array<Require> = arrayOf(),
                      val validator: KClass<out Validator> = NoneValidator::class,
                      val transformer: KClass<out Transformer<*>> = NoneTransformer::class,

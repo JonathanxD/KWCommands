@@ -34,6 +34,9 @@ import com.github.jonathanxd.kwcommands.command.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Transformer
+import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.util.EnumTransformer
 import com.github.jonathanxd.kwcommands.util.EnumValidator
@@ -47,12 +50,12 @@ class BuildingArgument<T> {
     var name: String = ""
     var description: String = ""
     var isOptional: Boolean = false
-    var isVarargs: Boolean = false
+    var isMultiple: Boolean = false
     lateinit var type: TypeInfo<out T>
     var defaultValue: T? = null
     lateinit var validator: Validator
     lateinit var transformer: Transformer<T>
-    var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
+    var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyMap() }
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     var handler: ArgumentHandler<out T>? = null
@@ -77,8 +80,8 @@ class BuildingArgument<T> {
         this.type = f()
     }
 
-    inline fun varargs(f: () -> Boolean) {
-        this.isVarargs = f()
+    inline fun multiple(f: () -> Boolean) {
+        this.isMultiple = f()
     }
 
     @Suppress("NOTHING_TO_INLINE")
@@ -130,7 +133,7 @@ class BuildingArgument<T> {
             description = this.description,
             isOptional = this.isOptional,
             type = this.type,
-            isVarargs = this.isVarargs,
+            isMultiple = this.isMultiple,
             defaultValue = this.defaultValue,
             validator = this.validator,
             transformer = this.transformer,
@@ -320,7 +323,7 @@ val booleanTransformer: Transformer<Boolean> = transformer { _, _, it: String ->
         else -> false
     }
 }
-val booleanPossibilities = listOf("yes", "true", "no", "false")
+val booleanPossibilities = mapOf("" to listOf("yes", "true", "no", "false"))
 
 inline fun stringArg(f: BuildingArgument<String>.() -> Unit): Argument<String> = argument {
     validator = stringValidator
@@ -349,14 +352,14 @@ inline fun doubleArg(f: BuildingArgument<Double>.() -> Unit): Argument<Double> =
 inline fun booleanArg(f: BuildingArgument<Boolean>.() -> Unit): Argument<Boolean> = argument {
     validator = booleanValidator
     transformer = booleanTransformer
-    possibilities = possibilitiesFunc { _, _ -> booleanPossibilities.toList() }
+    possibilities = possibilitiesFunc { _, _ -> booleanPossibilities.toMap() }
     f(this)
 }
 
 inline fun <reified T> enumArg(f: BuildingArgument<T>.() -> Unit): Argument<T> = argument {
     validator = EnumValidator(T::class.java)
     transformer = EnumTransformer(T::class.java)
-    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(T::class.java).toList() }
+    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(T::class.java).toMap() }
     f(this)
 }
 
@@ -366,7 +369,7 @@ inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argum
     this.type { TypeInfo.of(type) }
     validator = EnumValidator(type)
     transformer = EnumTransformer(type)
-    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(type).toList() }
+    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(type).toMap() }
     f(this)
 } as Argument<T>
 
@@ -379,7 +382,7 @@ inline fun <reified T> listArg(base: Argument<T>,
     name = base.name
     type = TypeInfo.builderOf(List::class.java).of(base.type).buildGeneric()
     isOptional = base.isOptional
-    isVarargs = true
+    isMultiple = true
     validator = base.validator
     transformer = ListTransformer(base.transformer)
     possibilities = base.possibilities

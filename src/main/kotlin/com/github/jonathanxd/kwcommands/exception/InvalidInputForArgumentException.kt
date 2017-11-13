@@ -31,10 +31,11 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.Input
 
 class InvalidInputForArgumentException(val command: Command,
                                        val parsedArgs: List<ArgumentContainer<*>>,
-                                       val input: String,
+                                       val input: Input,
                                        val arg: Argument<*>,
                                        manager: CommandManager,
                                        message: String) : CommandException(manager, message)

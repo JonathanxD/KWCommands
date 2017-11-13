@@ -28,19 +28,31 @@
 package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.iutils.opt.specialized.OptObject
-import com.github.jonathanxd.jwiutils.kt.some
+import com.github.jonathanxd.kwcommands.argument.Argument
 
 /**
- * Holds the input of argument. Holds and empty [OptObject] when the argument is varargs
+ * Holds the input of argument. Holds and empty [OptObject] when the argument is multiple
  * and no value was provided to it.
  */
-data class Input(val input: OptObject<String>) {
-    constructor(input: String) : this(some(input))
+// 1.2 dev note: Do we change ListInput and MapInput values to List<Input> and Map<Input, Input> respectively?
+sealed class Input
 
-    val value: String get() = input.orElse(EMPTY)
+/**
+ * Denotes a single input for argument
+ */
+data class SingleInput(val input: String): Input()
 
-    companion object {
-        @JvmStatic
-        val EMPTY = "\uFFFF"
-    }
-}
+/**
+ * Denotes a collection of elements input for argument marked as [multiple][Argument.isMultiple].
+ */
+data class ListInput(val input: List<Input>): Input()
+
+/**
+ * Denotes a map of elements input for argument marked as [multiple][Argument.isMultiple].
+ */
+data class MapInput(val input: Map<Input, Input>): Input()
+
+/**
+ * Denotes no value input for argument marked as [multiple][Argument.isMultiple].
+ */
+object EmptyInput: Input()

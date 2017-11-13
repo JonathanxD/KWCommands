@@ -39,9 +39,9 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementBuilder
-import com.github.jonathanxd.kwcommands.argument.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.argument.Transformer
-import com.github.jonathanxd.kwcommands.argument.Validator
+import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Transformer
+import com.github.jonathanxd.kwcommands.parser.Validator
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
