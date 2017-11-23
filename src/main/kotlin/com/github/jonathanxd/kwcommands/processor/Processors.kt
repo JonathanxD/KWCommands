@@ -44,6 +44,12 @@ object Processors {
     fun createCommonProcessor(manager: CommandManager): CommandProcessor =
             CommonCommandProcessor(manager, CommandParserImpl(manager))
 
+    @JvmStatic
+    fun createCommonProcessor(manager: CommandManager,
+                              commandParser: CommandParser,
+                              commandDispatcher: CommandDispatcher): CommandProcessor =
+            CommonCommandProcessor(manager, commandParser, commandDispatcher)
+
     private class CommonCommandProcessor(
             manager: CommandManager,
             override val parser: CommandParser = CommandParserImpl(manager),

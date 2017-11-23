@@ -97,7 +97,7 @@ class DslTest {
         manager.registerCommand(runCommand, this)
 
         try {
-            processor.processAndHandle("hello KWCommands", this, infoManager).let {
+            processor.processAndDispatch("hello KWCommands", this, infoManager).let {
                 handler.handleResults(it, printer)
                 Assert.assertTrue(it.isEmpty())
             }
@@ -107,7 +107,7 @@ class DslTest {
         }
 
         try {
-            processor.processAndHandle("promote KWCommands ADMIN USER", this, infoManager).let {
+            processor.processAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
                 handler.handleResults(it, printer)
                 Assert.assertTrue(it.isEmpty())
             }
@@ -117,7 +117,7 @@ class DslTest {
         }
 
         try {
-            processor.processAndHandle("promote KWCommands x", this, infoManager).let {
+            processor.processAndDispatch("promote KWCommands x", this, infoManager).let {
                 handler.handleResults(it, printer)
                 Assert.assertTrue(it.isEmpty())
             }

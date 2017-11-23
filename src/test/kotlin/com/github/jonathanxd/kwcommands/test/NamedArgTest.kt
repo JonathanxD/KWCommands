@@ -72,7 +72,7 @@ class NamedArgTest {
         manager.registerCommand(cmd, this)
 
         try {
-            processor.processAndHandle("example --directory mydir --recursive", this, infoManager)
+            processor.processAndDispatch("example --directory mydir --recursive", this, infoManager)
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
         }

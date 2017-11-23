@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.test.welcome;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.exception.CommandException;
@@ -70,7 +69,7 @@ public class WelcomeTests {
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndHandle("welcome", this, informationManager);
+            processor.processAndDispatch("welcome", this, informationManager);
         } catch (CommandException e) {
             handler.handleCommandException(e, sysOutWHF);
         }
@@ -101,7 +100,7 @@ public class WelcomeTests {
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndHandle("mycommands welcome",
+            processor.processAndDispatch("mycommands welcome",
                     this, informationManager);
         } catch (CommandException e) {
             handler.handleCommandException(e, sysOutWHF);

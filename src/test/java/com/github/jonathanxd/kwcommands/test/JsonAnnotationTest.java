@@ -120,7 +120,7 @@ public class JsonAnnotationTest {
                                        CommandProcessor processor,
                                        InformationManager informationManager) {
 
-        List<CommandResult> commandResults = processor.processAndHandle(
+        List<CommandResult> commandResults = processor.processAndDispatch(
                 commandString,
                 this, informationManager);
 

@@ -30,4 +30,6 @@ package com.github.jonathanxd.kwcommands
 /**
  * Command parsing and handling library.
  */
-object KWCommands
+object KWCommands {
+    fun aio() = AIO()
+}

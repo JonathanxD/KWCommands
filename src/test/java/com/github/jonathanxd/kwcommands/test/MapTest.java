@@ -73,7 +73,7 @@ public class MapTest {
         CommonPrinter localizedSysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndHandle(
+            processor.processAndDispatch(
                     "mapcmd 897 { project = KWCommands } --n2 -8",
                     this,
                     informationManager);
@@ -82,7 +82,7 @@ public class MapTest {
             Assert.assertEquals(MapUtils.mapOf("project", "KWCommands"), this.values);
             Assert.assertEquals(-8, this.n2);
 
-            processor.processAndHandle(
+            processor.processAndDispatch(
                     "mapcmd " +
                             "1 " +
                             "--values {a=\"man, i l u = {\", uhu=s} " +
@@ -94,7 +94,7 @@ public class MapTest {
             Assert.assertEquals(MapUtils.mapOf("a", "man, i l u = {", "uhu", "s"), this.values);
             Assert.assertEquals(2, this.n2);
 
-            processor.processAndHandle(
+            processor.processAndDispatch(
                     "mapcmd " +
                             "1 " +
                             "--values {a=\"man, i l u = {\", uhu=[s,b]}" +

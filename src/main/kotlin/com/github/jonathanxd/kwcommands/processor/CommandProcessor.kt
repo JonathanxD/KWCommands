@@ -66,17 +66,17 @@ interface CommandProcessor {
             this.dispatcher.unregisterInterceptor(commandInterceptor)
 
     /**
-     * Process command string list.
+     * Parse command string.
      *
      * @param commandString Command line string, with commands and arguments of commands.
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun process(commandString: String, owner: Any?): List<CommandContainer> =
+    fun parse(commandString: String, owner: Any?): List<CommandContainer> =
             this.parser.parse(commandString, owner)
 
     /**
-     * Process command string list.
+     * Dispatch command string.
      *
      * This provides a way to specify owner based on command input string (`commandName`).
      *
@@ -85,38 +85,38 @@ interface CommandProcessor {
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun processWithOwnerFunction(commandString: String,
-                                 ownerProvider: (commandName: String) -> Any?): List<CommandContainer> =
+    fun parseWithOwnerFunction(commandString: String,
+                               ownerProvider: (commandName: String) -> Any?): List<CommandContainer> =
             this.parser.parseWithOwnerFunction(commandString, ownerProvider)
 
     /**
-     * Handle [commands] and returns [result list][CommandResult] of command executions.
+     * Dispatch [commands] and returns [result list][CommandResult] of command executions.
      *
-     * This function will first check requirements, and then handle arguments and the command.
+     * This function will first check requirements, and then dispatch arguments and the command.
      *
      * @param commands Command to handle.
      * @param informationManager Information provide manager.
-     * @return Result of command handling process. May be command handler return values or values added via
+     * @return Result of command dispatch process. May be command dispatcher return values or values added via
      * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
      * each command.
      */
-    fun handle(commands: List<CommandContainer>,
-               informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
+    fun dispatch(commands: List<CommandContainer>,
+                 informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
             this.dispatcher.dispatch(commands, informationManager)
 
     /**
-     * Calls [process] and then [handle] to handle result of [process].
+     * Calls [parse] and then [dispatch] to dispatch result of [parse].
      */
-    fun processAndHandle(commandString: String,
-                         owner: Any?,
-                         informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            processAndHandleWithOwnerFunc(commandString, { owner }, informationManager)
+    fun processAndDispatch(commandString: String,
+                           owner: Any?,
+                           informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
+            processAndDispatchWithOwnerFunc(commandString, { owner }, informationManager)
 
     /**
-     * Calls [processWithOwnerFunction] and then [handle] to handle result of [process].
+     * Calls [parseWithOwnerFunction] and then [dispatch] to dispatch result of [parse].
      */
-    fun processAndHandleWithOwnerFunc(commandString: String,
-                                      ownerProvider: (commandName: String) -> Any?,
-                                      informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            processWithOwnerFunction(commandString, ownerProvider).let { this.handle(it, informationManager) }
+    fun processAndDispatchWithOwnerFunc(commandString: String,
+                                        ownerProvider: (commandName: String) -> Any?,
+                                        informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
+            parseWithOwnerFunction(commandString, ownerProvider).let { this.dispatch(it, informationManager) }
 }

@@ -214,16 +214,16 @@ class CommandTest {
         processor.parser.commandManager.registerCommand(command, this)
 
 
-        processor.handle(processor.process("open house", this))
+        processor.dispatch(processor.parse("open house", this))
                 .assertAll(listOf("open(house)"))
 
-        processor.handle(processor.process("open door window \"of house\" 5.0", this))
+        processor.dispatch(processor.parse("open door window \"of house\" 5.0", this))
                 .assertAll(listOf("open door", "open window(of house, 5.0)"))
 
-        processor.handle(processor.process("open door window \"of house\" 1 7.0", this))
+        processor.dispatch(processor.parse("open door window \"of house\" 1 7.0", this))
                 .assertAll(listOf("open door", 1, "open window(of house, 1, 7.0)"))
 
-        processor.handle(processor.process("open door & open window \"of house\" 5 19.0", this))
+        processor.dispatch(processor.parse("open door & open window \"of house\" 5 19.0", this))
                 .assertAll(listOf("open door", 5, "open window(of house, 5, 19.0)"))
     }
 

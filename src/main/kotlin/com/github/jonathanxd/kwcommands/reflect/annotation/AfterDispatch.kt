@@ -25,17 +25,17 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.element
+package com.github.jonathanxd.kwcommands.reflect.annotation
 
-import com.github.jonathanxd.iutils.reflection.Link
-import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
+import kotlin.reflect.KClass
 
 /**
- * Element information to [ReflectionHandler] handle the command correctly and invoke [elementLink].
+ * Marks a function to handle post dispatch of all commands,
+ * including those that are not registered by this class. To filter the commands
+ * of this class, specify it in [filter] property.
  *
- * @property elementLink Link to element to invoke.
- * @property parameters Parameter specification (parameters required to be passed to [elementLink]).
+ * The function must have an list receiver of type `List<CommandResult>`.
  */
-data class Element(val elementLink: Link<Any?>,
-                   val parameters: List<Parameter<*>>,
-                   val owner: Class<*>)
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
+annotation class AfterDispatch(val filter: Array<KClass<*>> = emptyArray())

@@ -50,15 +50,36 @@ interface CommandDispatcher {
     val options: Options
 
     /**
-     * Register a [command interceptor][CommandInterceptor].
+     * Register a [command interceptor][commandInterceptor].
      */
     fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean
 
     /**
-     * Unregister a [command interceptor][CommandInterceptor].
+     * Registers [command interceptors][commandInterceptors]
+     */
+    fun registerInterceptors(commandInterceptors: List<CommandInterceptor>): Boolean =
+            commandInterceptors.map { this.registerInterceptor(it) }.any { it }
+
+    /**
+     * Unregister a [command interceptor][commandInterceptor].
      */
     fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean
 
+    /**
+     * Registers a [dispatch handler][dispatchHandler]
+     */
+    fun registerDispatchHandler(dispatchHandler: DispatchHandler): Boolean
+
+    /**
+     * Registers [dispatch handlers][dispatchHandlers]
+     */
+    fun registerDispatchHandlers(dispatchHandlers: List<DispatchHandler>): Boolean =
+            dispatchHandlers.map { this.registerDispatchHandler(it) }.any { it }
+
+    /**
+     * Unregisters a [dispatch handler][dispatchHandler]
+     */
+    fun unregisterDispatchHandler(dispatchHandler: DispatchHandler): Boolean
 
     /**
      * Handle [commands] and returns [result list][CommandResult] of command executions.

@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.reflection.Invokables;
 import com.github.jonathanxd.iutils.reflection.Links;
 import com.github.jonathanxd.iutils.text.Text;
@@ -104,7 +103,7 @@ public class Basic {
                     return null;
                 }));
 
-        processor.handle(processor.process("play A", null), manager);
+        processor.dispatch(processor.parse("play A", null), manager);
 
     }
 
@@ -123,7 +122,7 @@ public class Basic {
 
         informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
 
-        processor.handle(processor.process("play a c", this), informationManager);
+        processor.dispatch(processor.parse("play a c", this), informationManager);
     }
 
 

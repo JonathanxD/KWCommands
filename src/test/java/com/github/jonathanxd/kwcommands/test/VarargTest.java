@@ -70,7 +70,7 @@ public class VarargTest {
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndHandle(
+            processor.processAndDispatch(
                     "varargcmd 1 hey man --n2 5",
                     this,
                     informationManager);
@@ -79,7 +79,7 @@ public class VarargTest {
             Assert.assertEquals(Collections3.listOf("hey", "man"), this.names);
             Assert.assertEquals(5, this.n2);
 
-            processor.processAndHandle(
+            processor.processAndDispatch(
                     "varargcmd 1 --names hey kw --n2 -4",
                     this,
                     informationManager);

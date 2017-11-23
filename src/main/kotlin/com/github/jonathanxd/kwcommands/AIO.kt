@@ -25,17 +25,21 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.element
+package com.github.jonathanxd.kwcommands
 
-import com.github.jonathanxd.iutils.reflection.Link
-import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
+import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
+import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
+import com.github.jonathanxd.kwcommands.parser.CommandParserImpl
+import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 
 /**
- * Element information to [ReflectionHandler] handle the command correctly and invoke [elementLink].
- *
- * @property elementLink Link to element to invoke.
- * @property parameters Parameter specification (parameters required to be passed to [elementLink]).
+ * All-in-one: CommandManager, Parser, Dispatcher, Processor and Environment
  */
-data class Element(val elementLink: Link<Any?>,
-                   val parameters: List<Parameter<*>>,
-                   val owner: Class<*>)
+class AIO {
+    val commandManager = CommandManagerImpl()
+    val parser = CommandParserImpl(commandManager)
+    val dispatcher = CommandDispatcherImpl(commandManager)
+    val processor = Processors.createCommonProcessor(commandManager, parser, dispatcher)
+    val reflectionEnvironment = ReflectionEnvironment(commandManager)
+}

@@ -38,11 +38,13 @@ import com.github.jonathanxd.kwcommands.processor.*
 import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.MissingInformation
 import com.github.jonathanxd.kwcommands.util.checkRequiredInfo
+import java.util.*
 
 class CommandDispatcherImpl(override val commandManager: CommandManager) : CommandDispatcher {
     override val options: Options = Options()
 
     private val interceptors = mutableSetOf<CommandInterceptor>()
+    private val dispatchHandlers = mutableSetOf<DispatchHandler>()
 
     override fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
             this.interceptors.add(commandInterceptor)
@@ -50,6 +52,11 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
     override fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean =
             this.interceptors.remove(commandInterceptor)
 
+    override fun registerDispatchHandler(dispatchHandler: DispatchHandler): Boolean =
+            this.dispatchHandlers.add(dispatchHandler)
+
+    override fun unregisterDispatchHandler(dispatchHandler: DispatchHandler): Boolean =
+            this.dispatchHandlers.remove(dispatchHandler)
 
     override fun dispatch(commands: List<CommandContainer>,
                           informationManager: InformationManager): List<CommandResult> {
@@ -156,6 +163,14 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                 }
 
                 results.addAll(perCommandResults)
+            }
+        }
+
+        if (this.dispatchHandlers.isNotEmpty() && results.isNotEmpty()) {
+            val resultsI = Collections.unmodifiableList(results)
+
+            this.dispatchHandlers.forEach {
+                it.handle(resultsI)
             }
         }
 

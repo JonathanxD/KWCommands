@@ -25,17 +25,13 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.element
+package com.github.jonathanxd.kwcommands.dispatch
 
-import com.github.jonathanxd.iutils.reflection.Link
-import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
+import com.github.jonathanxd.kwcommands.processor.CommandResult
 
 /**
- * Element information to [ReflectionHandler] handle the command correctly and invoke [elementLink].
- *
- * @property elementLink Link to element to invoke.
- * @property parameters Parameter specification (parameters required to be passed to [elementLink]).
+ * Handles dispatch of commands after all commands is dispatched
  */
-data class Element(val elementLink: Link<Any?>,
-                   val parameters: List<Parameter<*>>,
-                   val owner: Class<*>)
+interface DispatchHandler {
+    fun handle(result: List<CommandResult>)
+}

@@ -37,6 +37,7 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
+import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.json.JsonCommandParser
 import com.github.jonathanxd.kwcommands.json.getCommandJsonObj
@@ -142,9 +143,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @param owner Owner of command.
      * @return True if all command was registered with success.
      */
-    fun registerCommands(list: List<Command>, owner: Any): Boolean {
-        return list.prepareCommands().all { this.manager.registerCommand(it, owner) }
-    }
+    fun registerCommands(list: List<Command>, owner: Any): Boolean =
+            list.prepareCommands().all { this.manager.registerCommand(it, owner) }
 
     /**
      * Register all commands in [list] including super commands (of sub-commands) that are not in [list] and are not registered.
@@ -250,6 +250,49 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             this.fromJsonAnnotated(member, member.declaringClass, instanceProvider, jsonCommandParserResolver)
 
     // Reflection
+
+    /**
+     * Create list with all [dispatch handlers][DispatchHandler] of [klass].
+     */
+    @JvmOverloads
+    fun <T : Any> dispatchHandlersFrom(klass: Class<T>,
+                                       instanceProvider: (Class<*>) -> Any?,
+                                       includeInner: Boolean = true): List<DispatchHandler> =
+        mutableListOf<DispatchHandler>().also {
+            dispatchHandlersFrom(klass, instanceProvider, includeInner, it)
+        }
+
+    fun <T : Any> dispatchHandlersFrom(klass: Class<T>,
+                                       instanceProvider: (Class<*>) -> Any?,
+                                       includeInner: Boolean,
+                                       handlers: MutableList<DispatchHandler>) {
+
+
+        val methods = klass.methods.filter {
+            it.isAnnotationPresent(AfterDispatch::class.java)
+        }
+
+        if (methods.isNotEmpty()) {
+            val instance = instanceProvider(klass)
+            methods.forEach {
+                val afterDispatch = it.getDeclaredAnnotation(AfterDispatch::class.java)
+
+                val link: Link<Any?> = Links.ofInvokable<Any?>(Invokables.fromMethodHandle(LOOKUP.unreflect(it)))
+                        .bind(instance)
+
+                handlers += if (afterDispatch.filter.isEmpty()) {
+                    ReflectDispatchHandler(link)
+                } else {
+                    ReflectFilterDispatchHandler(link, afterDispatch.filter.map { it.java }.toList())
+                }
+            }
+
+        }
+
+        klass.classes.forEach {
+            dispatchHandlersFrom(it, instanceProvider, includeInner, handlers)
+        }
+    }
 
     /**
      * Create command list from commands of class [klass]
@@ -444,7 +487,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
     @Suppress("UNCHECKED_CAST")
     fun createSetterHandler(instance: Any?, field: Field): Handler =
-            ReflectionHandler(Element(linkField(instance, field), emptyList()))
+            ReflectionHandler(Element(linkField(instance, field), emptyList(), field.declaringClass))
 
     fun linkField(instance: Any?, field: Field): Link<Any?> =
             if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
@@ -560,7 +603,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
         return karg!!.let {
             if (it.handler == null)
-                it.copy(handler = ReflectionHandler(Element(link, listOf(parameters))))
+                it.copy(handler = ReflectionHandler(Element(link, listOf(parameters), field.declaringClass)))
             else it
         }
     }
@@ -717,7 +760,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             }
         }
 
-        return MethodElement(Element(link, parameters), arguments, requiredInfo)
+        return MethodElement(Element(link, parameters, method.declaringClass), arguments, requiredInfo)
     }
 
     /**

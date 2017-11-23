@@ -146,7 +146,7 @@ public class JsonTest {
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
-        List<CommandResult> commandResults = processor.processAndHandle(
+        List<CommandResult> commandResults = processor.processAndDispatch(
                 "register " + pname + " " + pemail,
                 this, informationManager);
 

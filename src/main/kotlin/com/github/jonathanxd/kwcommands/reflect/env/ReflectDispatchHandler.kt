@@ -25,17 +25,41 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.element
+package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.reflection.Link
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler
+import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 
-/**
- * Element information to [ReflectionHandler] handle the command correctly and invoke [elementLink].
- *
- * @property elementLink Link to element to invoke.
- * @property parameters Parameter specification (parameters required to be passed to [elementLink]).
- */
-data class Element(val elementLink: Link<Any?>,
-                   val parameters: List<Parameter<*>>,
-                   val owner: Class<*>)
+class ReflectDispatchHandler(private val link: Link<Any?>) : DispatchHandler {
+    override fun handle(result: List<CommandResult>) {
+        link.invoke(result)
+    }
+}
+
+class ReflectFilterDispatchHandler(private val link: Link<Any?>,
+                                   private val filter: List<Class<*>>) : DispatchHandler {
+    override fun handle(result: List<CommandResult>) {
+        val filtered = result.filter {
+            val container = it.container
+            val handler: Any? = when (container) {
+                is CommandContainer -> container.handler
+                is ArgumentContainer<*> -> container.handler
+                else -> null
+            }
+
+            when (handler) {
+                is ReflectionHandler -> handler.element.owner.let { owner -> filter.any { it == owner } }
+                is DynamicHandler -> handler.type.let { owner -> filter.any { it == owner } }
+                else -> false
+            }
+        }
+
+        if (filtered.isNotEmpty()) {
+            link.invoke(filtered)
+        }
+    }
+}

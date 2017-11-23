@@ -69,7 +69,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.handle(processor.process("download https://askdsal.0/x.file 10", this), information)// ?
+        val result = processor.dispatch(processor.parse("download https://askdsal.0/x.file 10", this), information)// ?
 
         Assert.assertTrue(result.any { it is UnsatisfiedRequirementsResult })
     }
@@ -88,7 +88,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.handle(processor.process("download https://askdsal.0/x.file 10", this))// ?
+        val result = processor.dispatch(processor.parse("download https://askdsal.0/x.file 10", this))// ?
 
         Assert.assertTrue(result.any {
             it is UnsatisfiedRequirementsResult
@@ -115,7 +115,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process("world setblock 10 10 0 stone", this), information)
+        processor.dispatch(processor.parse("world setblock 10 10 0 stone", this), information)
                 .assertAll(listOf("setted block STONE at 10, 10, 0"))
 
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
@@ -132,7 +132,7 @@ class ReflectionTest {
 
         })
 
-        processor.handle(processor.process("world tpto Adm A,B,C", this), information)
+        processor.dispatch(processor.parse("world tpto Adm A,B,C", this), information)
                 .assertAll(listOf("teleported A, B, C to Adm!"))
     }
 
@@ -144,7 +144,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process("tp a c", this))
+        processor.dispatch(processor.parse("tp a c", this))
                 .assertAll(listOf("Teleported a to c!"))
     }
 
@@ -163,10 +163,10 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process("a capitalize kwcommands", this))
+        processor.dispatch(processor.parse("a capitalize kwcommands", this))
                 .assertAll(listOf("Kwcommands"))
 
-        processor.handle(processor.process("a b kwcommands", this))
+        processor.dispatch(processor.parse("a b kwcommands", this))
                 .assertAll(listOf("KWCOMMANDS"))
     }
 
@@ -189,7 +189,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.handle(processor.process("getName", this), information)
+        val result = processor.dispatch(processor.parse("getName", this), information)
 
         result.assertAll(listOf(simplePlayer.name))
     }
