@@ -45,7 +45,7 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class Cmd(val order: Int = 0,
                      val name: String = "",
-                     val description: String,
+                     val description: String = "",
                      val alias: Array<String> = arrayOf(),
                      val parents: Array<String> = arrayOf(),
                      val requirements: Array<Require> = arrayOf(),

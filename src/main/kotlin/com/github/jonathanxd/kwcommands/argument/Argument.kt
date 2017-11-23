@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
@@ -53,7 +54,7 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  */
 data class Argument<out T>(val id: Any,
                            val name: String,
-                           val description: String,
+                           val description: TextComponent,
                            val isOptional: Boolean,
                            val type: TypeInfo<out T>,
                            val defaultValue: T?,

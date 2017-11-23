@@ -29,6 +29,8 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.exception.RethrowException;
+import com.github.jonathanxd.iutils.text.Text;
+import com.github.jonathanxd.iutils.text.TextComponent;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.Argument;
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
@@ -47,6 +49,10 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
 import com.github.jonathanxd.kwcommands.parser.Input;
 import com.github.jonathanxd.kwcommands.parser.SingleInput;
+import com.github.jonathanxd.kwcommands.parser.SingleInputType;
+import com.github.jonathanxd.kwcommands.parser.Validation;
+import com.github.jonathanxd.kwcommands.parser.ValidationKt;
+import com.github.jonathanxd.kwcommands.parser.Validator;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
@@ -56,7 +62,7 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.requirement.Requirement;
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester;
-import com.github.jonathanxd.kwcommands.parser.Validator;
+import com.github.jonathanxd.kwcommands.util.KLocale;
 
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -135,18 +141,19 @@ public class JsonTest {
         InformationManagerImpl informationManager = new InformationManagerImpl();
 
         informationManager.<JsonTest.Player>registerInformation(new Information.Id<>(TypeInfo.of(JsonTest.Player.class),
-                new String[] { "player"}), s -> s.equals("perm.register"), "player requesting register.");
+                new String[]{"player"}), s -> s.equals("perm.register"), "player requesting register.");
 
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
         List<CommandResult> commandResults = processor.processAndHandle(
-                Collections3.listOf("register", pname, pemail),
+                "register " + pname + " " + pemail,
                 this, informationManager);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
 
-        commonHelpInfoHandler.handleResults(commandResults, new CommonPrinter(s -> {
+        commonHelpInfoHandler.handleResults(commandResults, new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
+                s -> {
             System.out.println(s);
             return Unit.INSTANCE;
         }, false));
@@ -193,6 +200,12 @@ public class JsonTest {
     public static class ReqTester implements RequirementTester<Player, String> {
         public static final ReqTester INSTANCE = new ReqTester();
 
+        @NotNull
+        @Override
+        public TextComponent getName() {
+            return Text.of("RequirementTester");
+        }
+
         @Override
         public boolean test(@NotNull Requirement<Player, String> requirement,
                             @NotNull Information<? extends Player> information) {
@@ -203,16 +216,26 @@ public class JsonTest {
 
     public static class EmailValidator implements Validator {
         public static final EmailValidator INSTANCE = new EmailValidator();
-
         private static final Pattern REGEX = Pattern.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])");
-
         private static final Predicate<String> pred = REGEX.asPredicate();
 
+        @NotNull
         @Override
-        public boolean invoke(@NotNull List<? extends ArgumentContainer<?>> parsed,
-                              @NotNull Argument<?> current,
-                              @NotNull Input value) {
-            return value instanceof SingleInput && pred.test(((SingleInput) value).getInput());
+        public TextComponent getName() {
+            return Text.of("Email Validator");
+        }
+
+        @Override
+        public Validation invoke(@NotNull List<? extends ArgumentContainer<?>> parsed,
+                                 @NotNull Argument<?> current,
+                                 @NotNull Input value) {
+
+            return value instanceof SingleInput && pred.test(((SingleInput) value).getInput())
+                    ? ValidationKt.valid()
+                    :
+                    ValidationKt.invalid(value, this, Text.of("Invalid email format"),
+                            Collections3.listOf(SingleInputType.INSTANCE)
+                    );
 
         }
 

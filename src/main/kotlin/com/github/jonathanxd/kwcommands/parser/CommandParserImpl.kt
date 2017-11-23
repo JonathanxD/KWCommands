@@ -27,9 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.iutils.collection.wrapper.WrapperCollections
+import com.github.jonathanxd.iutils.annotation.Beta
+import com.github.jonathanxd.iutils.box.IMutableBox
+import com.github.jonathanxd.iutils.box.MutableBox
 import com.github.jonathanxd.iutils.option.Options
-import com.github.jonathanxd.jwiutils.kt.none
+import com.github.jonathanxd.kwcommands.ValidationTexts
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -37,325 +39,430 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.processor.KWParserOptions
-import com.github.jonathanxd.kwcommands.util.escape
-import com.github.jonathanxd.kwcommands.util.isBoolean
-import com.github.jonathanxd.kwcommands.util.nameOrId
-import com.github.jonathanxd.kwcommands.util.nameOrIdWithType
+import com.github.jonathanxd.kwcommands.util.*
 import java.util.*
 
+@Beta
 class CommandParserImpl(override val commandManager: CommandManager) : CommandParser {
+
     override val options: Options = Options()
 
-    override fun parseWithOwnerFunction(stringList: List<String>,
-                                        ownerProvider: (commandName: String) -> Any?): List<CommandContainer> {
-        val orderOption = this.options[KWParserOptions.ORDER]
-        val commands = mutableListOf<CommandContainer>()
-        val deque: Deque<Command> = LinkedList()
-        val getStr: (Int) -> String = { stringList[it].escape('\\') }
-        val getRawStr: (Int) -> String = { stringList[it] }
+    override fun parseWithOwnerFunction(commandString: String,
+                                        ownerProvider: OwnerProvider): List<CommandContainer> {
+        val containers = mutableListOf<CommandContainer>()
 
-        // Checks if is argument name
-        val isName: (Int) -> Boolean = { stringList[it].startsWith("--") }
-        val getName: (Int) -> String = { stringList[it].substring(2).escape('\\') }
+        parse(commandString.sourcedCharIterator(), containers, CommandHolder(), ownerProvider)
 
-        var index = 0 // Current index in string list
-
-        while (index < stringList.size) {
-            var command: Command? = null
-
-            if (stringList[index].isAndOp()) {
-                deque.clear()
-                ++index
-                continue
-            }
-
-            while (command == null) {
-
-                if (deque.isEmpty()) {
-                    command = commandManager.getCommand(getStr(index), ownerProvider(getStr(index)))
-
-                    if (command == null)
-                        throw CommandNotFoundException(getStr(index),
-                                commands.toList(),
-                                this.commandManager,
-                                "Command ${getStr(index)} (index $index in $stringList) was not found.")
-                } else {
-                    command = this.commandManager.getSubCommand(deque.last, getStr(index))
-
-                    if (command == null) {
-                        val rm = deque.removeLast()
-
-                        if (rm.parent != null)
-                            deque.offerLast(rm.parent)
-                    }
-                }
-            }
-
-            if (index + 1 == stringList.size ||
-                    (index + 1 < stringList.size
-                            && (stringList[index + 1].isAndOp()
-                            || this.commandManager.getSubCommand(command, getStr(index + 1)) == null))) {
-
-                val order = orderOption || command.arguments.any { it.isMultiple }
-                val arguments = command.arguments.toMutableList()
-                val args = mutableListOf<ArgumentContainer<*>>()
-                val immutableArgs = WrapperCollections.immutableList(args)
-
-                if (!arguments.isEmpty()) {
-                    val requiredArgsCount = arguments.count { !it.isOptional }
-
-                    if (index + requiredArgsCount >= stringList.size) {
-
-                        val required = arguments.filter { !it.isOptional }.joinToString { it.id.toString() }
-                        val provided = if (index + 1 < stringList.size)
-                            ", Provided arguments: ${stringList.subList(index + 1, stringList.size).joinToString()}"
-                        else ""
-
-                        throw ArgumentsMissingException(command,
-                                args.toList(),
-                                this.commandManager,
-                                "Some required arguments of command $command is missing (Required arguments ids: $required$provided).")
-                    }
-
-                    var requiredCount = 0
-
-                    val maxNames = arguments.size
-                    var names = 0
-
-                    (index + 1 until stringList.size).forEach {
-                        if (isName(it) && names + 1 < maxNames)
-                            ++names
-                    }
-
-                    val size = stringList.size - 1
-                    var argPos = 0
-                    var searchPos = index + 1 // Index to search argument value or name
-
-                    while (searchPos <= size) {
-                        val it = searchPos
-                        val argStr = getStr(it)
-                        var argInput = SingleInput(argStr)
-
-                        fun parseVarargs(arg: Argument<*>): ArgumentContainer<*> {
-                            var container: ArgumentContainer<*>? = null
-                            val inputs = mutableListOf<Input>()
-                            var values: Collection<Any?>? = null
-                            var lindex = if (isName(it)) it + 1 else it // Offset add to argument value index
-
-                            val cArgs = args.toMutableList()
-                            var input = getStr(lindex)
-
-                            while (!isName(lindex) && arg.validator(immutableArgs, arg, SingleInput(input))) {
-                                val inputObj = SingleInput(input)
-                                inputs += inputObj
-                                ++searchPos
-                                ++index
-                                ++lindex
-
-                                container?.let { cArgs.add(it) }
-
-                                @Suppress("UNCHECKED_CAST")
-                                val converted = arg.transformer(cArgs, arg, inputObj)
-                                        as MutableCollection<Any?>
-
-                                if (values == null) values = converted
-                                else (values as MutableCollection<Any?>).addAll(converted)
-
-                                container?.let { cArgs.removeAt(cArgs.lastIndex) }
-
-                                @Suppress("UNCHECKED_CAST")
-                                container = ArgumentContainer(
-                                        arg,
-                                        inputObj,
-                                        values,
-                                        arg.handler as? ArgumentHandler<Any?>
-                                )
-
-                                if (lindex <= size) {
-                                    input = getStr(lindex)
-                                } else
-                                    break
-                            }
-
-                            if (inputs.isEmpty()) {
-                                @Suppress("UNCHECKED_CAST")
-                                values = arg.transformer(cArgs, arg, EmptyInput)
-                                        as Collection<Any?>
-                            }
-
-                            val filtered = inputs.filterIsInstance<SingleInput>()
-
-                            val inp = ListInput(filtered.map { SingleInput(it.input) })
-
-                            @Suppress("UNCHECKED_CAST")
-                            val argContainer = ArgumentContainer(
-                                    arg,
-                                    inp,
-                                    values ?: emptyList<Any?>(),
-                                    arg.handler as? ArgumentHandler<Any?>
-                            )
-
-                            if (!arg.isOptional)
-                                requiredCount++
-
-                            arguments.remove(arg)
-                            args.add(argContainer)
-
-                            return argContainer
-                        }
-
-                        var arg: Argument<*>? = null
-
-                        if (isName(it)) {
-                            val argName = getName(it)
-
-                            arg = arguments.firstOrNull { it.nameOrId == argName }
-                                    ?: throw ArgumentNotFoundException(command,
-                                    args.toList(),
-                                    argName,
-                                    this.commandManager,
-                                    "No argument found for input name '$argName' of command $command")
-
-                            if (it + 1 > size) {
-                                if (arg.isBoolean(args))
-                                    argInput = SingleInput("true")
-                                else
-                                    throw NoInputForArgumentException(command,
-                                            args.toList(),
-                                            arg,
-                                            this.commandManager,
-                                            "No input for specified named argument '${arg.nameOrIdWithType}' of command $command")
-                            } else {
-                                if (isName(it + 1) && arg.isBoolean(args)) {
-                                    argInput = SingleInput("true")
-                                } else {
-                                    if (arg.isMultiple) {
-                                        parseVarargs(arg)
-                                        arg = null
-                                    } else {
-                                        val input = getStr(it + 1)
-                                        val inputObj = SingleInput(input)
-
-                                        if (!arg.validator(args, arg, inputObj))
-                                            throw InvalidInputForArgumentException(
-                                                    command,
-                                                    args.toList(),
-                                                    inputObj,
-                                                    arg,
-                                                    this.commandManager,
-                                                    "Invalid input $input for required argument " +
-                                                            "'${arg.nameOrIdWithType}' of command $command.")
-                                        argInput = inputObj
-                                        ++searchPos
-                                        ++index
-                                    }
-                                }
-                            }
-                        } else {
-                            val inputObj = SingleInput(argStr)
-
-                            if (!order) {
-                                arg = arguments.find { it.validator(args, it, inputObj) }
-
-                                if (arg == null && requiredCount == requiredArgsCount)
-                                    break
-                                else if (arg == null)
-                                    throw NoArgumentForInputException(command,
-                                            args.toList(),
-                                            argStr,
-                                            this.commandManager,
-                                            "No argument for input string $argStr for command $command")
-                            } else {
-                                if (argPos >= arguments.size) {
-                                    arg = null
-                                } else {
-                                    var any = false
-                                    while (argPos < arguments.size) {
-                                        val atPos = arguments[argPos]
-
-                                        if (atPos.isMultiple) {
-                                            parseVarargs(atPos)
-                                            arg = null
-                                            any = true
-                                            break
-                                        } else {
-                                            if (!atPos.validator(args, atPos, inputObj)) {
-                                                if (!atPos.isOptional)
-                                                    throw InvalidInputForArgumentException(
-                                                            command,
-                                                            args.toList(),
-                                                            inputObj,
-                                                            atPos,
-                                                            this.commandManager,
-                                                            "Invalid input $argStr for required argument " +
-                                                                    "'${atPos.nameOrIdWithType}' of command $command.")
-
-                                            } else {
-                                                any = true
-                                                arg = atPos
-                                                break
-                                            }
-                                        }
-
-                                        ++argPos
-                                    }
-
-                                    if (!any)
-                                        throw NoArgumentForInputException(command,
-                                                args.toList(),
-                                                argStr,
-                                                this.commandManager,
-                                                "No argument for input string $argStr for command $command")
-                                }
-                            }
-                        }
-
-                        if (arg != null) {
-                            if (!arg.isOptional)
-                                requiredCount++
-                            @Suppress("UNCHECKED_CAST")
-                            args.add(ArgumentContainer(
-                                    arg,
-                                    argInput,
-                                    arg.transformer(args, arg, argInput),
-                                    arg.handler as? ArgumentHandler<Any?>
-                            ))
-                            arguments.remove(arg)
-                        }
-                        ++index
-                        ++searchPos
-                    }
-
-                    if (requiredCount != requiredArgsCount) {
-                        val missing = arguments.filter { !it.isOptional }.joinToString {
-                            val poss = it.possibilities.invoke(args, it)
-                            if (poss.isNotEmpty()) "${it.id}{possibilities=$poss}"
-                            else it.id.toString()
-                        }
-                        throw ArgumentsMissingException(command,
-                                args.toList(),
-                                this.commandManager,
-                                "Some required arguments of command $command is missing. (Missing arguments ids: $missing)")
-                    }
-
-                    arguments.map { ArgumentContainer(it, null, it.defaultValue, null) }
-                }
-
-                commands += CommandContainer(
-                        command = command,
-                        handler = command.handler,
-                        arguments = args)
-            } else {
-                deque.offer(command)
-            }
-
-            ++index
-        }
-
-        return commands
+        return containers
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline private fun String.isAndOp() = this == "&"
+    private fun parse(commandsIterator: SourcedCharIterator,
+                      containers: MutableList<CommandContainer>,
+                      lastCommand: CommandHolder,
+                      ownerProvider: OwnerProvider) {
+        while (commandsIterator.hasNext()) {
+            val isCommand =
+                    parseCommand(commandsIterator, containers, lastCommand, ownerProvider, !lastCommand.isPresent)
+
+            if (!isCommand || !commandsIterator.hasNext()) {
+                val last = lastCommand.value
+
+                if (last != null) {
+                    lastCommand.set(null)
+
+                    val args = parseArguments(commandsIterator, last)
+
+                    containers += CommandContainer(last, args, last.handler)
+                }
+            }
+        }
+    }
+
+    private fun getCommand(name: String,
+                           containers: MutableList<CommandContainer>,
+                           lastCommand: CommandHolder,
+                           owner: Any?): Command? {
+        var last: Command? = lastCommand.getOrElse(null)
+
+        while (last != null) {
+            val cmd = this.commandManager.getSubCommand(last, name)
+
+            if (cmd != null) {
+                lastCommand.set(cmd)
+                return cmd
+            } else {
+                if (last.arguments.isEmpty()) {
+                    containers += CommandContainer(last, emptyList(), last.handler)
+                }
+                last = last.parent
+            }
+        }
+
+        return this.commandManager.getCommand(name, owner)?.also {
+            lastCommand.set(it)
+        }
+    }
+
+    private fun SourcedCharIterator.parseSingle(): SingleInput = this.parseSingleInput()
+
+    private fun SourcedCharIterator.peekSingle(): Pair<SingleInput, SourcedCharIterator> =
+            this.runInNew { this.parseSingleInput() }
+
+    private fun parseCommand(commandsIterator: SourcedCharIterator,
+                             containers: MutableList<CommandContainer>,
+                             lastCommand: CommandHolder,
+                             ownerProvider: OwnerProvider,
+                             required: Boolean): Boolean {
+        val last = lastCommand.getOrElse(null)
+
+        val peek = commandsIterator.peekSingle()
+        val (input, iter) = peek
+
+        if (input.content == "&") {
+            commandsIterator.from(iter)
+
+            if (last.arguments.isNotEmpty())
+                failAME(last, emptyList(), last.arguments, emptyList())
+
+            containers += CommandContainer(last, emptyList(), last.handler)
+
+            lastCommand.set(null)
+
+            return true
+        }
+
+        val command = getCommand(input.input, containers, lastCommand, ownerProvider(input.input))
+
+        if (command != null) {
+            commandsIterator.from(iter)
+            lastCommand.set(command)
+            return true
+        }
+
+        if (required)
+            throw CommandNotFoundException(input.input, containers.toList(),
+                    this.commandManager,
+                    "Command '${input.input}' not found${if (last != null) " neither in parent command ${last.toStr()}" +
+                            " nor in command manager" else " in command manager"}.")
+        else
+            return false
+    }
+
+    private fun parseArguments(commandsIterator: SourcedCharIterator,
+                               command: Command): List<ArgumentContainer<*>> {
+        if (command.arguments.isEmpty()) {
+            return emptyList()
+        }
+
+        val currentArgs = command.arguments.toMutableList()
+        val args = mutableListOf<ArgumentContainer<*>>()
+        val required = command.arguments.count { !it.isOptional }
+        var currentRequired = 0
+        val nextArgument = {
+            val i = currentArgs.iterator()
+            val next = i.next()
+            i.remove()
+            next
+        }
+
+        while (commandsIterator.hasNext() && currentArgs.isNotEmpty()) {
+            val peek = commandsIterator.peekSingle()
+            val (input, iter) = peek
+
+            val named = input.input.getArgumentNameOrNull()?.let { name ->
+                commandsIterator.from(iter)
+                (currentArgs.firstOrNull { it.nameOrId == name }
+                        ?: failANFE(command, currentArgs, args, name)).also {
+                    currentArgs.remove(it)
+                }
+            }
+
+            val argument = named ?: nextArgument()
+
+            val parse =
+                    if (argument.isMultiple)
+                        parseVarargsArgument(commandsIterator, command, argument, args, named != null)
+                    else
+                        parseSingleArgument(commandsIterator, command, argument, args, named != null)
+
+            if (parse && !argument.isOptional)
+                ++currentRequired
+        }
+
+        if (currentRequired != required) {
+            val provided = args.map { it.argument }
+            val missing = command.arguments.filterNot { provided.any { v -> it == v } }
+            failAME(command, args, missing, provided)
+
+        }
+
+        return args
+    }
+
+    private fun parseSingleArgument(commandsIterator: SourcedCharIterator,
+                                    command: Command,
+                                    argument: Argument<*>,
+                                    args: MutableList<ArgumentContainer<*>>,
+                                    isNamed: Boolean): Boolean {
+        val start = commandsIterator.sourceIndex
+        val hasNext = commandsIterator.hasNext()
+        val isBoolean = argument.isBoolean(args)
+        val peek by lazy(LazyThreadSafetyMode.NONE) {
+            commandsIterator.peekSingle()
+        }
+        val filled = (!hasNext || peek.first.input.isArgumentName()) && isBoolean
+
+        val next = when {
+            filled -> SingleInput("true", commandsIterator.sourceString, 0, 0)
+            hasNext -> peek.first
+            else -> failNIFAE(command, argument, args)
+        }
+
+        val validation = argument.validate(args, next)
+
+        if (validation.isValid) {
+            if (!filled) commandsIterator.from(peek.second)
+            @Suppress("UNCHECKED_CAST")
+            args += ArgumentContainer(argument,
+                    next,
+                    argument.transformer(args, argument, next),
+                    argument.handler as ArgumentHandler<Any?>?
+            )
+            return true
+        } else if (isNamed || !argument.isOptional)
+            failIIFAE(command, next, argument, args, validation)
+
+        return false
+    }
+
+    private fun Argument<*>.validate(args: List<ArgumentContainer<*>>, input: Input): Validation =
+            this.validator(args, this, input)
+
+    private fun parseVarargsArgument(commandsIterator: SourcedCharIterator,
+                                     command: Command,
+                                     argument: Argument<*>,
+                                     args: MutableList<ArgumentContainer<*>>,
+                                     isNamed: Boolean): Boolean {
+
+        if (!commandsIterator.hasNext()) {
+            if (argument.isOptional) {
+                val input = EmptyInput(commandsIterator.sourceString)
+                @Suppress("UNCHECKED_CAST")
+                args += ArgumentContainer(argument,
+                        input,
+                        argument.transformer(args, argument, input),
+                        argument.handler as ArgumentHandler<Any?>?
+                )
+            } else {
+                failNIFAE(command, argument, args)
+            }
+        }
+
+        val (next, _) = commandsIterator.peekSingle()
+
+        return when {
+            next.input.startsWith(MAP_OPEN) -> parseMapArgument(commandsIterator, command, argument, args, isNamed)
+            next.input.startsWith(LIST_OPEN) -> parseListArgument(commandsIterator, command, argument, args, isNamed)
+            else -> parseListArgument(commandsIterator, command, argument, args, isNamed)
+        }
+    }
+
+    private fun parseListArgument(commandsIterator: SourcedCharIterator,
+                                  command: Command,
+                                  argument: Argument<*>,
+                                  args: MutableList<ArgumentContainer<*>>,
+                                  isNamed: Boolean): Boolean {
+        if (commandsIterator.hasNext() && commandsIterator.peekSingle().first.input.startsWith(LIST_OPEN)) {
+
+            val copy = commandsIterator.copy()
+
+            val input = commandsIterator.parseListInput()
+
+            val validation = argument.validate(args, input)
+            if (validation.isInvalid) {
+                if (!argument.isOptional || isNamed)
+                    failIIFAE(command,
+                            input,
+                            argument,
+                            args,
+                            validation)
+                else {
+                    // I know, this may slow down the parser system a bit
+                    // Because the list may be parsed twice
+                    // But I think that it is not a problem (at least for now)
+                    // This is required because as this is a parsing algorithm, and values can be peeked
+                    // before it is parsed, failing to parse at some point, requires the
+                    // pointer to go back to last valid state, otherwise the input will be ignored
+                    // this also allows list to be parsed to other value for other arguments, example,
+                    // for single input arguments, the first fragment (or the entire map) can be parsed
+                    // as a single input string instead of a input list.
+                    commandsIterator.from(copy) // Restore old state
+                    return false
+                }
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            args += ArgumentContainer(argument,
+                    input,
+                    argument.transformer(args, argument, input),
+                    argument.handler as ArgumentHandler<Any?>?
+            )
+
+            return true
+        }
+
+        val inputs = mutableListOf<Input>()
+        val start = commandsIterator.sourceIndex
+
+        while (commandsIterator.hasNext()) {
+            val (peekInput, iter) = commandsIterator.peekSingle()
+
+            if (peekInput.input.isArgumentName())
+                break
+
+            val validation = argument.validate(args, peekInput)
+
+            if (validation.isValid) {
+                commandsIterator.from(iter)
+                inputs += peekInput
+            } else {
+                break
+            }
+        }
+
+        if (inputs.isEmpty()) {
+            if (!argument.isOptional || isNamed) {
+                val (peekInput, iter) = commandsIterator.peekSingle()
+                failIIFAE(command,
+                        peekInput,
+                        argument,
+                        args,
+                        validation(validatedElement(peekInput, ListFormatCheckValidator,
+                                ValidationTexts.expectedInputList(), listOf(ListInputType))))
+            } else {
+                return false
+            }
+        }
+
+        val end =
+                if (inputs.isEmpty()) start
+                else inputs.last().end
+
+        val input = ListInput(inputs, commandsIterator.sourceString, start, end)
+
+        val validation = argument.validate(args, input)
+
+        if (validation.isInvalid) {
+            if (!argument.isOptional || isNamed)
+                failIIFAE(command,
+                        input,
+                        argument,
+                        args,
+                        validation)
+            else
+                return false
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        args += ArgumentContainer(argument,
+                input,
+                argument.transformer(args, argument, input),
+                argument.handler as ArgumentHandler<Any?>?
+        )
+
+        return true
+    }
+
+    private fun parseMapArgument(commandsIterator: SourcedCharIterator,
+                                 command: Command,
+                                 argument: Argument<*>,
+                                 args: MutableList<ArgumentContainer<*>>,
+                                 isNamed: Boolean): Boolean {
+        val peek = commandsIterator.peekSingle()
+        val (peekInput, _) = peek
+        val copy = commandsIterator.copy()
+
+        if (!peekInput.input.startsWith(MAP_OPEN)) {
+            throw failIIFAE(command,
+                    peekInput,
+                    argument,
+                    args,
+                    validation(validatedElement(peekInput, MapFormatCheckValidator,
+                            ValidationTexts.expectedInputMap(), listOf(MapInputType))))
+        }
+
+        val input = commandsIterator.parseMapInput()
+
+        val validation = argument.validate(args, input)
+        if (validation.isInvalid) {
+            if (!argument.isOptional || isNamed)
+                failIIFAE(command,
+                        input,
+                        argument,
+                        args,
+                        validation)
+            else {
+                // I know, this may slow down the parser system a bit
+                // Because the map may be parsed twice
+                // But I think that it is not a problem (at least for now)
+                // This is required because as this is a parsing algorithm, and values can be peeked
+                // before it is parsed, failing to parse at some point, requires the
+                // pointer to go back to last valid state, otherwise the input will be ignored
+                // this also allows map to be parsed to other value for other arguments, example,
+                // for single input arguments, the first fragment (or the entire map) can be parsed
+                // as a single input string instead of a input map.
+                commandsIterator.from(copy) // Restore old state
+                return false
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        args += ArgumentContainer(argument,
+                input,
+                argument.transformer(args, argument, input),
+                argument.handler as ArgumentHandler<Any?>?
+        )
+
+        return true
+    }
+
+    private fun failAME(command: Command,
+                        args: List<ArgumentContainer<*>>,
+                        missing: List<Argument<*>>,
+                        provided: List<Argument<*>>): Nothing =
+            throw ArgumentsMissingException(command,
+                    args,
+                    this.commandManager,
+                    "Missing arguments ${missing.toStr()} of command ${command.toStr()}. Provided: ${provided.toStr()}.")
+
+    private fun failIIFAE(command: Command,
+                          input: Input,
+                          argument: Argument<*>,
+                          args: List<ArgumentContainer<*>>,
+                          validation: Validation): Nothing =
+            throw InvalidInputForArgumentException(command, args, input, argument, validation, this.commandManager,
+                    "Invalid input '$input' for argument '${argument.toStr()}' of command '${command.toStr()}'.")
+
+    private fun failNIFAE(command: Command,
+                          argument: Argument<*>,
+                          args: List<ArgumentContainer<*>>): Nothing =
+            throw NoInputForArgumentException(command, args, argument, this.commandManager,
+                    "No input provided for argument '${argument.toStr()}' of command '${command.toStr()}'.")
+
+    private fun failANFE(command: Command,
+                         currentArgs: List<Argument<*>>,
+                         args: List<ArgumentContainer<*>>,
+                         name: String): Nothing =
+            throw ArgumentNotFoundException(command, args, name, this.commandManager,
+                    "Cannot find argument with name '$name' in arguments '${currentArgs.toStr()}'" +
+                            " of command '${command.toStr()}'")
+
+    private fun String.escaped() = this.escape('\\')
+    private fun String.isArgumentName() = this.startsWith("--")
+    private fun String.getArgumentName() = this.substring(2) // "--".length
+    private fun String.getArgumentNameOrNull() = if (!this.isArgumentName()) null else this.substring(2) // "--".length
+
+    class CommandDeque : Deque<Command> by LinkedList()
+    class CommandHolder : IMutableBox<Command> by MutableBox()
+
 }

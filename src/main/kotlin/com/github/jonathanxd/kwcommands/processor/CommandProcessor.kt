@@ -68,28 +68,26 @@ interface CommandProcessor {
     /**
      * Process command string list.
      *
-     * @param stringList List of commands and its arguments. Each element of this string represents a
-     * command or a argument to pass to command.
+     * @param commandString Command line string, with commands and arguments of commands.
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun process(stringList: List<String>, owner: Any?): List<CommandContainer> =
-            this.parser.parse(stringList, owner)
+    fun process(commandString: String, owner: Any?): List<CommandContainer> =
+            this.parser.parse(commandString, owner)
 
     /**
      * Process command string list.
      *
      * This provides a way to specify owner based on command input string (`commandName`).
      *
-     * @param stringList List of commands and its arguments. Each element of this string represents a
-     * command or a argument to pass to command.
+     * @param commandString Command line string, with commands and arguments of commands.
      * @param ownerProvider Provider of the owner of the input command.
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun processWithOwnerFunction(stringList: List<String>,
+    fun processWithOwnerFunction(commandString: String,
                                  ownerProvider: (commandName: String) -> Any?): List<CommandContainer> =
-            this.parser.parseWithOwnerFunction(stringList, ownerProvider)
+            this.parser.parseWithOwnerFunction(commandString, ownerProvider)
 
     /**
      * Handle [commands] and returns [result list][CommandResult] of command executions.
@@ -109,16 +107,16 @@ interface CommandProcessor {
     /**
      * Calls [process] and then [handle] to handle result of [process].
      */
-    fun processAndHandle(stringList: List<String>,
+    fun processAndHandle(commandString: String,
                          owner: Any?,
                          informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            processAndHandleWithOwnerFunc(stringList, { owner }, informationManager)
+            processAndHandleWithOwnerFunc(commandString, { owner }, informationManager)
 
     /**
      * Calls [processWithOwnerFunction] and then [handle] to handle result of [process].
      */
-    fun processAndHandleWithOwnerFunc(stringList: List<String>,
+    fun processAndHandleWithOwnerFunc(commandString: String,
                                       ownerProvider: (commandName: String) -> Any?,
                                       informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            processWithOwnerFunction(stringList, ownerProvider).let { this.handle(it, informationManager) }
+            processWithOwnerFunction(commandString, ownerProvider).let { this.handle(it, informationManager) }
 }

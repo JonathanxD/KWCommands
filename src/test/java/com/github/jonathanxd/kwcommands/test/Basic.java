@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.test;
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.reflection.Invokables;
 import com.github.jonathanxd.iutils.reflection.Links;
+import com.github.jonathanxd.iutils.text.Text;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.Argument;
 import com.github.jonathanxd.kwcommands.command.Command;
@@ -66,7 +67,7 @@ public class Basic {
         CommandProcessor processor = Processors.createCommonProcessor();
         Command command = Command.builder()
                 .name(CommandName.name("play"))
-                .description("Play a music on instrument")
+                .description(Text.of("Play a music on instrument"))
                 .handler((commandContainer, informationManager, resultHandler) -> {
                     Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
                     if (!speakerInfo.isEmpty()) {
@@ -103,7 +104,7 @@ public class Basic {
                     return null;
                 }));
 
-        processor.handle(processor.process(Collections3.listOf("play", "A"), null), manager);
+        processor.handle(processor.process("play A", null), manager);
 
     }
 
@@ -122,7 +123,7 @@ public class Basic {
 
         informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
 
-        processor.handle(processor.process(Collections3.listOf("play", "a", "c"), this), informationManager);
+        processor.handle(processor.process("play a c", this), informationManager);
     }
 
 

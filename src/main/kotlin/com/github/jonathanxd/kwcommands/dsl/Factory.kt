@@ -27,7 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.dsl
 
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.asText
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.*
@@ -35,6 +37,7 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
@@ -48,14 +51,14 @@ import com.github.jonathanxd.kwcommands.util.*
 class BuildingArgument<T> {
     lateinit var id: Any
     var name: String = ""
-    var description: String = ""
+    var description: TextComponent = "".asText()
     var isOptional: Boolean = false
     var isMultiple: Boolean = false
     lateinit var type: TypeInfo<out T>
     var defaultValue: T? = null
     lateinit var validator: Validator
     lateinit var transformer: Transformer<T>
-    var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyMap() }
+    var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     var handler: ArgumentHandler<out T>? = null
@@ -68,7 +71,7 @@ class BuildingArgument<T> {
         this.name = f()
     }
 
-    inline fun description(f: () -> String) {
+    inline fun description(f: () -> TextComponent) {
         this.description = f()
     }
 
@@ -160,6 +163,16 @@ class BuildingRequirement<T, R>(var required: R) {
 
     inline fun tester(crossinline f: (requirement: Requirement<T, R>, information: Information<T>) -> Boolean) {
         this.tester = object : RequirementTester<T, R> {
+            override fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean =
+                    f(requirement, information)
+        }
+    }
+
+    inline fun tester(testerName: TextComponent,
+                      crossinline f: (requirement: Requirement<T, R>, information: Information<T>) -> Boolean) {
+        this.tester = object : RequirementTester<T, R> {
+            override val name: TextComponent
+                get() = testerName
             override fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean =
                     f(requirement, information)
         }
@@ -302,28 +315,22 @@ inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContai
 
 // Additionals
 
-val stringValidator: Validator = validator { _, _, _: String -> true }
-val stringTransformer: Transformer<String> = transformer { _, _, it: String -> it }
+val stringValidator: Validator = StringValidator
+val stringTransformer: Transformer<String> = StringTransformer
 
-val intValidator: Validator = validator { _, _, it: String -> it.toIntOrNull() != null }
-val intTransformer: Transformer<Int> = transformer { _, _, it: String -> it.toInt() }
+val intValidator: Validator = IntValidator
+val intTransformer: Transformer<Int> = IntTransformer
 
-val longValidator: Validator = validator { _, _, it: String -> it.toLongOrNull() != null }
-val longTransformer: Transformer<Long> = transformer { _, _, it: String -> it.toLong() }
+val longValidator: Validator = LongValidator
+val longTransformer: Transformer<Long> = LongTransformer
 
-val doubleValidator: Validator = validator { _, _, it: String -> it.toDoubleOrNull() != null }
-val doubleTransformer: Transformer<Double> = transformer { _, _, it: String -> it.toDouble() }
+val doubleValidator: Validator = DoubleValidator
+val doubleTransformer: Transformer<Double> = DoubleTransformer
 
-val booleanValidator: Validator = validator { _, _, it: String ->
-    it == "yes" || it == "no" || it == "true" || it == "false"
-}
-val booleanTransformer: Transformer<Boolean> = transformer { _, _, it: String ->
-    when (it) {
-        "yes", "true" -> true
-        else -> false
-    }
-}
-val booleanPossibilities = mapOf("" to listOf("yes", "true", "no", "false"))
+val booleanValidator: Validator = BooleanValidator
+val booleanTransformer: Transformer<Boolean> = BooleanTransformer
+
+val booleanPossibilities = BooleanPossibilities
 
 inline fun stringArg(f: BuildingArgument<String>.() -> Unit): Argument<String> = argument {
     validator = stringValidator
@@ -352,14 +359,14 @@ inline fun doubleArg(f: BuildingArgument<Double>.() -> Unit): Argument<Double> =
 inline fun booleanArg(f: BuildingArgument<Boolean>.() -> Unit): Argument<Boolean> = argument {
     validator = booleanValidator
     transformer = booleanTransformer
-    possibilities = possibilitiesFunc { _, _ -> booleanPossibilities.toMap() }
+    possibilities = booleanPossibilities
     f(this)
 }
 
 inline fun <reified T> enumArg(f: BuildingArgument<T>.() -> Unit): Argument<T> = argument {
     validator = EnumValidator(T::class.java)
     transformer = EnumTransformer(T::class.java)
-    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(T::class.java).toMap() }
+    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(T::class.java).toList() }
     f(this)
 }
 
@@ -369,7 +376,7 @@ inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argum
     this.type { TypeInfo.of(type) }
     validator = EnumValidator(type)
     transformer = EnumTransformer(type)
-    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(type).toMap() }
+    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(type).toList() }
     f(this)
 } as Argument<T>
 
@@ -383,7 +390,7 @@ inline fun <reified T> listArg(base: Argument<T>,
     type = TypeInfo.builderOf(List::class.java).of(base.type).buildGeneric()
     isOptional = base.isOptional
     isMultiple = true
-    validator = base.validator
+    validator = ListValidator(base.validator)
     transformer = ListTransformer(base.transformer)
     possibilities = base.possibilities
     requirements { +base.requirements }
@@ -485,7 +492,7 @@ class BuildingCommand {
     var parent: Command? = null
     var order = 0
     var name = BuildingCommandName()
-    var description: String = ""
+    var description: TextComponent = "".asText()
     var handler: Handler? = null
     val arguments = UList<Argument<*>>()
     val requirements = UList<Requirement<*, *>>()
@@ -496,7 +503,7 @@ class BuildingCommand {
         this.order = f()
     }
 
-    inline fun description(f: () -> String) {
+    inline fun description(f: () -> TextComponent) {
         this.description = f()
     }
 

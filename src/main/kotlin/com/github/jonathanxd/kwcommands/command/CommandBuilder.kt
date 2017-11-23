@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.command
 
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
@@ -40,7 +42,7 @@ class CommandBuilder {
     private var parent: Command? = null
     private var order = 0
     private lateinit var name: CommandName
-    private lateinit var description: String
+    private var description: TextComponent = Text.single("")
     private var handler: Handler? = null
     private val arguments = mutableListOf<Argument<*>>()
     private val requirements = mutableListOf<Requirement<*, *>>()
@@ -74,7 +76,7 @@ class CommandBuilder {
     /**
      * Sets [Command.description].
      */
-    fun description(description: String): CommandBuilder {
+    fun description(description: TextComponent): CommandBuilder {
         this.description = description
         return this
     }

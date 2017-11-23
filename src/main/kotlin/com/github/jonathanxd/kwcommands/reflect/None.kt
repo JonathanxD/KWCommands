@@ -33,18 +33,15 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
 
 
 sealed class None
 
 object NoneValidator : None(), Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean =
-            true
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+            valid()
 }
 
 object NoneTransformer : None(), Transformer<Any> {
@@ -53,8 +50,8 @@ object NoneTransformer : None(), Transformer<Any> {
 }
 
 object NonePossibilities : None(), PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): Map<String, List<String>> =
-            emptyMap()
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
+            emptyList()
 }
 
 object NoneHandler : None(), Handler {

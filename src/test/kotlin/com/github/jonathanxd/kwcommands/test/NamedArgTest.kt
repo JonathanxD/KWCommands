@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.kwcommands.dsl.argument
 import com.github.jonathanxd.kwcommands.dsl.booleanArg
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.dsl.stringArg
@@ -37,13 +36,14 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.util.KLocale
 import org.junit.Test
 
 class NamedArgTest {
 
     @Test
     fun test() {
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
         val handler = CommonHelpInfoHandler()
 
         val cmd = command {
@@ -72,7 +72,7 @@ class NamedArgTest {
         manager.registerCommand(cmd, this)
 
         try {
-            processor.processAndHandle(listOf("example", "--directory", "mydir", "--recursive"), this, infoManager)
+            processor.processAndHandle("example --directory mydir --recursive", this, infoManager)
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
         }

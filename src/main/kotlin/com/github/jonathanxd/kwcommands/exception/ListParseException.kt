@@ -29,10 +29,10 @@ package com.github.jonathanxd.kwcommands.exception
 
 import com.github.jonathanxd.kwcommands.util.SourcedIterator
 
-class MapParseException(message: String) : RuntimeException(message)
+class ListParseException(message: String) : RuntimeException(message)
 
-fun Iterator<Char>.mapParseException(message: String): MapParseException =
+fun Iterator<Char>.listParseException(message: String): ListParseException =
         if (this is SourcedIterator)
-            MapParseException("$message. At: ${this.sourceIndex} of '${this.sourceString}'.")
+            ListParseException("$message. At: ${this.sourceIndex} of '${this.sourceString}'.")
         else
-            MapParseException(message)
+            ListParseException(message)

@@ -27,12 +27,16 @@
  */
 package com.github.jonathanxd.kwcommands.printer
 
+import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.iutils.text.converter.TextLocalizer
 import com.github.jonathanxd.kwcommands.command.Command
 
 /**
  * Command printer
  */
 interface Printer {
+
+    val localizer: TextLocalizer
 
     /**
      * Prints command to buffer.
@@ -63,7 +67,12 @@ interface Printer {
     /**
      * Prints plain [text].
      */
-    fun printPlain(text: String)
+    fun printPlain(text: TextComponent)
+
+    /**
+     * Prints empty plain text
+     */
+    fun printEmpty()
 
     /**
      * Flush buffer texts to predefined output.

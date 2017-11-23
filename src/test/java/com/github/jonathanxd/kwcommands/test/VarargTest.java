@@ -44,20 +44,25 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
 
 public class VarargTest {
+    private int n = Integer.MIN_VALUE;
+    private List<String> names = null;
+    private int n2 = Integer.MIN_VALUE;
+
     @Test
     public void varargTest() {
         CommandManager commandManager = new CommandManagerImpl();
-        CommandProcessor processor = Processors.createCommonProcessorWithNewParser(commandManager);
+        CommandProcessor processor = Processors.createCommonProcessor(commandManager);
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
         InformationManager informationManager = new InformationManagerImpl();
 
         List<Command> commands = reflectionEnvironment.fromClass(VarargTest.class,
-                aClass -> new VarargTest(), this);
+                aClass -> this, this);
 
         commandManager.registerAll(commands, this);
 
@@ -66,13 +71,22 @@ public class VarargTest {
 
         try {
             processor.processAndHandle(
-                    Collections3.listOf("varargcmd", "1", "hey", "man", "--n2", "1"),
+                    "varargcmd 1 hey man --n2 5",
                     this,
                     informationManager);
+
+            Assert.assertEquals(1, this.n);
+            Assert.assertEquals(Collections3.listOf("hey", "man"), this.names);
+            Assert.assertEquals(5, this.n2);
+
             processor.processAndHandle(
-                    Collections3.listOf("varargcmd", "1", "--names", "hey", "man", "--n2", "1"),
+                    "varargcmd 1 --names hey kw --n2 -4",
                     this,
                     informationManager);
+
+            Assert.assertEquals(1, this.n);
+            Assert.assertEquals(Collections3.listOf("hey", "kw"), this.names);
+            Assert.assertEquals(-4, this.n2);
         } catch (CommandException e) {
             handler.handleCommandException(e, sysOutWHF);
         }
@@ -82,9 +96,9 @@ public class VarargTest {
     public void varargcmd(@Arg("n") int n,
                           @Arg(value = "names", multiple = true) List<String> names,
                           @Arg("n2") int n2) {
-        System.out.println("Number: " + n);
-        System.out.println("Names: " + names);
-        System.out.println("Number 2: " + n2);
+        this.n = n;
+        this.names = names;
+        this.n2 = n2;
     }
 
 }

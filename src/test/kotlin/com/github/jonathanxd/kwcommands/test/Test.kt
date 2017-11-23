@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.jwiutils.kt.asText
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
@@ -125,14 +127,14 @@ class CommandTest {
         val command = Command(
                 parent = null,
                 name = CommandName.StringName("open"),
-                description = "",
+                description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
                         Argument(id = "name",
                                 name = "",
-                                description = "",
+                                description = "".asText(),
                                 isOptional = false,
                                 isMultiple = false,
                                 defaultValue = null,
@@ -140,7 +142,7 @@ class CommandTest {
                                 transformer = transformer { _, _, it: String -> it },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyMap() })
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
 
                 ),
                 requiredInfo = emptySet(),
@@ -149,7 +151,7 @@ class CommandTest {
         command.addSubCommand(Command(
                 parent = command,
                 name = CommandName.StringName("door"),
-                description = "",
+                description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
@@ -161,14 +163,14 @@ class CommandTest {
         command.addSubCommand(Command(
                 parent = command,
                 name = CommandName.StringName("window"),
-                description = "",
+                description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
                         Argument(id = "name",
                                 name = "",
-                                description = "",
+                                description = "".asText(),
                                 isOptional = false,
                                 defaultValue = null,
                                 isMultiple = false,
@@ -176,16 +178,16 @@ class CommandTest {
                                 transformer = transformer { _, _, it: String -> it },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyMap() }),
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() }),
                         Argument(id = "amount",
                                 name = "",
-                                description = "",
+                                description = "".asText(),
                                 isOptional = true,
                                 defaultValue = null,
                                 isMultiple = false,
                                 validator = validator { _, _, it: String ->  it.toIntOrNull() != null },
                                 transformer = transformer { _, _, it: String -> it.toInt() },
-                                possibilities = possibilitiesFunc { _, _ -> emptyMap() },
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
@@ -193,7 +195,7 @@ class CommandTest {
                                 }),
                         Argument(id = "double",
                                 name = "",
-                                description = "",
+                                description = "".asText(),
                                 isOptional = false,
                                 defaultValue = null,
                                 isMultiple = false,
@@ -201,7 +203,7 @@ class CommandTest {
                                 transformer = transformer { _, _, it: String -> it.toDouble() },
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyMap() })
+                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList()
@@ -212,16 +214,16 @@ class CommandTest {
         processor.parser.commandManager.registerCommand(command, this)
 
 
-        processor.handle(processor.process(listOf("open", "house"), this))
+        processor.handle(processor.process("open house", this))
                 .assertAll(listOf("open(house)"))
 
-        processor.handle(processor.process(listOf("open", "door", "window", "of house", "5.0"), this))
+        processor.handle(processor.process("open door window \"of house\" 5.0", this))
                 .assertAll(listOf("open door", "open window(of house, 5.0)"))
 
-        processor.handle(processor.process(listOf("open", "door", "window", "of house", "1", "7.0"), this))
+        processor.handle(processor.process("open door window \"of house\" 1 7.0", this))
                 .assertAll(listOf("open door", 1, "open window(of house, 1, 7.0)"))
 
-        processor.handle(processor.process(listOf("open", "door", "&", "open", "window", "of house", "5", "19.0"), this))
+        processor.handle(processor.process("open door & open window \"of house\" 5 19.0", this))
                 .assertAll(listOf("open door", 5, "open window(of house, 5, 19.0)"))
     }
 

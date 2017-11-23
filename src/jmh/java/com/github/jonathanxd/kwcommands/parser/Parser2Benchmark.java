@@ -71,7 +71,7 @@ public class Parser2Benchmark {
     public void setup() {
         this.manager = new CommandManagerImpl();
         this.environment = new ReflectionEnvironment(this.manager);
-        this.parser = new CommandParserV2(this.manager);
+        this.parser = new CommandParserImpl(this.manager);
         this.manager.registerAll(
                 this.environment.fromClass(Parser2Benchmark.class, c -> new Parser2Benchmark(), this),
                 this

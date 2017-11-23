@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.information.Information
 
 /**
@@ -36,6 +38,9 @@ import com.github.jonathanxd.kwcommands.information.Information
  * @param R Required value.
  */
 interface RequirementTester<T, R> {
+
+    val name: TextComponent
+        get() = Text.of(this::class.java.simpleName)
 
     /**
      * Test [Requirement.subject] against the [Requirement.required] value.

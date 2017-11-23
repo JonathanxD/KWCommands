@@ -208,7 +208,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
             }
         }
 
-        return possibilitiesFunc { _, _ -> emptyMap() }
+        return possibilitiesFunc { _, _ -> emptyList() }
     }
 
     override fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?> {

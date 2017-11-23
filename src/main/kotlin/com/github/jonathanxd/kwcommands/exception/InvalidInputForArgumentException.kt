@@ -32,10 +32,12 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.Validation
 
 class InvalidInputForArgumentException(val command: Command,
                                        val parsedArgs: List<ArgumentContainer<*>>,
                                        val input: Input,
                                        val arg: Argument<*>,
+                                       val validation: Validation,
                                        manager: CommandManager,
                                        message: String) : CommandException(manager, message)

@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.reflect.util
 
 import com.github.jonathanxd.iutils.reflection.Reflection
+import com.github.jonathanxd.iutils.string.TextParser
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -61,6 +62,23 @@ fun <T : Any> KClass<T>.get(): T? =
             Reflection.getInstance(this.java)
                     ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.", e)
         }
+
+/**
+ * Gets singleton instance of a [KClass]
+ */
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> KClass<out T>.get(base: Class<T>, baseValue: () -> T?): T? =
+        if (None::class.java.isAssignableFrom(this.java)) null
+        else this.objectInstance ?: try {
+            val ctr = this.java.getDeclaredConstructor(base)
+            val value = baseValue()
+            if (value != null) {
+                ctr.newInstance(value)
+            } else null
+        } catch (e: Throwable) {
+            null
+        } ?: Reflection.getInstance(this.java)
+                ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.")
 
 /**
  * Resolve parent commands.
@@ -129,7 +147,7 @@ fun Cmd.toKCommand(manager: CommandManager,
     return Command(parent = parent ?: superCommand,
             order = order,
             name = CommandName.StringName(name),
-            description = description,
+            description = TextParser.parse(description),
             handler = handler,
             arguments = arguments,
             requirements = this.getRequirements(),

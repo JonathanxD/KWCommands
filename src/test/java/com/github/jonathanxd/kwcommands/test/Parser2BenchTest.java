@@ -31,7 +31,7 @@ import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.parser.CommandParser;
-import com.github.jonathanxd.kwcommands.parser.CommandParserV2;
+import com.github.jonathanxd.kwcommands.parser.CommandParserImpl;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
@@ -46,18 +46,18 @@ public class Parser2BenchTest {
     private CommandManager manager;
     private ReflectionEnvironment environment;
     private CommandParser parser;
-    private List<String> cmd;
+    private String cmd;
 
     @Before
     public void setup() {
         this.manager = new CommandManagerImpl();
         this.environment = new ReflectionEnvironment(this.manager);
-        this.parser = new CommandParserV2(this.manager);
+        this.parser = new CommandParserImpl(this.manager);
         this.manager.registerAll(
                 this.environment.fromClass(Parser2BenchTest.class, c -> new Parser2BenchTest(), this),
                 this
         );
-        this.cmd = Collections3.listOf("bench", "9", "a", "b", "c", "--types", "simple", "unknown");
+        this.cmd = "bench 9 a b c --types simple unknown";
     }
 
     @Test

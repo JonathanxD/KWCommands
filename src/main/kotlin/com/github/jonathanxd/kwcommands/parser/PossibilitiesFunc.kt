@@ -33,10 +33,8 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 @FunctionalInterface
 interface PossibilitiesFunc {
     /**
-     * Possibilities of arguments by name. For maps, names is generally `key` and `value`, for list, `element`,
-     * for single input, an empty string.
+     * Possibilities of arguments.
      */
     operator fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>): Map<String, List<String>>
+                        current: Argument<*>): List<Input>
 }
-

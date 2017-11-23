@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.*
@@ -53,7 +54,7 @@ inline fun <reified T> InformationId(tags: Array<String>): Information.Id<T> =
  */
 inline fun <reified T> Argument(id: Any,
                                 name: String,
-                                description: String,
+                                description: TextComponent,
                                 isOptional: Boolean,
                                 defaultValue: T?,
                                 isMultiple: Boolean,

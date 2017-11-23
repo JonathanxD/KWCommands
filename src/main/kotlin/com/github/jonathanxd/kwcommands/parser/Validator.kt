@@ -27,20 +27,21 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 
-@FunctionalInterface
+/**
+ * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
+ * are invalid.
+ */
 interface Validator {
+    val name: TextComponent
+        get() = Text.of(this::class.java.simpleName)
+
     operator fun invoke(parsed: List<ArgumentContainer<*>>,
                         current: Argument<*>,
-                        value: Input): Boolean
+                        value: Input): Validation
 }
 
-/**
- * Result of value validation. The [Int] value denotes the type parameter of value, and the [Boolean]
- * value if the parameter value is valid or not.
- */
-class Validation(val validation: Map<Int, Boolean>) {
-    val isValid: Boolean = validation.values.all { it }
-}

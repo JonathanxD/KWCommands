@@ -1,0 +1,67 @@
+error.argument_not_found=Nenhum argument encontrado com o nome '$input' para o comando '$command_name'
+error.command_arguments_missing=Alguns arguments do comando '$command_name' não estão presentes:
+error.command_provided_arguments=Fornecido
+error.command_missing_arguments=Faltando
+error.command_not_found=Comando com o nome '$command_name' não foi encontrado.
+error.invalid_input_value=Entrada '$input' invalida para o argumento '$argument_name' do comando '$command_name'.
+error.invalid_inputs=Entradas invalidas
+error.no_input_for_argument=Nenhuma entrada fornecida para o argumento nomeado '$argument_name' do comando '$command_name'
+error.unsatisfied_requirement=Requisitos unsatisfeitos para '$result_string'
+error.missing_information=Informações faltando para '$result_string'
+
+info.parsed_arguments=Argumentos analisados com sucesso
+info.available_commands=Comandos disponiveis
+
+info.message=Mensagem
+info.range=[$range_start..$range_end]
+info.input=Entrada
+info.input_type=Tipo do valor inserido
+info.valid_input_types=Tipos de valores validos
+info.validator=Validador
+info.processed_commands=Comandos processados
+info.argument_type=Tipo do argumento
+info.argument_possibilities=Possibilidades para o argumento
+info.command_specification=Especificação do comando
+info.argument=Argumento
+info.command=Comando
+info.req.continuation=Do $container_string
+info.information_identification=Identificação da informação
+info.type=Tipo
+info.tags=Rótulos
+info.present=Presente
+info.required=Obrigatorio
+info.tester=Testador
+info.reason=Motivo
+info.include_provided=Incluir fornecido
+info.key=Chave
+info.value=Valor
+info.true=Sim
+info.false=Não
+info.requirements=Requisitos
+
+help.header.1=-------- Comandos --------
+help.header.2=
+help.header.3=--------  Rótulos --------
+help.header.4= [ ]  = Obrigatório
+help.header.5= < >  = Opcional
+help.header.6=  ?   = Opcional
+help.header.7=  ->  = Comando principal
+help.header.8= -'>  = Sub comando
+help.header.9=  -   = Descrição
+help.header.10= - x: = Descrição do argumento x
+help.header.11=  *   = Requisito de informação
+help.header.12=  **  = Requisito de valor
+help.header.13=--------  Rótulos --------
+
+help.footer.1=
+help.footer.2=-------- Comandos --------
+
+help.argument_description=Descrição do argumento
+help.requires_value=** Requer valor '$required_value' do sujeito '$subject_type' (rótulos: $subject_tags) (Testador: $tester)
+help.requires_info=* Requer a informação '$information_id' do tipo '$information_type'.
+help.no_commands=Sem comandos
+
+type.single=Valor unico
+type.list=Lista de valores
+type.map=Mapa de valores
+type.empty=Vazio

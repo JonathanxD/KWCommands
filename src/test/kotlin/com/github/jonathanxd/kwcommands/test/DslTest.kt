@@ -27,22 +27,23 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.jwiutils.kt.textOf
 import com.github.jonathanxd.kwcommands.dsl.*
 import com.github.jonathanxd.kwcommands.exception.CommandException
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.util.KLocale
 import org.junit.Assert
 import org.junit.Test
 
 class DslTest {
     @Test
     fun dslTest() {
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
         val handler = CommonHelpInfoHandler()
 
         val helloCommand = command {
@@ -65,18 +66,20 @@ class DslTest {
             requirements {
                 +requirement<Group, Group>(Group.ADMIN) {
                     subject(informationId { tags { +"group" } })
-                    tester { (required1), (_, value) -> value == required1 }
+                    tester(textOf("GroupTester")) { (required1), (_, value) ->
+                        value == required1
+                    }
                 }
             }
             arguments {
                 +stringArg {
                     id { "userId" }
-                    description { "Identification of user to promote" }
+                    description { textOf("Identification of user to promote") }
                     transformer { _, _, it -> (it as SingleInput).input.toLowerCase() }
                 }
                 +listArg(enumArg<Group> {
                     id {"groupList"}
-                    description { "Groups to add user to" }
+                    description { textOf("Groups to add user to") }
                 })
             }
 
@@ -94,7 +97,7 @@ class DslTest {
         manager.registerCommand(runCommand, this)
 
         try {
-            processor.processAndHandle(listOf("hello", "KWCommands"), this, infoManager).let {
+            processor.processAndHandle("hello KWCommands", this, infoManager).let {
                 handler.handleResults(it, printer)
                 Assert.assertTrue(it.isEmpty())
             }
@@ -104,7 +107,7 @@ class DslTest {
         }
 
         try {
-            processor.processAndHandle(listOf("promote", "KWCommands", "ADMIN", "USER"), this, infoManager).let {
+            processor.processAndHandle("promote KWCommands ADMIN USER", this, infoManager).let {
                 handler.handleResults(it, printer)
                 Assert.assertTrue(it.isEmpty())
             }
@@ -114,7 +117,7 @@ class DslTest {
         }
 
         try {
-            processor.processAndHandle(listOf("promote", "KWCommands", "x"), this, infoManager).let {
+            processor.processAndHandle("promote KWCommands x", this, infoManager).let {
                 handler.handleResults(it, printer)
                 Assert.assertTrue(it.isEmpty())
             }

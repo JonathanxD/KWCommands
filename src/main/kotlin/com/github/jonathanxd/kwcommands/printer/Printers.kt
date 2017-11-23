@@ -27,9 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.printer
 
+import com.github.jonathanxd.kwcommands.util.KLocale
+
 object Printers {
 
-    val sysOut = CommonPrinter(System.out::println, true)
-    val sysOutWHF = CommonPrinter(System.out::println, false)
-
+    val sysOut = CommonPrinter(KLocale.localizer, System.out::println, true)
+    val sysOutWHF = CommonPrinter(KLocale.localizer, System.out::println, false)
 }

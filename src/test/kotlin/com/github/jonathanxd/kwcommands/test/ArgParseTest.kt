@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.jwiutils.kt.textOf
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.dsl.intArg
 import com.github.jonathanxd.kwcommands.dsl.stringArg
@@ -35,20 +36,20 @@ import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
-import com.github.jonathanxd.kwcommands.processor.KWParserOptions
 import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.util.KLocale
 import org.junit.Test
 
 class ArgParseTest {
 
     @Test
     fun test() {
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
         val handler = CommonHelpInfoHandler()
 
         val cmd = command {
             stringName { "example" }
-            description { "Test command" }
+            description { textOf("Test command") }
             arguments {
                 +intArg {
                     id { "value" }
@@ -57,7 +58,7 @@ class ArgParseTest {
                 +stringArg {
                     id { "name" }
                     name { "name" }
-                    description { "String argument" }
+                    description { textOf("String argument") }
                 }
             }
             handlerWithContext {
@@ -71,12 +72,11 @@ class ArgParseTest {
         val infoManager = InformationManagerImpl()
         val manager = CommandManagerImpl()
         val processor = Processors.createCommonProcessor(manager)
-        processor.parser.options[KWParserOptions.ORDER] = true
 
         manager.registerCommand(cmd, this)
 
         try {
-            processor.processAndHandle(listOf("example", "Hello", "9"), this, infoManager)
+            processor.processAndHandle("example Hello 9", this, infoManager)
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
         }

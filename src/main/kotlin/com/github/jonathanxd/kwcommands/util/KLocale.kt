@@ -27,52 +27,28 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-class PeekIterator(val elements: List<String>) : ListIterator<String> {
-    private var elementIndex: Int = 0
+import com.github.jonathanxd.iutils.localization.Locale
+import com.github.jonathanxd.iutils.localization.Locales
+import com.github.jonathanxd.iutils.localization.MapLocaleManager
+import com.github.jonathanxd.iutils.text.converter.NoColorTextLocalizer
+import com.github.jonathanxd.kwcommands.printer.Printers
+import java.nio.file.Paths
 
-    fun peekNext(): String = this.elements[this.elementIndex]
-    fun peekPrevious(): String = this.elements[this.elementIndex - 1]
-
-    override fun hasNext(): Boolean = this.elementIndex < this.elements.size
-
-    override fun hasPrevious(): Boolean = this.elementIndex - 1 >= 0
-
-    override fun next(): String = this.elements[this.elementIndex].also { this.elementIndex++ } // or elements[elementIndex++]
-
-    override fun nextIndex(): Int = this.elementIndex
-
-    override fun previous(): String = this.elements[--this.elementIndex]
-
-    override fun previousIndex(): Int = this.elementIndex - 1
-
-    fun copy(): PeekIterator {
-        val iter = PeekIterator(elements)
-        iter.elementIndex = this.elementIndex
-        return iter
+object KLocale {
+    val localeManager = MapLocaleManager()
+    val defaultLocale = Locales.create("en_us").also {
+        it.load()
+        localeManager.registerLocale(it)
+    }
+    val ptBr = Locales.create("pt_br").also {
+        it.load()
+        localeManager.registerLocale(it)
     }
 
-    fun from(peek: PeekIterator) {
-        this.elementIndex = peek.elementIndex
-    }
-}
-
-
-fun PeekIterator.charIter(): CharIterator {
-    var charIter: CharIterator? = null
-
-    val hasNextC = {
-        (charIter != null && (charIter!!.hasNext() || this.hasNext())) || (charIter == null && this.hasNext())
-    }
-    val nextC = {
-        if (charIter == null || !charIter!!.hasNext())
-            charIter = this.next().iterator()
-
-        charIter!!.next()
+    private fun Locale.load() {
+        this.load(Paths.get("kwcommands", "lang"), null, Printers::class.java.classLoader)
+        this.load(Paths.get("kwcommands", "lang"), "validation", Printers::class.java.classLoader)
     }
 
-    return object : CharIterator() {
-        override fun hasNext(): Boolean = hasNextC()
-
-        override fun nextChar(): Char = nextC()
-    }
+    val localizer = NoColorTextLocalizer(localeManager, defaultLocale)
 }

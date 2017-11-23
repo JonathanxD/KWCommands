@@ -62,14 +62,14 @@ class ReflectionTest {
         val env = ReflectionEnvironment(manager)
         env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
 
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
 
         printer.printAll(manager)
         printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this), information)// ?
+        val result = processor.handle(processor.process("download https://askdsal.0/x.file 10", this), information)// ?
 
         Assert.assertTrue(result.any { it is UnsatisfiedRequirementsResult })
     }
@@ -81,14 +81,14 @@ class ReflectionTest {
         val env = ReflectionEnvironment(manager)
         env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
 
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
 
         printer.printAll(manager)
         printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.handle(processor.process(listOf("download", "https://askdsal.0/x.file", "10"), this))// ?
+        val result = processor.handle(processor.process("download https://askdsal.0/x.file 10", this))// ?
 
         Assert.assertTrue(result.any {
             it is UnsatisfiedRequirementsResult
@@ -108,14 +108,14 @@ class ReflectionTest {
 
         env.registerCommands(env.fromClass(World::class, { it.newInstance() }, this), this)
 
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
 
         printer.printAll(manager)
         printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process(listOf("world", "setblock", "10", "10", "0", "stone"), this), information)
+        processor.handle(processor.process("world setblock 10 10 0 stone", this), information)
                 .assertAll(listOf("setted block STONE at 10, 10, 0"))
 
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
@@ -124,7 +124,7 @@ class ReflectionTest {
                     return ArgumentType(
                             validator {_, _, _: String -> true },
                             transformer {_, _, it: String -> SimplePlayer(it) },
-                            possibilitiesFunc { _, _ -> emptyMap() }, null).cast(type)
+                            possibilitiesFunc { _, _ -> emptyList() }, null).cast(type)
                 }
 
                 return null
@@ -132,7 +132,7 @@ class ReflectionTest {
 
         })
 
-        processor.handle(processor.process(listOf("world", "tpto", "Adm", "A,B,C"), this), information)
+        processor.handle(processor.process("world tpto Adm A,B,C", this), information)
                 .assertAll(listOf("teleported A, B, C to Adm!"))
     }
 
@@ -144,7 +144,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process(listOf("tp", "a", "c"), this))
+        processor.handle(processor.process("tp a c", this))
                 .assertAll(listOf("Teleported a to c!"))
     }
 
@@ -153,22 +153,20 @@ class ReflectionTest {
         val manager = ReflectCommandManagerImpl()
 
         manager.registerClassWithInner(InnerCommands::class.java, object : InstanceProvider {
-            override fun <T> get(type: Class<T>): T {
-                return type.newInstance()
-            }
+            override fun <T> get(type: Class<T>): T = type.newInstance()
         }, this)
 
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
 
         printer.printAll(manager)
         printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.handle(processor.process(listOf("a", "capitalize", "kwcommands"), this))
+        processor.handle(processor.process("a capitalize kwcommands", this))
                 .assertAll(listOf("Kwcommands"))
 
-        processor.handle(processor.process(listOf("a", "b", "kwcommands"), this))
+        processor.handle(processor.process("a b kwcommands", this))
                 .assertAll(listOf("KWCOMMANDS"))
     }
 
@@ -184,14 +182,14 @@ class ReflectionTest {
         val env = ReflectionEnvironment(manager)
         env.registerCommands(env.fromClass(TestOptInfo::class, { it.newInstance() }, this), this)
 
-        val printer = CommonPrinter(::println)
+        val printer = CommonPrinter(KLocale.localizer, ::println)
 
         printer.printAll(manager)
         printer.flush()
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.handle(processor.process(listOf("getName"), this), information)
+        val result = processor.handle(processor.process("getName", this), information)
 
         result.assertAll(listOf(simplePlayer.name))
     }

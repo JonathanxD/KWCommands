@@ -47,26 +47,24 @@ interface CommandParser {
     /**
      * Process command string list.
      *
-     * @param stringList List of commands and its arguments. Each element of this string represents a
-     * command or a argument to pass to command.
+     * @param commandString Command line string, with commands and arguments of commands.
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parse(stringList: List<String>, owner: Any?): List<CommandContainer> =
-            parseWithOwnerFunction(stringList, { owner })
+    fun parse(commandString: String, owner: Any?): List<CommandContainer> =
+            parseWithOwnerFunction(commandString, { owner })
 
     /**
      * Process command string list.
      *
      * This provides a way to specify owner based on command input string (`commandName`).
      *
-     * @param stringList List of commands and its arguments. Each element of this string represents a
-     * command or a argument to pass to command.
+     * @param commandString Command line string, with commands and arguments of commands.
      * @param ownerProvider Provider of the owner of the input command.
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parseWithOwnerFunction(stringList: List<String>,
+    fun parseWithOwnerFunction(commandString: String,
                                ownerProvider: OwnerProvider): List<CommandContainer>
 
 }

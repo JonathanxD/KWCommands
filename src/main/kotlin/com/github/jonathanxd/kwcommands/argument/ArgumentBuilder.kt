@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
@@ -43,14 +45,14 @@ class ArgumentBuilder<T> {
 
     private lateinit var id: Any
     private var name: String = ""
-    private var description: String = ""
+    private var description: TextComponent = Text.single("")
     private var isOptional: Boolean = false
     private lateinit var type: TypeInfo<out T>
     private var isMultiple: Boolean = false
     private var defaultValue: T? = null
     private lateinit var validator: Validator
     private lateinit var transformer: Transformer<T>
-    private var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyMap() }
+    private var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private var handler: ArgumentHandler<out T>? = null
@@ -74,7 +76,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.description]
      */
-    fun description(description: String): ArgumentBuilder<T> {
+    fun description(description: TextComponent): ArgumentBuilder<T> {
         this.description = description
         return this
     }

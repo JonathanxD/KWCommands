@@ -1,0 +1,69 @@
+error.argument_not_found=No argument found with name '$input' in command '$command_name'
+error.command_arguments_missing=Some arguments of command '$command_name' is missing:
+error.command_provided_arguments=Provided
+error.command_missing_arguments=Missing
+error.command_not_found=Command with name '$command_name' was not found.
+error.invalid_input_value=Invalid input value '$input' provided for argument '$argument_name' of command '$command_name'.
+error.invalid_inputs=Invalid inputs
+error.no_input_for_argument=No input value provided for named argument '$argument_name' of command '$command_name'
+error.unsatisfied_requirement=Unsatisfied requirements of '$result_string'
+error.missing_information=Missing information of '$result_string'
+
+info.parsed_arguments=Successfully parsed args
+info.available_commands=Available Commands
+info.available_commands=Available Commands
+
+info.message=Message
+info.range=[$range_start..$range_end]
+info.input=Input
+info.input_type=Type of inserted value
+info.valid_input_types=Valid input types
+info.validator=Validator
+info.processed_commands=Processed commands
+info.argument_type=Argument type
+info.argument_possibilities=Argument possibilities
+info.command_specification=Command specification
+info.argument=Argument
+info.command=Command
+info.req.continuation=Of $container_string
+info.information_identification=Information identification
+info.type=Type
+info.tags=Tags
+info.present=Present
+info.required=Required
+info.tester=Tester
+info.reason=Reason
+info.include_provided=Include provided
+info.key=Key
+info.value=Value
+info.true=True
+info.false=False
+info.requirements=Requirements
+
+
+help.header.1=-------- Commands --------
+help.header.2=
+help.header.3=--------   Label  --------
+help.header.4= [ ]  = Required
+help.header.5= < >  = Optional
+help.header.6=  ?   = Optional
+help.header.7=  ->  = Main command
+help.header.8= -'>  = Sub command
+help.header.9=  -   = Description
+help.header.10= - x: = Description of argument x
+help.header.11=  *   = Information Requirement
+help.header.12=  **  = Requirement
+help.header.13=--------   Label  --------
+
+help.footer.1=
+help.footer.2=-------- Commands --------
+
+help.argument_description=Argument description
+help.requires_value=** Requires value '$required_value' of subject '$subject_type' (tags: $subject_tags) (Tester: $tester)
+help.requires_info=* Requires information '$information_id' of type '$information_type'.
+help.no_commands=No commands
+
+type.single=Single value
+type.list=Value list
+type.map=Map of values
+type.empty=Empty

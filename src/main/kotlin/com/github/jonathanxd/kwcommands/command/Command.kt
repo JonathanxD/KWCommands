@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.command
 
+import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
@@ -49,7 +50,7 @@ import java.util.*
 data class Command(val parent: Command?,
                    val order: Int,
                    val name: CommandName,
-                   val description: String,
+                   val description: TextComponent,
                    val handler: Handler?,
                    val arguments: List<Argument<*>>,
                    val requirements: List<Requirement<*, *>>,

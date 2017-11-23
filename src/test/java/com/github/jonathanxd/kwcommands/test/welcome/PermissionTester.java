@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.test.welcome;
 
+import com.github.jonathanxd.iutils.text.Text;
+import com.github.jonathanxd.iutils.text.TextComponent;
 import com.github.jonathanxd.kwcommands.information.Information;
 import com.github.jonathanxd.kwcommands.requirement.Requirement;
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester;
@@ -36,6 +38,12 @@ import org.jetbrains.annotations.NotNull;
 public class PermissionTester implements RequirementTester<User, String> {
 
     public static final PermissionTester INSTANCE = new PermissionTester();
+
+    @NotNull
+    @Override
+    public TextComponent getName() {
+        return Text.of("RequirementTester");
+    }
 
     @Override
     public boolean test(@NotNull Requirement<User, String> requirement,

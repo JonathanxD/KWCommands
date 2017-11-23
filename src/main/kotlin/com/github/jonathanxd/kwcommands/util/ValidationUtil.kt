@@ -25,14 +25,19 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.ListInput
+import com.github.jonathanxd.kwcommands.parser.MapInput
+import com.github.jonathanxd.kwcommands.parser.Validation
 
-class NoArgumentForInputException(val command: Command,
-                                  val parsedArgs: List<ArgumentContainer<*>>,
-                                  val input: String,
-                                  manager: CommandManager,
-                                  message: String) : CommandException(manager, message)
+fun ListInput.validate(validatorFunc: (Input) -> Validation): Validation =
+        this.input.map { validatorFunc(it) }
+                .reduce { acc, validation -> acc + validation }
+
+
+fun MapInput.validate(validatorFunc: (Input) -> Validation): Validation =
+        this.input.entries
+                .map { (k, v) -> validatorFunc(k) + validatorFunc(v) }
+                .reduce { acc, validation -> acc + validation }

@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.reflect.env
 import com.github.jonathanxd.iutils.reflection.Invokables
 import com.github.jonathanxd.iutils.reflection.Link
 import com.github.jonathanxd.iutils.reflection.Links
+import com.github.jonathanxd.iutils.string.TextParser
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
@@ -37,8 +38,13 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.json.*
+import com.github.jonathanxd.kwcommands.json.JsonCommandParser
+import com.github.jonathanxd.kwcommands.json.getCommandJsonObj
+import com.github.jonathanxd.kwcommands.json.resolveJsonString
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Transformer
+import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
@@ -229,7 +235,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             }
 
             return listOf(cmd)
-        }catch (e: Exception) {
+        } catch (e: Exception) {
             throw IllegalArgumentException("Exception occurred while parsing json of obj '$jsonObj'", e)
         }
     }
@@ -438,7 +444,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
     @Suppress("UNCHECKED_CAST")
     fun createSetterHandler(instance: Any?, field: Field): Handler =
-        ReflectionHandler(Element(linkField(instance, field), emptyList()))
+            ReflectionHandler(Element(linkField(instance, field), emptyList()))
 
     fun linkField(instance: Any?, field: Field): Link<Any?> =
             if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
@@ -488,11 +494,26 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             val argumentType = this.getOrNull(type)
 
             val description = argumentAnnotation?.description ?: ""
-            val possibilities = argumentAnnotation?.possibilities?.get()
-                    ?: argumentType?.possibilities
-                    ?: possibilitiesFunc { _, _ -> emptyMap() }
-            val transformer = argumentAnnotation?.transformer?.get() ?: argumentType.require(type).transformer
-            val validator = argumentAnnotation?.validator?.get() ?: argumentType.require(type).validator
+
+            val defaultPoss = {
+                argumentType?.possibilities
+                        ?: possibilitiesFunc { _, _ -> emptyList() }
+            }
+
+            val possibilities = argumentAnnotation?.possibilities
+                    ?.get(PossibilitiesFunc::class.java, defaultPoss)
+                    ?: defaultPoss()
+
+            val defaultTransformer = { argumentType.require(type).transformer }
+            val transformer = argumentAnnotation?.transformer
+                    ?.get(Transformer::class.java, defaultTransformer)
+                    ?: defaultTransformer()
+
+            val defaultValidator = { argumentType.require(type).validator }
+            val validator = argumentAnnotation?.validator
+                    ?.get(Validator::class.java, defaultValidator)
+                    ?: defaultValidator()
+
             val defaultValue: Any? = when {
                 argumentType != null -> argumentType.defaultValue
                 typeIsOpt -> Optional.empty<Any>()
@@ -506,7 +527,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             karg = Argument(
                     id = id,
                     name = "",
-                    description = description,
+                    description = TextParser.parse(description),
                     isOptional = isOptional,
                     isMultiple = isMultiple,
                     possibilities = possibilities,
@@ -649,15 +670,25 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                     val argumentType = this.getOrNull(type)
 
-                    val possibilities = argumentAnnotation.possibilities.get()
-                            ?: argumentType?.possibilities
-                            ?: possibilitiesFunc { _, _ -> emptyMap() }
+                    val defaultPoss = {
+                        argumentType?.possibilities
+                                ?: possibilitiesFunc { _, _ -> emptyList() }
+                    }
 
-                    val transformer = argumentAnnotation.transformer.get()
-                            ?: argumentType.require(type).transformer
+                    val possibilities = argumentAnnotation.possibilities
+                            .get(PossibilitiesFunc::class.java, defaultPoss)
+                            ?: defaultPoss()
 
-                    val validator = argumentAnnotation.validator.get()
-                            ?: argumentType.require(type).validator
+                    val defaultTransformer = { argumentType.require(type).transformer }
+                    val transformer = argumentAnnotation.transformer
+                            .get(Transformer::class.java, defaultTransformer)
+                            ?: defaultTransformer()
+
+                    val defaultValidator = { argumentType.require(type).validator }
+                    val validator = argumentAnnotation.validator
+                            .get(Validator::class.java, defaultValidator)
+                            ?: defaultValidator()
+
 
                     val defaultValue = argumentType?.defaultValue
                     val requirements = argumentAnnotation.requirements.toSpecs()
@@ -665,7 +696,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val argument = Argument(
                             id = id,
                             name = "",
-                            description = description,
+                            description = TextParser.parse(description),
                             isOptional = isOptional,
                             isMultiple = isMultiple,
                             possibilities = possibilities,
@@ -790,7 +821,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                                     MapTransformer(keyType.transformer, valueType.transformer),
                                     MapPossibilitiesFunc(keyType.possibilities, valueType.possibilities),
                                     keyType.defaultValue?.let { k ->
-                                        valueType.defaultValue?.let {v ->
+                                        valueType.defaultValue?.let { v ->
                                             mapOf(k to v)
                                         }
                                     }
@@ -800,81 +831,49 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     }
 
                     if (typeClass.isEnum) {
-                        @Suppress("UNCHECKED_CAST")
-                        val constants: Array<Enum<*>> = typeClass.enumConstants as Array<Enum<*>>
-
-                        return ArgumentType(type, validator { _, _, name: String ->
-                            constants.any { it.name.toLowerCase() == name }
-                        }, transformer { _, _, name: String ->
-                            constants.first { it.name.toLowerCase() == name }
-                        }, possibilitiesFunc { _, _ ->
-                            mapOf("" to constants.map { it.name.toLowerCase() })
-                        }, null).cast(type)
+                        return ArgumentType(type, EnumValidator(typeClass),
+                                EnumTransformer(typeClass),
+                                EnumPossibilitiesFunc(typeClass),
+                                null).cast(type)
                     }
                 }
 
                 return when (type) {
                     TypeInfo.of(Short::class.javaObjectType),
                     TypeInfo.of(Short::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.toShortOrNull() != null },
-                            transformer { _, _, v: String -> v.toShort() },
-                            possibilitiesFunc { _, _ -> emptyMap() },
-                            0)
+                    -> ArgumentType(type, ShortValidator, ShortTransformer, ShortPossibilities, SHORT_DEFAULT_VALUE)
 
                     TypeInfo.of(Char::class.javaObjectType),
                     TypeInfo.of(Char::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.length == 1 },
-                            transformer { _, _, v: String -> v[0] },
-                            possibilitiesFunc { _, _ -> emptyMap() }, 0.toChar())
+                    -> ArgumentType(type, CharValidator, CharTransformer, CharPossibilities, CHAR_DEFAULT_VALUE)
 
                     TypeInfo.of(Byte::class.javaObjectType),
                     TypeInfo.of(Byte::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.toByteOrNull() != null },
-                            transformer { _, _, v: String -> v.toByte() },
-                            possibilitiesFunc { _, _ -> emptyMap() }, 0)
+                    -> ArgumentType(type, ByteValidator, ByteTransformer, BytePossibilities, BYTE_DEFAULT_VALUE)
 
                     TypeInfo.of(Int::class.javaObjectType),
                     TypeInfo.of(Int::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.toIntOrNull() != null },
-                            transformer { _, _, v: String -> v.toInt() },
-                            possibilitiesFunc { _, _ -> emptyMap() }, 0)
+                    -> ArgumentType(type, IntValidator, IntTransformer, IntPossibilities, INT_DEFAULT_VALUE)
 
                     TypeInfo.of(Float::class.javaObjectType),
                     TypeInfo.of(Float::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.toFloatOrNull() != null },
-                            transformer { _, _, v: String -> v.toFloat() },
-                            possibilitiesFunc { _, _ -> emptyMap() }, 0.0F)
+                    -> ArgumentType(type, FloatValidator, FloatTransformer, FloatPossibilities, FLOAT_DEFAULT_VALUE)
 
                     TypeInfo.of(Double::class.javaObjectType),
                     TypeInfo.of(Double::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.toDoubleOrNull() != null },
-                            transformer { _, _, v: String -> v.toDouble()},
-                            possibilitiesFunc { _, _ -> emptyMap() }, 0.0)
+                    -> ArgumentType(type, DoubleValidator, DoubleTransformer, DoublePossibilities, DOUBLE_DEFAULT_VALUE)
 
                     TypeInfo.of(Long::class.javaObjectType),
                     TypeInfo.of(Long::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it.toLongOrNull() != null },
-                            transformer { _, _, v: String -> v.toLong() },
-                            possibilitiesFunc { _, _ -> emptyMap() }, 0L)
+                    -> ArgumentType(type, LongValidator, LongTransformer, LongPossibilities, LONG_DEFAULT_VALUE)
 
                     TypeInfo.of(Boolean::class.javaObjectType),
                     TypeInfo.of(Boolean::class.javaPrimitiveType)
-                    -> ArgumentType(type,
-                            validator { _, _, it: String -> it == "true" || it == "false" },
-                            transformer { _, _, v: String -> v.toBoolean() },
-                            possibilitiesFunc { _, _ -> emptyMap() }, false)
+                    -> ArgumentType(type, BooleanValidator, BooleanTransformer, BooleanPossibilities,
+                            BOOLEAN_DEFAULT_VALUE)
 
-                    TypeInfo.of(String::class.java) -> ArgumentType(
-                            validator { _, _, _: String -> true },
-                            transformer { _, _, v: String -> v },
-                            possibilitiesFunc { _, _ -> emptyMap() }, "")
+                    TypeInfo.of(String::class.java)
+                    -> ArgumentType(StringValidator, StringTransformer, StringPossibilities, STRING_DEFAULT_VALUE)
                     else -> null
                 }?.cast(type)
 
@@ -890,7 +889,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     return ArgumentType(type,
                             ReflectListValidator(storage, component),
                             ReflectListTransform(storage, component),
-                            possibilitiesFunc { _, _ -> emptyMap() },
+                            possibilitiesFunc { _, _ -> emptyList() },
                             mutableListOf<Any?>()).cast(type)
 
                 return null

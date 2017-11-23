@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
@@ -35,7 +34,6 @@ import com.github.jonathanxd.kwcommands.information.Information;
 import com.github.jonathanxd.kwcommands.json.CmdJson;
 import com.github.jonathanxd.kwcommands.json.CmdJsonType;
 import com.github.jonathanxd.kwcommands.json.DefaultJsonParser;
-import com.github.jonathanxd.kwcommands.json.JsonCommandParser;
 import com.github.jonathanxd.kwcommands.json.MapTypeResolver;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
@@ -48,6 +46,7 @@ import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.KLocale;
 import com.github.jonathanxd.kwcommands.util.PrinterKt;
 
 import org.junit.Assert;
@@ -86,24 +85,28 @@ public class JsonAnnotationTest {
         InformationManagerImpl informationManager = new InformationManagerImpl();
 
         informationManager.<JsonTest.Player>registerInformation(new Information.Id<>(TypeInfo.of(JsonTest.Player.class),
-                new String[] { "player"}), s -> s.equals("perm.register"), "player requesting register.");
+                new String[]{"player"}), s -> s.equals("perm.register"), "player requesting register.");
 
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
-        this.handle(Collections3.listOf("register", pname, pemail), processor, informationManager);
+        this.handle("register " + pname + " " + pemail, processor, informationManager);
 
         Assert.assertEquals(pname, this.name);
         Assert.assertEquals(pemail, this.email);
         Assert.assertEquals(1, this.called);
 
-        this.handle(Collections3.listOf("register", "any", pname), processor, informationManager);
+        this.handle("register any " + pname, processor, informationManager);
 
         Assert.assertEquals(pname, this.name);
         Assert.assertEquals(null, this.email);
         Assert.assertEquals(2, this.called);
 
-        Printer printer = new CommonPrinter(s -> {System.out.println(s); return Unit.INSTANCE;}, true);
+        Printer printer = new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
+                s -> {
+                    System.out.println(s);
+                    return Unit.INSTANCE;
+                }, true);
 
         for (Command command : commands) {
             PrinterKt.printAll(printer, command);
@@ -113,20 +116,21 @@ public class JsonAnnotationTest {
 
     }
 
-    private List<CommandResult> handle(List<String> commands,
+    private List<CommandResult> handle(String commandString,
                                        CommandProcessor processor,
                                        InformationManager informationManager) {
 
         List<CommandResult> commandResults = processor.processAndHandle(
-                commands,
+                commandString,
                 this, informationManager);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
 
-        commonHelpInfoHandler.handleResults(commandResults, new CommonPrinter(s -> {
-            System.out.println(s);
-            return Unit.INSTANCE;
-        }, false));
+        commonHelpInfoHandler.handleResults(commandResults, new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
+                s -> {
+                    System.out.println(s);
+                    return Unit.INSTANCE;
+                }, false));
 
         return commandResults;
     }

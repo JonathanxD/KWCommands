@@ -31,16 +31,15 @@ import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.parser.*
 
 
-typealias ValidatorAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> Boolean
+typealias ValidatorAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> Validation
 typealias TransformerAlias<T> = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> T
-typealias PossibilitiesFuncAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>) -> Map<String, List<String>>
-
+typealias PossibilitiesFuncAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>) -> List<Input>
 
 inline fun validator(crossinline func: (parsed: List<ArgumentContainer<*>>,
                                         current: Argument<*>,
-                                        value: Input) -> Boolean) =
+                                        value: Input) -> Validation) =
         object : Validator {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean =
+            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
                     func(parsed, current, value)
         }
 
@@ -53,9 +52,9 @@ inline fun <T> transformer(crossinline func: (parsed: List<ArgumentContainer<*>>
         }
 
 inline fun possibilitiesFunc(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                                current: Argument<*>) -> Map<String, List<String>>) =
+                                                current: Argument<*>) -> List<Input>) =
         object : PossibilitiesFunc {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): Map<String, List<String>> =
+            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
                     func(parsed, current)
         }
 
@@ -65,8 +64,11 @@ inline fun validator(crossinline func: (parsed: List<ArgumentContainer<*>>,
                                         current: Argument<*>,
                                         value: String) -> Boolean) =
         object : Validator {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean =
-                    (value as? SingleInput)?.let { func(parsed, current, it.input) } ?: false
+            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+                    (value as? SingleInput)?.let {
+                        if (func(parsed, current, it.input)) valid()
+                        else invalid(value, this, null, listOf(SingleInputType))
+                    } ?: invalid(value, this, null, listOf(SingleInputType))
 
         }
 

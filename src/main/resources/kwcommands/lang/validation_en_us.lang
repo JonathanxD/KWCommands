@@ -1,0 +1,31 @@
+message.expected_char=Character was expected
+message.invalid_char=Invalid character
+
+message.expected_byte=Byte was expected
+message.invalid_byte=Invalid byte
+
+message.expected_short=Short was expected
+message.invalid_short=Invalid short
+
+message.expected_int=Int was expected
+message.invalid_int=Invalid int
+
+message.expected_long=Long was expected
+message.invalid_long=Invalid long
+
+message.expected_float=Float was expected
+message.invalid_float=Invalid float
+
+message.expected_double=Double was expected
+message.invalid_double=Invalid double
+
+message.expected_boolean=Boolean was expected
+message.invalid_boolean=Invalid boolean
+
+message.expected_string=String was expected
+
+message.expected_input_list=List of values was expected
+message.expected_input_map=Map of values was expected
+
+message.expected_enum=Enum constant was expected
+message.invalid_enum=Invalid enum constant

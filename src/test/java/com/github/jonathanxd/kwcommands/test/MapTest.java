@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
+import com.github.jonathanxd.iutils.map.MapUtils;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.exception.CommandException;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
@@ -43,53 +43,82 @@ import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.KLocale;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
 
 public class MapTest {
+
+    private int n = Integer.MIN_VALUE;
+    private Map<String, String> values = null;
+    private int n2 = Integer.MIN_VALUE;
+
     @Test
-    public void varargTest() {
+    public void mapTest() {
         CommandManager commandManager = new CommandManagerImpl();
-        CommandProcessor processor = Processors.createCommonProcessorWithNewParser(commandManager);
+        CommandProcessor processor = Processors.createCommonProcessor(commandManager);
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
         InformationManager informationManager = new InformationManagerImpl();
 
-        List<Command> commands = reflectionEnvironment.fromClass(MapTest.class,
-                aClass -> new MapTest(), this);
+        List<Command> commands = reflectionEnvironment.fromClass(MapTest.class, aClass -> this, this);
 
         commandManager.registerAll(commands, this);
 
-        HelpInfoHandler handler = new CommonHelpInfoHandler();
-        CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
+        KLocale.INSTANCE.getLocalizer().setDefaultLocale(KLocale.INSTANCE.getPtBr());
+        HelpInfoHandler localizedHandler = new CommonHelpInfoHandler();
+        CommonPrinter localizedSysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            /*processor.processAndHandle(
-                    Collections3.listOf("mapcmd", "1", "hey", "man", "--n2", "1"),
-                    this,
-                    informationManager);*/
             processor.processAndHandle(
-                    Collections3.listOf("mapcmd",
-                            "1",
-                            "--values", "[a=\"man, i l u = [\",", "uhu=s]",
-                            "--n2", "1"),
+                    "mapcmd 897 { project = KWCommands } --n2 -8",
                     this,
                     informationManager);
+
+            Assert.assertEquals(897, this.n);
+            Assert.assertEquals(MapUtils.mapOf("project", "KWCommands"), this.values);
+            Assert.assertEquals(-8, this.n2);
+
+            processor.processAndHandle(
+                    "mapcmd " +
+                            "1 " +
+                            "--values {a=\"man, i l u = {\", uhu=s} " +
+                            "--n2 2",
+                    this,
+                    informationManager);
+
+            Assert.assertEquals(1, this.n);
+            Assert.assertEquals(MapUtils.mapOf("a", "man, i l u = {", "uhu", "s"), this.values);
+            Assert.assertEquals(2, this.n2);
+
+            processor.processAndHandle(
+                    "mapcmd " +
+                            "1 " +
+                            "--values {a=\"man, i l u = {\", uhu=[s,b]}" +
+                            "--n2 2",
+                    this,
+                    informationManager);
+
+            Assert.assertEquals(1, this.n);
+            Assert.assertEquals(MapUtils.mapOf("a", "man, i l u = {", "uhu", "s"), this.values);
+            Assert.assertEquals(2, this.n2);
+
         } catch (CommandException e) {
-            handler.handleCommandException(e, sysOutWHF);
+            localizedHandler.handleCommandException(e, localizedSysOutWHF);
             e.printStackTrace();
         }
     }
 
     @Cmd(description = "Vararg test")
     public void mapcmd(@Arg("n") int n,
-                       @Arg(value = "values", multiple = true) Map<String, String> names,
+                       @Arg(value = "values", multiple = true) Map<String, String> values,
                        @Arg("n2") int n2) {
-        System.out.println("Number: " + n);
-        System.out.println("Names: " + names);
-        System.out.println("Number 2: " + n2);
+        this.n = n;
+        this.values = values;
+        this.n2 = n2;
     }
 
 }

@@ -27,8 +27,12 @@
  */
 package com.github.jonathanxd.kwcommands.printer
 
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.iutils.text.converter.TextLocalizer
+import com.github.jonathanxd.jwiutils.kt.asText
+import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -39,14 +43,15 @@ import com.github.jonathanxd.kwcommands.util.nameOrId
 /**
  * Common implementation of command printer backing to a print function
  */
-class CommonPrinter(val out: (String) -> Unit,
+class CommonPrinter(override val localizer: TextLocalizer,
+                    val out: (String) -> Unit,
                     val printHeaderAndFooter: Boolean = true) : Printer {
 
-    private val buffer = mutableListOf<String>()
+    private val buffer = mutableListOf<TextComponent>()
     private val commands = mutableListOf<Command>()
 
     init {
-        if(printHeaderAndFooter) Companion.printHeader(commands, buffer)
+        if (printHeaderAndFooter) Companion.printHeader(commands, buffer)
     }
 
     override fun printCommand(command: Command, level: Int) {
@@ -58,30 +63,34 @@ class CommonPrinter(val out: (String) -> Unit,
     }
 
     override fun printTo(command: Command, level: Int, out: (String) -> Unit) {
-        val buffer = mutableListOf<String>()
+        val buffer = mutableListOf<TextComponent>()
         val commands = mutableListOf<Command>()
 
-        if(printHeaderAndFooter) Companion.printHeader(commands, buffer)
+        if (printHeaderAndFooter) Companion.printHeader(commands, buffer)
 
         Companion.printTo(buffer, commands, command, level)
 
-        if(printHeaderAndFooter) Companion.printFooter(commands, buffer)
+        if (printHeaderAndFooter) Companion.printFooter(commands, buffer)
 
-        Companion.flushTo(out, commands, buffer)
+        Companion.flushTo(out, commands, buffer, this.localizer)
     }
 
-    override fun printPlain(text: String) {
+    override fun printEmpty() {
+        Companion.printEmpty(this.commands, this.buffer)
+    }
+
+    override fun printPlain(text: TextComponent) {
         Companion.printPlain(text, this.commands, this.buffer)
     }
 
     override fun flush() {
-        if(printHeaderAndFooter) Companion.printFooter(commands, buffer)
+        if (printHeaderAndFooter) Companion.printFooter(commands, buffer)
 
-        Companion.flushTo(this.out, this.commands, this.buffer)
+        Companion.flushTo(this.out, this.commands, this.buffer, this.localizer)
         this.commands.clear()
         this.buffer.clear()
 
-        if(printHeaderAndFooter) Companion.printHeader(commands, buffer)
+        if (printHeaderAndFooter) Companion.printHeader(commands, buffer)
     }
 
     companion object {
@@ -91,39 +100,44 @@ class CommonPrinter(val out: (String) -> Unit,
         }
 
         private val header = listOf(
-                "-------- Commands --------",
-                "",
-                "--------   Label  --------",
-                " [ ]  = Required",
-                " < >  = Optional",
-                "  ?   = Optional",
-                "  ->  = Main command",
-                " -'>  = Sub command",
-                "  -   = Description",
-                " - x: = Description of argument x",
-                "  *   = Information Requirement",
-                "  **  = Requirement",
-                "--------   Label  --------",
-                "")
+                Texts.header1(),
+                Texts.header2(),
+                Texts.header3(),
+                Texts.header4(),
+                Texts.header5(),
+                Texts.header6(),
+                Texts.header7(),
+                Texts.header8(),
+                Texts.header9(),
+                Texts.header10(),
+                Texts.header11(),
+                Texts.header12(),
+                Texts.header13())
 
         private val footer = listOf(
-                "",
-                "-------- Commands --------"
+                Texts.footer1(),
+                Texts.footer2()
         )
 
-        fun printPlain(text: String,
-                       commands: MutableList<Command>, buffer: MutableList<String>) {
+        fun printPlain(text: TextComponent,
+                       commands: MutableList<Command>,
+                       buffer: MutableList<TextComponent>) {
             commands += DummyCommand
             buffer += text
         }
 
-        fun printHeader(commands: MutableList<Command>, buffer: MutableList<String>) {
+        fun printEmpty(commands: MutableList<Command>, buffer: MutableList<TextComponent>) {
+            commands += DummyCommand
+            buffer += Text.single("")
+        }
+
+        fun printHeader(commands: MutableList<Command>, buffer: MutableList<TextComponent>) {
             header.forEach {
                 printPlain(it, commands, buffer)
             }
         }
 
-        fun printFooter(commands: MutableList<Command>, buffer: MutableList<String>) {
+        fun printFooter(commands: MutableList<Command>, buffer: MutableList<TextComponent>) {
             footer.forEach {
                 printPlain(it, commands, buffer)
             }
@@ -132,8 +146,8 @@ class CommonPrinter(val out: (String) -> Unit,
         /**
          * Prints [command] of inheritance [level][level] to [out]. See [Printer.printTo].
          */
-        fun printTo(command: Command, level: Int, out: (String) -> Unit) {
-            val buffer = mutableListOf<String>()
+        fun printTo(command: Command, level: Int, out: (String) -> Unit, localize: TextLocalizer) {
+            val buffer = mutableListOf<TextComponent>()
             val commands = mutableListOf<Command>()
 
             printHeader(commands, buffer)
@@ -142,10 +156,10 @@ class CommonPrinter(val out: (String) -> Unit,
 
             printFooter(commands, buffer)
 
-            this.flushTo(out, commands, buffer)
+            this.flushTo(out, commands, buffer, localize)
         }
 
-        fun printFromRoot(buffer: MutableList<String>,
+        fun printFromRoot(buffer: MutableList<TextComponent>,
                           commands: MutableList<Command>,
                           command: Command,
                           level: Int) {
@@ -165,45 +179,49 @@ class CommonPrinter(val out: (String) -> Unit,
             }
         }
 
-        fun printTo(buffer: MutableList<String>,
+        fun printTo(buffer: MutableList<TextComponent>,
                     commands: MutableList<Command>,
                     command: Command,
                     level: Int) {
-            val builder = StringBuilder()
+            val components = mutableListOf<TextComponent>()
 
-            if (level == 0)
-                builder.append("->")
+            components += if (level == 0)
+                Text.single("->")
             else
-                builder.append("-").let {
+                Text.single("-").let {
                     for (i in 0..level)
-                        it.append("-")
-                    it.append("'>")
+                        it.append("-".asText())
+                    it.append("'>".asText())
                 }
 
-            builder.append(" ")
-
-            builder.append(command.name)
+            components += Text.single(" ")
+            components += Text.single(command.name.toString())
 
             command.arguments.forEach {
-                builder.append(" ")
+                components += Text.single(" ")
 
-                builder.apply {
-                    this.append(if (it.isOptional) "<" else "[")
+                components.apply {
+                    this.add(Text.single(if (it.isOptional) "<" else "["))
 
-                    this.append(it.nameOrId)
+                    this.add(Text.single(it.nameOrId))
 
-                    this.append(": ").append(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)
+                    this.add(Text.single(": ")
+                            .append(Text.single(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)))
 
-                    this.append(if (it.isOptional) ">" else "]")
+                    this.add(Text.single(if (it.isOptional) ">" else "]"))
                 }
 
             }
 
-            buffer += builder.toString()
+            buffer.add(Text.of(components))
             commands += command
         }
 
-        fun flushTo(out: (String) -> Unit, commands: List<Command>, buffer: List<String>) {
+        fun flushTo(out: (String) -> Unit, commands: List<Command>,
+                    cBuffer: List<TextComponent>,
+                    localize: TextLocalizer) {
+            val buffer = cBuffer.map { localize.localize(it) }
+
             fun ((String) -> Unit).flushAndClean(builder: StringBuilder) =
                     this(builder.toString().also {
                         builder.setLength(0)
@@ -226,11 +244,11 @@ class CommonPrinter(val out: (String) -> Unit,
 
                     val builder = StringBuilder(buff)
 
-                    val cmdDescNotBlank = command.description.isNotBlank()
+                    val cmdDescNotBlank = command.description.isNotEmpty
 
                     if (cmdDescNotBlank) {
                         builder.append(' ', remaining)
-                        builder.append(" - ${command.description}")
+                        builder.append(" - ${localize.localize(command.description)}")
                         out.flushAndClean(builder)
                     } else {
                         out.flushAndClean(builder)
@@ -238,15 +256,15 @@ class CommonPrinter(val out: (String) -> Unit,
 
                     val to = buff.indexOf(">")
 
-                    if (command.arguments.any { it.description.isNotBlank() }) {
+                    if (command.arguments.any { it.description.isNotEmpty }) {
                         builder.append(' ', to + 1)
-                        builder.append("Arguments description:")
+                        builder.append(localize.localize(Texts.getArgumentDescriptionText().append(Text.single(":"))))
                         out.flushAndClean(builder)
 
                         command.arguments.forEach {
-                            if (it.description.isNotBlank()) {
+                            if (it.description.isNotEmpty) {
                                 builder.append(' ', to + 1)
-                                builder.append(" - ${it.nameOrId}: ${it.description}")
+                                builder.append(" - ${it.nameOrId}: ${localize.localize(it.description)}")
                                 out.flushAndClean(builder)
                             }
                         }
@@ -258,7 +276,7 @@ class CommonPrinter(val out: (String) -> Unit,
                     if (anyReq || anyInfoReq) {
                         builder.append(' ', to + 1)
 
-                        builder.append("Requirements:")
+                        builder.append(localize.localize(Texts.getRequirementsText().append(":".asText())))
 
                         out.flushAndClean(builder)
 
@@ -267,7 +285,16 @@ class CommonPrinter(val out: (String) -> Unit,
 
                             builder.append(' ', to + 3)
 
-                            builder.append("** Requires value '${it.required}' of subject '${it.subject.type}' (tags: ${it.subject.tags.joinToString(separator = " ")}) (Tester: ${it.tester.javaClass.simpleName})")
+                            val tags=
+                                    if (it.subject.tags.isNotEmpty()) it.subject.tags.joinToString(separator = " ")
+                                    else "[]"
+                            builder.append(localize.localize(Texts.getRequiresValueText(
+                                    it.required.toString(),
+                                    it.subject.type.toString(),
+                                    tags,
+                                    it.tester.name
+                            )))
+
                             out.flushAndClean(builder)
                         }
 
@@ -276,7 +303,10 @@ class CommonPrinter(val out: (String) -> Unit,
 
                             builder.append(' ', to + 3)
 
-                            builder.append("* Requires information '${it.id}' of type '${it.id.type}'.")
+                            builder.append(localize.localize(Texts.getRequiresInfoText(
+                                    it.id.toString(),
+                                    it.id.type.toString())
+                            ))
                             out.flushAndClean(builder)
                         }
 
@@ -284,7 +314,13 @@ class CommonPrinter(val out: (String) -> Unit,
 
                             if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
                                 builder.append(' ', to + 2)
-                                builder.append("Argument(${arg.id}):")
+
+                                builder.append(localize.localize(Text.of(
+                                        Texts.getArgumentText(),
+                                        "(",
+                                        arg.id.toString(),
+                                        "):"
+                                )))
                                 out.flushAndClean(builder)
                             }
 
@@ -292,14 +328,14 @@ class CommonPrinter(val out: (String) -> Unit,
                                 arg.requiredInfo.forEach(infoRequirementPrinter)
                             }
 
-                            if(arg.requirements.isNotEmpty()) {
+                            if (arg.requirements.isNotEmpty()) {
                                 arg.requirements.forEach(requirementPrinter)
                             }
                         }
 
                         if (command.requirements.isNotEmpty() || command.requiredInfo.isNotEmpty()) {
                             builder.append(' ', to + 2)
-                            builder.append("Command:")
+                            builder.append(localize.localize(Texts.getCommandText().append(":".asText())))
                             out.flushAndClean(builder)
                         }
 
@@ -322,7 +358,7 @@ class CommonPrinter(val out: (String) -> Unit,
                 if (commands.isNotEmpty()) {
                     buffer.forEach { out(it) }
                 } else {
-                    out("No commands")
+                    out(localize.localize(Texts.getNoCommandsText()))
                 }
             }
         }

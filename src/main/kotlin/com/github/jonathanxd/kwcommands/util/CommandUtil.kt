@@ -54,9 +54,6 @@ fun Command.toStr() = this.fullname
 fun Iterable<Argument<*>>.toStr() = this.joinToString { it.toStr() }
 fun Argument<*>.toStr() = this.nameOrId
 
-fun Argument<*>.isValidVarargs() =
-    this.isMultiple && MutableCollection::class.java.isAssignableFrom(this.type.typeClass)
-
 val Argument<*>.nameOrId get() = if (this.name.isEmpty()) this.id.toString() else this.name
 val Argument<*>.nameOrIdWithType
     get() =
@@ -69,4 +66,4 @@ fun Argument<*>.isBoolean(parsedArgs: List<ArgumentContainer<*>>): Boolean =
         this.type.canResolve()
                 && (this.type.typeClass == Boolean::class.javaObjectType
                 || this.type.typeClass == Boolean::class.javaPrimitiveType)
-                && this.validator(parsedArgs, this, SingleInput("true"))
+                && this.validator(parsedArgs, this, SingleInput("true", "true", 0, 4)).isValid
