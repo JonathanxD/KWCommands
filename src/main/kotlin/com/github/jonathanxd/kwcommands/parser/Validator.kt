@@ -46,9 +46,8 @@ interface Validator {
                         value: Input): Validation
 }
 
-abstract class SingleValidator<T>(val type: Class<T>,
-                                  val expectedText: TextComponent,
-                                  val invalidText: TextComponent) : Validator {
+abstract class SingleValidator(val expectedText: TextComponent,
+                               val invalidText: TextComponent) : Validator {
 
     abstract fun validateSingle(parsed: List<ArgumentContainer<*>>,
                                 current: Argument<*>,
