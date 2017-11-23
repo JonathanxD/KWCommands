@@ -31,6 +31,7 @@ import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import java.util.*
 
 /**
  * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
@@ -45,3 +46,27 @@ interface Validator {
                         value: Input): Validation
 }
 
+abstract class SingleValidator<T>(val type: Class<T>,
+                                  val expectedText: TextComponent,
+                                  val invalidText: TextComponent) : Validator {
+
+    abstract fun validateSingle(parsed: List<ArgumentContainer<*>>,
+                                current: Argument<*>,
+                                value: SingleInput): Boolean
+
+    override fun invoke(parsed: List<ArgumentContainer<*>>,
+                        current: Argument<*>,
+                        value: Input): Validation {
+        if (value !is SingleInput)
+            return invalid(value, this, expectedText, SINGLE_TYPE)
+
+        if (!this.validateSingle(parsed, current, value))
+            return invalid(value, this, invalidText, SINGLE_TYPE)
+
+        return valid()
+    }
+
+    companion object {
+        private val SINGLE_TYPE = Collections.unmodifiableList(listOf(SingleInputType))
+    }
+}
