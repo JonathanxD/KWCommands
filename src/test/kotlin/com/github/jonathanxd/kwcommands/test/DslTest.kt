@@ -97,9 +97,11 @@ class DslTest {
         manager.registerCommand(runCommand, this)
 
         try {
-            processor.processAndDispatch("hello KWCommands", this, infoManager).let {
-                handler.handleResults(it, printer)
-                Assert.assertTrue(it.isEmpty())
+            processor.parseAndDispatch("hello KWCommands", this, infoManager).let {
+                if (it.isRight) {
+                    handler.handleResults(it.right, printer)
+                    Assert.assertTrue(it.right.isEmpty())
+                }
             }
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
@@ -107,9 +109,11 @@ class DslTest {
         }
 
         try {
-            processor.processAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
-                handler.handleResults(it, printer)
-                Assert.assertTrue(it.isEmpty())
+            processor.parseAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
+                if (it.isRight) {
+                    handler.handleResults(it.right, printer)
+                    Assert.assertTrue(it.right.isEmpty())
+                }
             }
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
@@ -117,9 +121,11 @@ class DslTest {
         }
 
         try {
-            processor.processAndDispatch("promote KWCommands x", this, infoManager).let {
-                handler.handleResults(it, printer)
-                Assert.assertTrue(it.isEmpty())
+            processor.parseAndDispatch("promote KWCommands x", this, infoManager).let {
+                if (it.isRight) {
+                    handler.handleResults(it.right, printer)
+                    Assert.assertTrue(it.right.isEmpty())
+                }
             }
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)

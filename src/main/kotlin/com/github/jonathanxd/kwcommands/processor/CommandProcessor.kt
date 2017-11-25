@@ -27,8 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
+import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
+import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InformationManager
@@ -72,7 +74,7 @@ interface CommandProcessor {
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parse(commandString: String, owner: Any?): List<CommandContainer> =
+    fun parse(commandString: String, owner: Any?): Either<ParseFail, List<CommandContainer>> =
             this.parser.parse(commandString, owner)
 
     /**
@@ -86,7 +88,7 @@ interface CommandProcessor {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun parseWithOwnerFunction(commandString: String,
-                               ownerProvider: (commandName: String) -> Any?): List<CommandContainer> =
+                               ownerProvider: (commandName: String) -> Any?): Either<ParseFail, List<CommandContainer>> =
             this.parser.parseWithOwnerFunction(commandString, ownerProvider)
 
     /**
@@ -107,16 +109,18 @@ interface CommandProcessor {
     /**
      * Calls [parse] and then [dispatch] to dispatch result of [parse].
      */
-    fun processAndDispatch(commandString: String,
-                           owner: Any?,
-                           informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            processAndDispatchWithOwnerFunc(commandString, { owner }, informationManager)
+    fun parseAndDispatch(commandString: String,
+                         owner: Any?,
+                         informationManager: InformationManager = InformationManagerVoid)
+            : Either<ParseFail, List<CommandResult>> =
+            parseAndDispatchWithOwnerFunc(commandString, { owner }, informationManager)
 
     /**
      * Calls [parseWithOwnerFunction] and then [dispatch] to dispatch result of [parse].
      */
-    fun processAndDispatchWithOwnerFunc(commandString: String,
-                                        ownerProvider: (commandName: String) -> Any?,
-                                        informationManager: InformationManager = InformationManagerVoid): List<CommandResult> =
-            parseWithOwnerFunction(commandString, ownerProvider).let { this.dispatch(it, informationManager) }
+    fun parseAndDispatchWithOwnerFunc(commandString: String,
+                                      ownerProvider: (commandName: String) -> Any?,
+                                      informationManager: InformationManager = InformationManagerVoid)
+            : Either<ParseFail, List<CommandResult>> =
+            parseWithOwnerFunction(commandString, ownerProvider).mapRight { this.dispatch(it, informationManager) }
 }

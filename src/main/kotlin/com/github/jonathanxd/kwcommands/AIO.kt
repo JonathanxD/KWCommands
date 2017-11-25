@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands
 
+import com.github.jonathanxd.kwcommands.completion.CompletionImpl
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.parser.CommandParserImpl
@@ -42,4 +43,5 @@ class AIO {
     val dispatcher = CommandDispatcherImpl(commandManager)
     val processor = Processors.createCommonProcessor(commandManager, parser, dispatcher)
     val reflectionEnvironment = ReflectionEnvironment(commandManager)
+    val completion = CompletionImpl(parser)
 }

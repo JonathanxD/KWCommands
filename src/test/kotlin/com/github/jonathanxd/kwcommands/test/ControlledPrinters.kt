@@ -25,17 +25,24 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.printer.CommonPrinter
+import com.github.jonathanxd.kwcommands.printer.ControllableCommonPrinter
+import com.github.jonathanxd.kwcommands.util.KLocale
 
-class NoInputForArgumentException(val command: Command,
-                                  val parsedArgs: List<ArgumentContainer<*>>,
-                                  val arg: Argument<*>,
-                                  parsedCommands: List<CommandContainer>,
-                                  manager: CommandManager,
-                                  message: String) : CommandException(parsedCommands, manager, message)
+object ControlledPrinters {
+    val sysOut = ControllableCommonPrinter(
+            CommonPrinter(KLocale.localizer, System.out::println, true))
+
+    val sysOutWHF = ControllableCommonPrinter(
+            CommonPrinter(KLocale.localizer, System.out::println, false))
+
+    init {
+        val enable = System.getProperty("kwcommands.test.print", "false").toBoolean()
+
+        sysOut.enabled = enable
+        sysOutWHF.enabled = enable
+    }
+
+}

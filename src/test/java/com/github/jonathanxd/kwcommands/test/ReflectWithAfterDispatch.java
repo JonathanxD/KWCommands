@@ -52,7 +52,7 @@ public class ReflectWithAfterDispatch {
         Say say = new Say();
         Calc calc = new Calc();
 
-        AIO aio = KWCommands.INSTANCE.aio();
+        AIO aio = KWCommands.INSTANCE.createAio();
         ReflectionEnvironment reflectionEnvironment = aio.getReflectionEnvironment();
         reflectionEnvironment.registerCommands(
                 reflectionEnvironment.fromClass(Say.class, c -> say, this), this);
@@ -65,7 +65,7 @@ public class ReflectWithAfterDispatch {
                 .registerDispatchHandlers(dispatchHandlers);
 
 
-        aio.getProcessor().processAndDispatch("say hello calc plus 4 4", this,
+        aio.getProcessor().parseAndDispatch("say hello calc plus 4 4", this,
                 new InformationManagerImpl());
 
         Assert.assertEquals(2, handled);

@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.help
 
 import com.github.jonathanxd.kwcommands.exception.CommandException
+import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.printer.Printer
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 
@@ -36,5 +37,7 @@ interface HelpInfoHandler {
     fun handleCommandException(commandException: CommandException, printer: Printer)
     fun handleResults(commandResults: List<CommandResult>, printer: Printer)
     fun handleResult(commandResult: CommandResult, printer: Printer)
+
+    fun handleFail(parseFail: ParseFail, printer: Printer)
 
 }

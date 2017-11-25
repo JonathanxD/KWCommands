@@ -25,9 +25,14 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.processor
+package com.github.jonathanxd.kwcommands.fail
 
-/**
- * Options for the parser of processor
- */
-object KWParserOptions
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
+
+open class ParseFail(val parsedCommands: List<CommandContainer>,
+                     val manager: CommandManager,
+                     val iter: SourcedCharIterator)
+
+

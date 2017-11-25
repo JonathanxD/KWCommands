@@ -8,9 +8,9 @@ error.invalid_inputs=Invalid inputs
 error.no_input_for_argument=No input value provided for named argument '$argument_name' of command '$command_name'
 error.unsatisfied_requirement=Unsatisfied requirements of '$result_string'
 error.missing_information=Missing information of '$result_string'
+error.malformed_input=Malformed input for type '$input_type'
 
 info.parsed_arguments=Successfully parsed args
-info.available_commands=Available Commands
 info.available_commands=Available Commands
 
 info.message=Message
@@ -39,7 +39,10 @@ info.value=Value
 info.true=True
 info.false=False
 info.requirements=Requirements
-
+info.expected_tokens=Expected tokens
+info.found_token=Found token
+info.parsed_map=Successfully parsed map entries
+info.parsed_list=Successfully parsed list elements
 
 help.header.1=-------- Commands --------
 help.header.2=

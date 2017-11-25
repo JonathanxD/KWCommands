@@ -103,7 +103,7 @@ public class Basic {
                     return null;
                 }));
 
-        processor.dispatch(processor.parse("play A", null), manager);
+        processor.parseAndDispatch("play A", null, manager);
 
     }
 
@@ -122,7 +122,7 @@ public class Basic {
 
         informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
 
-        processor.dispatch(processor.parse("play a c", this), informationManager);
+        processor.parseAndDispatch("play a c", this, informationManager);
     }
 
 

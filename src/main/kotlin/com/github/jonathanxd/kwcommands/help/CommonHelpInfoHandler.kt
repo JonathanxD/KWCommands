@@ -36,18 +36,13 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.exception.*
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.ListInput
-import com.github.jonathanxd.kwcommands.parser.MapInput
-import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.kwcommands.fail.*
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.printer.Printer
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.MissingInformationResult
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
-import com.github.jonathanxd.kwcommands.util.level
-import com.github.jonathanxd.kwcommands.util.nameOrId
-import com.github.jonathanxd.kwcommands.util.point
-import com.github.jonathanxd.kwcommands.util.typeStr
+import com.github.jonathanxd.kwcommands.util.*
 
 class CommonHelpInfoHandler : HelpInfoHandler {
 
@@ -76,13 +71,13 @@ class CommonHelpInfoHandler : HelpInfoHandler {
             }
 
             is CommandNotFoundException -> {
-                printer.printPlain(Texts.getMissingCommandText(commandException.commandStr))
+                printer.printPlain(Texts.getMissingCommandText(commandException.commandStr.toInputString()))
 
-                if (commandException.commands.isNotEmpty()) {
+                if (commandException.parsedCommands.isNotEmpty()) {
                     printer.printPlain(Text.of(
                             Texts.getProcessedCommandsText(),
                             ": ",
-                            commandException.commands.joinToString(
+                            commandException.parsedCommands.joinToString(
                                     prefix = "'",
                                     separator = ",",
                                     postfix = "'") {
@@ -200,7 +195,242 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
     }
 
-    private fun printPossibilities(possibilities: List<Input>, printer: Printer) {
+    override fun handleFail(parseFail: ParseFail, printer: Printer) {
+        when (parseFail) {
+            is ArgumentsMissingFail -> {
+                val command = parseFail.command
+                val providedArgs = parseFail.providedArgs
+                val missing = command.arguments.filter { arg ->
+                    !arg.isOptional && providedArgs.none { it.argument == arg }
+                }
+
+                printer.printPlain(Texts.getArgumentCommandsMissingText(command.fullname))
+
+                if (providedArgs.isNotEmpty()) {
+                    val args = providedArgs.joinToString { it.argument.id.toString() }
+                    printer.printPlain(Text.of("  ", Texts.getProvidedArgumentsText(), ": ", args))
+                }
+
+                printer.printPlain(Text.of("  ", Texts.getMissingArgumentText(), ": ",
+                        missing.joinToString { it.id.toString() }))
+                printer.printEmpty()
+                printer.printPlain(Texts.getCommandSpecificationText())
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
+            is ArgumentNotFoundFail -> {
+                val command = parseFail.command
+                val parsed = parseFail.parsedArgs
+                val input = parseFail.input
+                printer.printPlain(Texts.getArgumentNotFoundText(input, command.fullname))
+
+                if (parsed.isNotEmpty()) {
+                    printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
+                            ": ",
+                            parsed.joinToString { it.argument.id.toString() }))
+                }
+
+                printer.printEmpty()
+                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(":")))
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
+            is CommandNotFoundFail -> {
+                printer.printPlain(Texts.getMissingCommandText(parseFail.commandStr.toInputString()))
+
+                if (parseFail.parsedCommands.isNotEmpty()) {
+                    printer.printPlain(Text.of(
+                            Texts.getProcessedCommandsText(),
+                            ": ",
+                            parseFail.parsedCommands.joinToString(
+                                    prefix = "'",
+                                    separator = ", ",
+                                    postfix = "'") {
+                                if (it.arguments.isNotEmpty())
+                                    "${it.command.fullname} ${it.arguments.filter { it.isDefined }.joinToString { it.input.toString() }}"
+                                else
+                                    it.command.fullname
+                            }))
+                }
+
+                printer.printPlain(Text.of(Texts.getAvailableCommandsText(), ":"))
+                parseFail.manager.createListWithAllCommands().forEach {
+                    printer.printCommand(it, it.level)
+                }
+                printer.flush()
+            }
+
+            is InvalidInputForArgumentFail -> {
+                val command = parseFail.command
+                val parsed = parseFail.parsedArgs
+                val argument = parseFail.arg
+                val input = parseFail.input
+                val validation = parseFail.validation
+
+                printer.printPlain(Texts.getInvalidInputValueText(input.toInputString(), argument.nameOrId, command.fullname))
+
+                if (parsed.isNotEmpty()) {
+                    printer.printPlain(Text.of("  ",
+                            Texts.getParsedArgumentsText(),
+                            ": ",
+                            parsed.joinToString { it.argument.id.toString() }))
+                }
+
+                if (validation.invalids.isNotEmpty()) {
+                    printer.printEmpty()
+                    printer.printPlain(Texts.getInvalidInputsText().and(Text.of(":")))
+                    for ((input, validator, msg, supported) in validation.invalids) {
+                        printer.printEmpty()
+
+                        val rangeText = Text.of(
+                                Texts.getInputRangeText(input.start.toString(), input.end.toString()), ": ")
+                        val text = printer.localizer.localize(rangeText)
+                        val range = (text.length + input.start)..(text.length + input.end)
+                        printer.printPlain(Text.of(
+                                " | ",
+                                text,
+                                input.source,
+                                " | ",
+                                Texts.getInputText(), ": ", input.toInputString()))
+                        printer.printPlain(Text.of(" | ", point(range)))
+
+                        printer.printPlain(Text.of(" | ", Texts.getInputTypeText(),
+                                ": ", input.type.getTypeString()))
+
+                        val supportedText = supported.map { it.getTypeString() }
+                                .reduce { acc, textComponent -> acc.append(", ").append(textComponent) }
+
+                        printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
+                                ": ", supportedText
+                        ))
+                        msg?.let { printer.printPlain(Text.of(" | ", Texts.getMessageText(), ": ", it)) }
+                        printer.printPlain(Text.of(" | ", Texts.getValidatorText(), ": ", validator.name))
+                    }
+                    printer.printEmpty()
+                }
+
+                printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
+
+                val poss = argument.possibilities.invoke(parsed, argument)
+
+                printPossibilities(poss, PrefixedPrinter(printer, "  - "))
+
+                printer.printEmpty()
+                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(": ")))
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
+            is NoInputForArgumentFail -> {
+                val command = parseFail.command
+                val parsed = parseFail.parsedArgs
+                val arg = parseFail.arg
+                printer.printPlain(Texts.getNoInputForArgumentText(arg.nameOrId, command.fullname))
+
+                if (parsed.isNotEmpty()) {
+                    printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
+                            ": ",
+                            parsed.joinToString { it.argument.id.toString() }))
+                }
+
+                printer.printEmpty()
+                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(":")))
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+
+            is CommandInputParseFail -> {
+                val command = parseFail.command
+                val parsed = parseFail.parsedArgs
+                val argument = parseFail.argument
+                val inputType = parseFail.inputType
+                val start = parseFail.iter.sourceIndex
+                var cfail = parseFail.fail
+
+                while (cfail is NestedInputParseFail) {
+                    cfail = cfail.fail2
+                }
+
+                val fail = cfail
+
+                printer.printPlain(
+                        Text.of(Texts.getMalformedInputText(inputType.getTypeString())))
+
+                if (parsed.isNotEmpty()) {
+                    printer.printPlain(Text.of("  ",
+                            Texts.getParsedArgumentsText(),
+                            ": ",
+                            parsed.joinToString { it.argument.id.toString() }))
+                }
+
+                printer.printEmpty()
+
+                val source = parseFail.iter.sourceString
+
+                val rangeText = Text.of(
+                        Texts.getInputRangeText(start.toString(), (source.length - 1).toString()), ": ")
+                val text = printer.localizer.localize(rangeText)
+                val range = (text.length + start)..(text.length + source.length - 1)
+                printer.printPlain(Text.of(" | ", text, source))
+                printer.printPlain(Text.of(" | ", point(range)))
+                printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
+                        ": ", inputType.getTypeString()
+                ))
+
+                when (fail) {
+                    is ListTokenExpectedFail, is MapTokenExpectedFail -> {
+                        val tokens = (fail as? ListTokenExpectedFail)?.tokens
+                                ?: (fail as MapTokenExpectedFail).tokens
+
+                        val foundToken = (fail as? ListTokenExpectedFail)?.foundToken
+                                ?: (fail as MapTokenExpectedFail).foundToken
+
+                        if (tokens.isNotEmpty()) {
+                            printer.printPlain(Text.of(" | ", Texts.getExpectedTokensText(), ": ",
+                                    tokens.joinToString { "'$it'" }, "."))
+                        }
+
+                        printer.printPlain(Text.of(" | ", Texts.getFoundTokenText(), ": ",
+                                "'", foundToken, "'."))
+
+                        when {
+                            fail is ListTokenExpectedFail && fail.list.input.isNotEmpty() -> {
+                                val list = fail.list.input.joinToString(prefix = "[", postfix = "]") {
+                                    it.getString()
+                                }
+                                printer.printPlain(Text.of(" | ", Texts.getParsedListText(), ": ", list, "."))
+                            }
+                            fail is MapTokenExpectedFail && fail.map.input.isNotEmpty() -> {
+                                val map = fail.map.input.entries.joinToString(prefix = "{", postfix = "}") {
+                                    "${it.key.getString()}=${it.value.getString()}"
+                                }
+
+                                printer.printPlain(Text.of(" | ", Texts.getParsedMapText(), ": ", map, "."))
+                            }
+                        }
+                    }
+                }
+
+                printer.printEmpty()
+
+                printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
+
+                val poss = argument.possibilities.invoke(parsed, argument)
+
+                printPossibilities(poss, PrefixedPrinter(printer, "  - "))
+
+                printer.printEmpty()
+                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(": ")))
+                printer.printFromRoot(command, 0)
+                printer.flush()
+            }
+        }
+    }
+
+
+    private fun printPossibilities(possibilities: List<Possibility>, printer: Printer) {
         if (possibilities.isNotEmpty()) {
             printer.printPlain(Texts.getArgumentPossibilitiesText().and(Text.of(": ")))
 
@@ -211,30 +441,31 @@ class CommonHelpInfoHandler : HelpInfoHandler {
         }
     }
 
-    private fun printPossibility(possibility: Input, printer: Printer) {
+    private fun printPossibility(possibility: Possibility, printer: Printer) {
         when (possibility) {
-            is SingleInput -> {
+            is SinglePossibility -> {
                 printer.printPlain(Text.of(possibility.input))
             }
-            is ListInput -> {
-                if (possibility.input.all { it is SingleInput }) {
-                    val list = possibility.input
-                            .map { it as SingleInput }
-                            .map(SingleInput::input)
-                            .stream().collect(Collectors3.split(10))
+            is ListPossibility -> {
+                if (possibility.possibilities.all { it is SinglePossibility }) {
+                    val list = possibility.possibilities
+                            .map { it as SinglePossibility }
+                            .map(SinglePossibility::input)
+                            .stream()
+                            .collect(Collectors3.split(10))
                     list.forEach {
                         it.forEach {
                             printer.printPlain(Text.of(it))
                         }
                     }
                 } else {
-                    possibility.input.forEach {
+                    possibility.possibilities.forEach {
                         printPossibility(it, printer)
                     }
                 }
             }
-            is MapInput -> {
-                possibility.input.forEach { k, v ->
+            is MapPossibility -> {
+                possibility.possibilities.forEach { (k, v) ->
                     printer.printPlain(Text.of(Texts.getKeyText(), ": "))
                     printPossibility(k, printer)
                     printer.printPlain(Text.of(Texts.getValueText(), ": "))
@@ -243,7 +474,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 }
             }
             else -> {
-                printer.printPlain(Text.of(possibility.toInputString()))
+                printer.printPlain(Text.of(possibility.getString()))
             }
         }
     }

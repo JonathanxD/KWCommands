@@ -29,8 +29,9 @@ package com.github.jonathanxd.kwcommands.exception
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.Input
 
-class CommandNotFoundException(val commandStr: String,
-                               val commands: List<CommandContainer>,
+class CommandNotFoundException(val commandStr: Input,
+                               parsedCommands: List<CommandContainer>,
                                manager: CommandManager,
-                               message: String) : CommandException(manager, message)
+                               message: String) : CommandException(parsedCommands, manager, message)

@@ -41,6 +41,9 @@ interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
     fun from(sourcedCharIterator: SourcedCharIterator)
     fun copy(): SourcedCharIterator
 
+    fun hasPrevious(): Boolean
+    fun previous(): Char
+
     /**
      * Runs [func] and restore iterator state to state before the invocation of [func]
      */
@@ -71,6 +74,10 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
     override fun hasNext(): Boolean = charIndex < input.length
 
     override fun nextChar(): Char = input[charIndex++]
+
+    override fun hasPrevious(): Boolean = charIndex > 0
+
+    override fun previous(): Char = input[--charIndex]
 
     override fun copy(): SourcedCharIterator {
         val new = IndexedSourcedCharIter(input)

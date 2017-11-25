@@ -27,82 +27,90 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
-import com.github.jonathanxd.iutils.object.Either;
+import com.github.jonathanxd.kwcommands.AIO;
+import com.github.jonathanxd.kwcommands.KWCommands;
+import com.github.jonathanxd.kwcommands.argument.Argument;
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
 import com.github.jonathanxd.kwcommands.command.Command;
-import com.github.jonathanxd.kwcommands.exception.CommandException;
-import com.github.jonathanxd.kwcommands.fail.ParseFail;
+import com.github.jonathanxd.kwcommands.completion.Completion;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
-import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
-import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
+import com.github.jonathanxd.kwcommands.parser.Input;
+import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc;
+import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
-import com.github.jonathanxd.kwcommands.processor.CommandResult;
-import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
-import com.github.jonathanxd.kwcommands.util.PrinterKt;
+import com.github.jonathanxd.kwcommands.util.KLocale;
 
-import org.junit.Assert;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Map;
 
-public class VarargTest {
-    private int n = Integer.MIN_VALUE;
-    private List<String> names = null;
-    private int n2 = Integer.MIN_VALUE;
+public class CompletionTest {
 
     @Test
-    public void varargTest() {
-        CommandManager commandManager = new CommandManagerImpl();
-        CommandProcessor processor = Processors.createCommonProcessor(commandManager);
-        ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
+    public void test() {
+        AIO aio = KWCommands.INSTANCE.createAio();
+        CommandManager commandManager = aio.getCommandManager();
+        CommandProcessor processor = aio.getProcessor();
+        ReflectionEnvironment reflectionEnvironment = aio.getReflectionEnvironment();
         InformationManager informationManager = new InformationManagerImpl();
+        Completion completion = aio.getCompletion();
 
-        List<Command> commands = reflectionEnvironment.fromClass(VarargTest.class,
-                aClass -> this, this);
+        //a b c [a
+        // a = command
+        // b = command
+        // c = argument
+        // [a = argument
+
+        List<Command> commands = reflectionEnvironment.fromClass(CompletionTest.class, aClass -> this, this);
 
         commandManager.registerAll(commands, this);
 
-        HelpInfoHandler handler = new CommonHelpInfoHandler();
-        CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
+        KLocale.INSTANCE.getLocalizer().setDefaultLocale(KLocale.INSTANCE.getPtBr());
+        HelpInfoHandler localizedHandler = new CommonHelpInfoHandler();
+        Printer localizedSysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        Either<ParseFail, List<CommandResult>> f1 = processor.parseAndDispatch(
-                "varargcmd 1 hey man --n2 5",
-                this,
-                informationManager);
+        String s00 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]} --n2 2";
+        String s0 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]";
+        String s = "mapcmd 1 --values {a=\"man, i l u = {\", A=";
 
-        PrinterKt.handleFailAndThrow(handler, f1, sysOutWHF);
+        List<String> complete = completion.complete(s, null);
 
-        Assert.assertEquals(1, this.n);
-        Assert.assertEquals(Collections3.listOf("hey", "man"), this.names);
-        Assert.assertEquals(5, this.n2);
 
-        Either<ParseFail, List<CommandResult>> f2 = processor.parseAndDispatch(
-                "varargcmd 1 --names hey kw --n2 -4",
-                this,
-                informationManager);
+        System.out.println("== Complete ==");
 
-        PrinterKt.handleFailAndThrow(handler, f2, sysOutWHF);
+        for (String s1 : complete) {
+            System.out.println(s1);
+        }
 
-        Assert.assertEquals(1, this.n);
-        Assert.assertEquals(Collections3.listOf("hey", "kw"), this.names);
-        Assert.assertEquals(-4, this.n2);
+        System.out.println("== Complete ==");
     }
 
     @Cmd(description = "Vararg test")
-    public void varargcmd(@Arg("n") int n,
-                          @Arg(value = "names", multiple = true) List<String> names,
-                          @Arg("n2") int n2) {
-        this.n = n;
-        this.names = names;
-        this.n2 = n2;
+    public void mapcmd(@Arg("n") int n,
+                       @Arg(value = "values", multiple = true) Map<E, X> values,
+                       @Arg("n2") int n2) {
+
     }
+
+    public static enum E {
+        A,
+        B
+    }
+
+    public static enum X {
+        C,
+        D
+    }
+
 
 }

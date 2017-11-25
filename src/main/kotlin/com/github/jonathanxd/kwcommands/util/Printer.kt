@@ -27,9 +27,14 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.exception.ParseException
+import com.github.jonathanxd.kwcommands.fail.ParseFail
+import com.github.jonathanxd.kwcommands.help.HelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.printer.Printer
+import com.github.jonathanxd.kwcommands.processor.CommandResult
 
 fun Printer.printAll(manager: CommandManager) {
 
@@ -85,4 +90,17 @@ fun point(range: ClosedRange<Int>): String {
     builder.append('^')
 
     return builder.toString()
+}
+
+fun HelpInfoHandler.handleFail(result: Either<ParseFail, List<CommandResult>>, printer: Printer) {
+    if (result.isLeft)
+        this.handleFail(result.left, printer)
+}
+
+fun HelpInfoHandler.handleFailAndThrow(result: Either<ParseFail, List<CommandResult>>, printer: Printer) {
+    if (result.isLeft) {
+        this.handleFail(result.left, printer)
+
+        throw ParseException("Failed to parse command string.")
+    }
 }

@@ -69,7 +69,7 @@ public class WelcomeTests {
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndDispatch("welcome", this, informationManager);
+            processor.parseAndDispatch("welcome", this, informationManager);
         } catch (CommandException e) {
             handler.handleCommandException(e, sysOutWHF);
         }
@@ -100,7 +100,7 @@ public class WelcomeTests {
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.processAndDispatch("mycommands welcome",
+            processor.parseAndDispatch("mycommands welcome",
                     this, informationManager);
         } catch (CommandException e) {
             handler.handleCommandException(e, sysOutWHF);

@@ -27,15 +27,4 @@
  */
 package com.github.jonathanxd.kwcommands.exception
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.CommandManager
-
-class NoInputForArgumentException(val command: Command,
-                                  val parsedArgs: List<ArgumentContainer<*>>,
-                                  val arg: Argument<*>,
-                                  parsedCommands: List<CommandContainer>,
-                                  manager: CommandManager,
-                                  message: String) : CommandException(parsedCommands, manager, message)
+class ParseException(message: String) : RuntimeException(message)

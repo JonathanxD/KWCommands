@@ -27,8 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
+import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 
 typealias OwnerProvider = (commandName: String) -> Any?
@@ -51,7 +53,7 @@ interface CommandParser {
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parse(commandString: String, owner: Any?): List<CommandContainer> =
+    fun parse(commandString: String, owner: Any?): Either<ParseFail, List<CommandContainer>> =
             parseWithOwnerFunction(commandString, { owner })
 
     /**
@@ -65,6 +67,6 @@ interface CommandParser {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun parseWithOwnerFunction(commandString: String,
-                               ownerProvider: OwnerProvider): List<CommandContainer>
+                               ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>>
 
 }

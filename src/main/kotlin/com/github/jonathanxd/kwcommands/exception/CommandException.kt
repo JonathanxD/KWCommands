@@ -27,6 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.exception
 
+import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 
-open class CommandException(val manager: CommandManager, message: String) : RuntimeException(message)
+open class CommandException(val parsedCommands: List<CommandContainer>,
+                            val manager: CommandManager,
+                            message: String) : RuntimeException(message)

@@ -25,17 +25,20 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.option.Option
 
-class NoInputForArgumentException(val command: Command,
-                                  val parsedArgs: List<ArgumentContainer<*>>,
-                                  val arg: Argument<*>,
-                                  parsedCommands: List<CommandContainer>,
-                                  manager: CommandManager,
-                                  message: String) : CommandException(parsedCommands, manager, message)
+/**
+ * Options for the parser of processor
+ */
+object KWParserOptions {
+    /**
+     * Debug option to enable exceptions in parser instead of using [Either],
+     * this option may only be used for debug purpose and does not work with `Completion System`.
+     *
+     * This option may be removed in future without advice.
+     */
+    val DEBUG_ENABLE_EXCEPTIONS = Option(false)
+}

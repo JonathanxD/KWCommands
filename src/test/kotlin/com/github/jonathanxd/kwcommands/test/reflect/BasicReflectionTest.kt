@@ -44,8 +44,8 @@ class BasicReflectionTest {
 
         reflect.registerCommands(reflect.fromClass(Gun::class.java, { it.newInstance() }, this), this)
 
-        processor.dispatch(processor.parse("gun 40 20", this))
-        processor.dispatch(processor.parse("gun shoot", this))
+        processor.parseAndDispatch("gun 40 20", this)
+        processor.parseAndDispatch("gun shoot", this)
     }
 
 }

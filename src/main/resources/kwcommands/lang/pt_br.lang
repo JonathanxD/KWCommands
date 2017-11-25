@@ -8,6 +8,7 @@ error.invalid_inputs=Entradas invalidas
 error.no_input_for_argument=Nenhuma entrada fornecida para o argumento nomeado '$argument_name' do comando '$command_name'
 error.unsatisfied_requirement=Requisitos unsatisfeitos para '$result_string'
 error.missing_information=Informações faltando para '$result_string'
+error.malformed_input=Entrada mal formada para o tipo '$input_type'
 
 info.parsed_arguments=Argumentos analisados com sucesso
 info.available_commands=Comandos disponiveis
@@ -38,6 +39,10 @@ info.value=Valor
 info.true=Sim
 info.false=Não
 info.requirements=Requisitos
+info.expected_tokens=Símbolo(s) esperado(s)
+info.found_token=Símbolo encontrado
+info.parsed_map=Entradas do mapa analisadas com sucesso
+info.parsed_list=Entradas da lista analisadas com sucesso
 
 help.header.1=-------- Comandos --------
 help.header.2=

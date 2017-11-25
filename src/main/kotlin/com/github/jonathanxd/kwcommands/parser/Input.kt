@@ -52,6 +52,8 @@ sealed class Input {
             else this.source.slice(start..end)
 
     abstract fun toInputString(): String
+
+    abstract fun getString(): String
 }
 
 /**
@@ -74,6 +76,8 @@ data class SingleInput(val input: String,
                     ", content='$content')"
 
     override fun toInputString(): String = input
+
+    override fun getString(): String = input
 }
 
 /**
@@ -96,6 +100,8 @@ data class ListInput(val input: List<Input>,
                     ", content='$content')"
 
     override fun toInputString(): String = "[${input.joinToString { it.toInputString() }}]"
+
+    override fun getString(): String = "[${this.input.joinToString(",") {it.getString()}}]"
 }
 
 /**
@@ -120,6 +126,11 @@ data class MapInput(val input: Map<Input, Input>,
     override fun toInputString(): String = input.entries.joinToString {
         "{${it.key.toInputString()}=${it.value.toInputString()}}"
     }
+
+    override fun getString(): String = "{${
+    this.input.entries.joinToString(",") {
+        "${it.key.getString()}=${it.value.getString()}"
+    }}}"
 }
 
 /**
@@ -134,6 +145,8 @@ class EmptyInput(override val source: String) : Input() {
             "EmptyInput(source='$source', content='')"
 
     override fun toInputString(): String = "EMPTY[]"
+
+    override fun getString(): String = ""
 }
 
 interface InputType {

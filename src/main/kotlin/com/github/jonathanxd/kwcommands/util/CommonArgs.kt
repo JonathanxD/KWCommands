@@ -39,7 +39,7 @@ import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeStorage
 
 object EmptyPossibilitesFunc : PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
             emptyList()
 }
 
@@ -109,28 +109,22 @@ class MapValidator(val keyValidator: Validator,
 class MapPossibilitiesFunc(val keyValidator: PossibilitiesFunc,
                            val valueValidator: PossibilitiesFunc) : PossibilitiesFunc {
 
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> {
-        val list = mutableListOf<String>()
-
-        for (ks in keyValidator(parsed, current)) {
-            for (vs in valueValidator(parsed, current)) {
-                list += "$ks=$vs"
-            }
-        }
-        val map = mutableMapOf<Input, Input>()
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> {
+        val list = mutableListOf<Pair<Possibility, Possibility>>()
 
         val ks = keyValidator.invoke(parsed, current)
         val vs = valueValidator.invoke(parsed, current)
 
         ks.forEach { k ->
             vs.forEach { v ->
-                map.put(k, v)
+                list += k to v
             }
         }
-        if (map.isEmpty())
+
+        if (list.isEmpty())
             return emptyList()
 
-        return listOf(MapInput(map))
+        return listOf(MapPossibility(list))
     }
 }
 
@@ -276,14 +270,14 @@ class EnumTransformer<T>(val type: Class<T>) : Transformer<T> {
 
 class EnumPossibilitiesFunc(val type: Class<*>) : PossibilitiesFunc {
     @Suppress("UNCHECKED_CAST")
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
-            (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
+            (type.enumConstants as Array<Enum<*>>).map { SinglePossibility(it.name) }
 
 }
 
 @Suppress("UNCHECKED_CAST")
-fun enumPossibilities(type: Class<*>): List<Input> =
-        (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
+fun enumPossibilities(type: Class<*>): List<Possibility> =
+        (type.enumConstants as Array<Enum<*>>).map { SinglePossibility(it.name) }
 
 
 // Short
@@ -470,8 +464,8 @@ object BooleanTransformer : Transformer<Boolean> {
 }
 
 object BooleanPossibilities : PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
-            listOf(SingleInput("true"), SingleInput("false"))
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
+            listOf(SinglePossibility("true"), SinglePossibility("false"))
 }
 
 // String

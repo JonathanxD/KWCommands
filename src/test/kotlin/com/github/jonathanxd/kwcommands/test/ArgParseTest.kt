@@ -76,7 +76,7 @@ class ArgParseTest {
         manager.registerCommand(cmd, this)
 
         try {
-            processor.processAndDispatch("example Hello 9", this, infoManager)
+            processor.parseAndDispatch("example Hello 9", this, infoManager)
         } catch (ex: CommandException) {
             handler.handleCommandException(ex, printer)
         }

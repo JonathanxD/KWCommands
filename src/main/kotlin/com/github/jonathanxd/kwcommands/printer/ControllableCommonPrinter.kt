@@ -25,17 +25,48 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.printer
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.iutils.text.converter.TextLocalizer
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 
-class NoInputForArgumentException(val command: Command,
-                                  val parsedArgs: List<ArgumentContainer<*>>,
-                                  val arg: Argument<*>,
-                                  parsedCommands: List<CommandContainer>,
-                                  manager: CommandManager,
-                                  message: String) : CommandException(parsedCommands, manager, message)
+/**
+ * Common implementation of command printer backing to a print function
+ */
+class ControllableCommonPrinter(val printer: Printer,
+                                var enabled: Boolean = true) : Printer {
+    override val localizer: TextLocalizer
+        get() = this.printer.localizer
+
+    override fun printCommand(command: Command, level: Int) {
+        if (enabled)
+            this.printer.printCommand(command, level)
+    }
+
+    override fun printFromRoot(command: Command, level: Int) {
+        if (enabled)
+            this.printer.printFromRoot(command, level)
+    }
+
+    override fun printTo(command: Command, level: Int, out: (String) -> Unit) {
+        if (enabled)
+            this.printer.printTo(command, level, out)
+    }
+
+    override fun printPlain(text: TextComponent) {
+        if (enabled)
+            this.printer.printPlain(text)
+    }
+
+    override fun printEmpty() {
+        if (enabled)
+            this.printer.printEmpty()
+    }
+
+    override fun flush() {
+        if (enabled)
+            this.printer.flush()
+    }
+
+}

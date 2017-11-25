@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.exception.RethrowException;
+import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.iutils.text.Text;
 import com.github.jonathanxd.iutils.text.TextComponent;
 import com.github.jonathanxd.iutils.type.TypeInfo;
@@ -37,6 +38,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.command.CommandContainer;
 import com.github.jonathanxd.kwcommands.command.Handler;
+import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.information.Information;
 import com.github.jonathanxd.kwcommands.json.DefaultJsonParser;
@@ -146,13 +148,13 @@ public class JsonTest {
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
-        List<CommandResult> commandResults = processor.processAndDispatch(
+        Either<ParseFail, List<CommandResult>> commandResults = processor.parseAndDispatch(
                 "register " + pname + " " + pemail,
                 this, informationManager);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
 
-        commonHelpInfoHandler.handleResults(commandResults, new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
+        commonHelpInfoHandler.handleResults(commandResults.getRight(), new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
                 s -> {
             System.out.println(s);
             return Unit.INSTANCE;

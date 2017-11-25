@@ -50,7 +50,7 @@ object NoneTransformer : None(), Transformer<Any> {
 }
 
 object NonePossibilities : None(), PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
+    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
             emptyList()
 }
 

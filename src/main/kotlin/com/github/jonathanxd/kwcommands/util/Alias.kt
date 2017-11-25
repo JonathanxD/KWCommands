@@ -33,7 +33,7 @@ import com.github.jonathanxd.kwcommands.parser.*
 
 typealias ValidatorAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> Validation
 typealias TransformerAlias<T> = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> T
-typealias PossibilitiesFuncAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>) -> List<Input>
+typealias PossibilitiesFuncAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>) -> List<Possibility>
 
 inline fun validator(crossinline func: (parsed: List<ArgumentContainer<*>>,
                                         current: Argument<*>,
@@ -52,9 +52,9 @@ inline fun <T> transformer(crossinline func: (parsed: List<ArgumentContainer<*>>
         }
 
 inline fun possibilitiesFunc(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                                current: Argument<*>) -> List<Input>) =
+                                                current: Argument<*>) -> List<Possibility>) =
         object : PossibilitiesFunc {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
+            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
                     func(parsed, current)
         }
 
