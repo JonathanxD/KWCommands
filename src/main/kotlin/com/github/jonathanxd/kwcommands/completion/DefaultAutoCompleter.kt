@@ -30,7 +30,9 @@ package com.github.jonathanxd.kwcommands.completion
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.parser.*
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.MapInput
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.util.nameOrId
 
 class DefaultAutoCompleter : AutoCompleter {
@@ -53,7 +55,7 @@ class DefaultAutoCompleter : AutoCompleter {
                                   completions: Completions) {
         val suggestions =
                 argument.possibilities(arguments, argument)
-                        .map(Possibility::getString)
+                        .map(Input::getString)
 
         completions.addAll(suggestions)
     }
@@ -78,59 +80,32 @@ class DefaultAutoCompleter : AutoCompleter {
         val suggestions =
                 argument.possibilities(arguments, argument)
 
-        val filter = FollowSuggestionFilter(suggestions)
-
         if (base == toCompleteMap) {
-            filter.next(base)
 
             if (key != null) {
                 filter.filtered.forEach {
-                    /*if (it is MapInput) {
+                    if (it is MapInput) {
                         it.input.forEach { (k, v) ->
                             if (key.getString() == k.getString())
                                 completions.add(v.getString())
                         }
-                    }*/
+                    }
                 }
             } else {
                 filter.filtered.forEach {
-                    /*if (it is MapInput) {
-                        it.input.keys.forEach {
+                    if (it is MapInput) {
+                        it.input.forEach { (it, _) ->
                             completions.add(it.getString())
                         }
-                    }*/
+                    }
                 }
             }
+        } else {
+
+            TODO()
         }
 
-        // {a=b,{{a=b}=b}}
-        // {a= <TAB>
-        // {a=b,{<TAB>
-        // {1=2,{{3,4}}
-        //
-
-
     }
 
-
-    override fun completeArgumentList(command: Command,
-                                      arguments: List<ArgumentContainer<*>>,
-                                      argument: Argument<*>,
-                                      base: Input,
-                                      toCompleteList: ListInput,
-                                      completions: Completions) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    class FollowSuggestionFilter(val suggestions: List<Possibility>) {
-        private var filtered_ = suggestions
-        val filtered: List<Possibility> get() = filtered_
-
-        fun next(input: Input) {
-            val type = input::class.java
-
-            filtered_ = filtered_.filter { type.isInstance(it) }
-        }
-    }
 
 }

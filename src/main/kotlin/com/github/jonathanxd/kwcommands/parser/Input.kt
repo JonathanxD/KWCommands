@@ -54,6 +54,8 @@ sealed class Input {
     abstract fun toInputString(): String
 
     abstract fun getString(): String
+
+    abstract fun toPlain(): Any
 }
 
 /**
@@ -75,6 +77,8 @@ data class SingleInput(val input: String,
                     ", end='$end'" +
                     ", content='$content')"
 
+    override fun toPlain(): Any = this.input
+
     override fun toInputString(): String = input
 
     override fun getString(): String = input
@@ -92,6 +96,9 @@ data class ListInput(val input: List<Input>,
 
     constructor(input: List<Input>) : this(input, "", 0, 0)
 
+    override fun toPlain(): Any =
+            this.input.map { it.toPlain() }
+
     override fun toString(): String =
             "ListInput(input=$input" +
                     ", source='$source'" +
@@ -107,14 +114,17 @@ data class ListInput(val input: List<Input>,
 /**
  * Denotes a map of elements input for argument marked as [multiple][Argument.isMultiple].
  */
-data class MapInput(val input: Map<Input, Input>,
+data class MapInput(val input: List<Pair<Input, Input>>,
                     override val source: String,
                     override val start: Int,
                     override val end: Int) : Input() {
 
     override val type: InputType = MapInputType
 
-    constructor(input: Map<Input, Input>) : this(input, "", 0, 0)
+    constructor(input: List<Pair<Input, Input>>) : this(input, "", 0, 0)
+
+    override fun toPlain(): Any =
+            this.input.map { it.first.toPlain() to it.second.toPlain() }
 
     override fun toString(): String =
             "MapInput(input=$input" +
@@ -123,13 +133,13 @@ data class MapInput(val input: Map<Input, Input>,
                     ", end='$end'" +
                     ", content='$content')"
 
-    override fun toInputString(): String = input.entries.joinToString {
-        "{${it.key.toInputString()}=${it.value.toInputString()}}"
+    override fun toInputString(): String = input.joinToString {
+        "{${it.first.toInputString()}=${it.second.toInputString()}}"
     }
 
     override fun getString(): String = "{${
-    this.input.entries.joinToString(",") {
-        "${it.key.getString()}=${it.value.getString()}"
+    this.input.joinToString(",") {
+        "${it.first.getString()}=${it.second.getString()}"
     }}}"
 }
 
@@ -141,12 +151,16 @@ class EmptyInput(override val source: String) : Input() {
     override val end: Int = 0
     override val type: InputType = EmptyInputType
 
+    override fun toPlain(): Any = Empty
+
     override fun toString(): String =
             "EmptyInput(source='$source', content='')"
 
     override fun toInputString(): String = "EMPTY[]"
 
     override fun getString(): String = ""
+
+    object Empty
 }
 
 interface InputType {
@@ -168,3 +182,4 @@ object MapInputType : InputType {
 object EmptyInputType : InputType {
     override fun getTypeString(): TextComponent = Texts.getEmptyTypeText()
 }
+

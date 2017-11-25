@@ -396,15 +396,15 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                                 "'", foundToken, "'."))
 
                         when {
-                            fail is ListTokenExpectedFail && fail.list.input.isNotEmpty() -> {
-                                val list = fail.list.input.joinToString(prefix = "[", postfix = "]") {
+                            fail is ListTokenExpectedFail && (fail.input as ListInput).input.isNotEmpty() -> {
+                                val list = fail.input.input.joinToString(prefix = "[", postfix = "]") {
                                     it.getString()
                                 }
                                 printer.printPlain(Text.of(" | ", Texts.getParsedListText(), ": ", list, "."))
                             }
-                            fail is MapTokenExpectedFail && fail.map.input.isNotEmpty() -> {
-                                val map = fail.map.input.entries.joinToString(prefix = "{", postfix = "}") {
-                                    "${it.key.getString()}=${it.value.getString()}"
+                            fail is MapTokenExpectedFail && (fail.input as MapInput).input.isNotEmpty() -> {
+                                val map = fail.input.input.joinToString(prefix = "{", postfix = "}") {
+                                    "${it.first.getString()}=${it.second.getString()}"
                                 }
 
                                 printer.printPlain(Text.of(" | ", Texts.getParsedMapText(), ": ", map, "."))
@@ -430,7 +430,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
     }
 
 
-    private fun printPossibilities(possibilities: List<Possibility>, printer: Printer) {
+    private fun printPossibilities(possibilities: List<Input>, printer: Printer) {
         if (possibilities.isNotEmpty()) {
             printer.printPlain(Texts.getArgumentPossibilitiesText().and(Text.of(": ")))
 
@@ -441,16 +441,16 @@ class CommonHelpInfoHandler : HelpInfoHandler {
         }
     }
 
-    private fun printPossibility(possibility: Possibility, printer: Printer) {
+    private fun printPossibility(possibility: Input, printer: Printer) {
         when (possibility) {
-            is SinglePossibility -> {
+            is SingleInput -> {
                 printer.printPlain(Text.of(possibility.input))
             }
-            is ListPossibility -> {
-                if (possibility.possibilities.all { it is SinglePossibility }) {
-                    val list = possibility.possibilities
-                            .map { it as SinglePossibility }
-                            .map(SinglePossibility::input)
+            is ListInput -> {
+                if (possibility.input.all { it is SingleInput }) {
+                    val list = possibility.input
+                            .map { it as SingleInput }
+                            .map(SingleInput::input)
                             .stream()
                             .collect(Collectors3.split(10))
                     list.forEach {
@@ -459,13 +459,13 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                         }
                     }
                 } else {
-                    possibility.possibilities.forEach {
+                    possibility.input.forEach {
                         printPossibility(it, printer)
                     }
                 }
             }
-            is MapPossibility -> {
-                possibility.possibilities.forEach { (k, v) ->
+            is MapInput -> {
+                possibility.input.forEach { (k, v) ->
                     printer.printPlain(Text.of(Texts.getKeyText(), ": "))
                     printPossibility(k, printer)
                     printer.printPlain(Text.of(Texts.getValueText(), ": "))

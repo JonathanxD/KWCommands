@@ -27,16 +27,12 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-
 @FunctionalInterface
-interface PossibilitiesFunc {
+interface Possibilities {
     /**
      * Possibilities of arguments.
      */
-    operator fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>): List<Possibility>
+    operator fun invoke(): List<Input>
 }
 
 sealed class Possibility {

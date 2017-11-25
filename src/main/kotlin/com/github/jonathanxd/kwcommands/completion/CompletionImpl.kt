@@ -69,7 +69,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
             complete(parse.left, suggestions)
         }
 
-        return suggestions
+        return suggestions//.distinct()
     }
 
     private fun complete(commandContainers: List<CommandContainer>, suggestion: MutableList<String>) {
@@ -129,15 +129,22 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
 
                 val main = tmain ?: tfail
                 val fail = tfail
-                val mainInput =
-                        (main as? MapInputParseFail)?.map
-                                ?: (fail as? ListInputParseFail)?.list
+                val mainInput = main.input
 
                 when (fail) {
+                    is MapKeyNotFound -> {
+                        this.autoCompleters.completeArgumentMap(command, parsedArgs, argument,
+                                mainInput,
+                                fail.input as MapInput,
+                                null,
+                                completions)
+
+                        suggestion += completionList
+                    }
                     is MapValueNotFound -> {
                         this.autoCompleters.completeArgumentMap(command, parsedArgs, argument,
-                                mainInput ?: fail.map,
-                                fail.map,
+                                mainInput,
+                                fail.input as MapInput,
                                 fail.key,
                                 completions)
 
@@ -150,19 +157,16 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                         val tokens = (fail as? ListTokenExpectedFail)?.tokens
                                     ?: (fail as MapTokenExpectedFail).tokens
 
-                        val failInput = (fail as? ListTokenExpectedFail)?.list
-                                ?: (fail as MapTokenExpectedFail).map
-
                         if (tokens.contains(',')) {
                             if (fail is ListTokenExpectedFail) {
                                 this.autoCompleters.completeArgumentList(command, parsedArgs, argument,
-                                        mainInput ?: fail.list,
-                                        fail.list,
+                                        mainInput,
+                                        fail.input as ListInput,
                                         completions)
                             } else if (fail is MapTokenExpectedFail) {
                                 this.autoCompleters.completeArgumentMap(command, parsedArgs, argument,
-                                        mainInput ?: fail.map,
-                                        fail.map,
+                                        mainInput,
+                                        fail.input as MapInput,
                                         null,
                                         completions)
                             }

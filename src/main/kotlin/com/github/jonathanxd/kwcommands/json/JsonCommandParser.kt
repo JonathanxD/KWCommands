@@ -40,7 +40,7 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementBuilder
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 import org.json.simple.JSONArray
@@ -218,7 +218,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
                         ?: this.typeResolver.resolveValidator(type))
                 .transformer(jsonObject.getAsSingleton<Transformer<Any?>>(TRANSFORMER_KEY, this.typeResolver)
                         ?: this.typeResolver.resolveTransformer(type))
-                .possibilities(jsonObject.getAsSingleton<PossibilitiesFunc>(POSSIBILITIES_KEY, this.typeResolver)
+                .possibilities(jsonObject.getAsSingleton<Possibilities>(POSSIBILITIES_KEY, this.typeResolver)
                         ?: this.typeResolver.resolvePossibilitiesFunc(type))
                 .defaultValue(this.typeResolver.resolveDefaultValue(type))
                 .handler(jsonObject.getArgumentHandler(HANDLER_KEY, this))

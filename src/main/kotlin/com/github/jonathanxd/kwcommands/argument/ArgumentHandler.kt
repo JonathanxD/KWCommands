@@ -63,9 +63,8 @@ interface ArgumentHandler<T> {
             override fun handle(argumentContainer: ArgumentContainer<T>,
                                 commandContainer: CommandContainer,
                                 informationManager: InformationManager,
-                                resultHandler: ResultHandler): Any {
-                return function(argumentContainer, commandContainer, informationManager, resultHandler)
-            }
+                                resultHandler: ResultHandler): Any =
+                    function(argumentContainer, commandContainer, informationManager, resultHandler)
         }
 
     }

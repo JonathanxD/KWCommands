@@ -27,32 +27,29 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.`object`.Node
-import com.github.jonathanxd.iutils.function.collector.BiCollectors
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.jwiutils.kt.biStreamJavaBacked
 import com.github.jonathanxd.kwcommands.ValidationTexts
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.invokeAsInputCapable
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeStorage
 
-object EmptyPossibilitesFunc : PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
+object EmptyPossibilitesFunc : Possibilities {
+    override fun invoke(): List<Input> =
             emptyList()
 }
 
-class MapTransformer<K, out V>(val keyTransformer: Transformer<K>,
-                               val valueTransformer: Transformer<V>) : Transformer<Map<K, V>> {
+class MapTransformer<K, out V>(val keyTransformer: Transformer<Input, K>,
+                               val valueTransformer: Transformer<Input, V>) : Transformer<Input, Map<K, V>> {
 
     @Suppress("UNCHECKED_CAST")
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Map<K, V> {
+    override fun invoke(value: Input): Map<K, V> {
 
         if (value is MapInput) {
-            return value.input.biStreamJavaBacked()
-                    .map { k, v -> Node(keyTransformer(parsed, current, k), keyTransformer(parsed, current, v)) }
-                    .collect(BiCollectors.toMap()) as Map<K, V>
+            return value.input
+                    .map { (k, v) ->
+                        keyTransformer(k) to valueTransformer(v)
+                    }
+                    .toMap()
         }
 
         val str = (value as SingleInput).input
@@ -61,14 +58,14 @@ class MapTransformer<K, out V>(val keyTransformer: Transformer<K>,
 
         if (list.size == 1) {
             val input = SingleInput(list[0], str, 0, list[0].length)
-            val key = keyTransformer.invoke(parsed, current, input)
+            val key = keyTransformer.invoke(input)
             return mutableMapOf<Any?, Any?>(key to null) as MutableMap<K, V>
         } else if (list.size == 2) {
             val kInput = SingleInput(list[0], str, 0, list[0].length)
             val vInput = SingleInput(list[1], str, kInput.start + 1, list[1].length) // 1 = '='
 
-            val key = keyTransformer.invoke(parsed, current, kInput)
-            val vValue = valueTransformer.invoke(parsed, current, vInput)
+            val key = keyTransformer.invoke(kInput)
+            val vValue = valueTransformer.invoke(vInput)
             return mutableMapOf(key to vValue)
         }
 
@@ -76,29 +73,29 @@ class MapTransformer<K, out V>(val keyTransformer: Transformer<K>,
     }
 }
 
-object MapFormatCheckValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation {
+object MapFormatCheckValidator : Validator<Input> {
+    override fun invoke(value: Input): Validation {
         throw IllegalStateException("dummy")
     }
 }
 
-object ListFormatCheckValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation {
+object ListFormatCheckValidator : Validator<Input> {
+    override fun invoke(value: Input): Validation {
         throw IllegalStateException("dummy")
     }
 }
 
-class MapValidator(val keyValidator: Validator,
-                   val valueValidator: Validator) : Validator {
+class MapValidator(val keyValidator: Validator<Input>,
+                   val valueValidator: Validator<Input>) : Validator<Input> {
 
     @Suppress("UNCHECKED_CAST")
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation {
+    override fun invoke(value: Input): Validation {
 
         if (value is MapInput) {
             val inputMap = value.input
 
             return validation(inputMap.map { (k, v) ->
-                keyValidator.invoke(parsed, current, k) to valueValidator.invoke(parsed, current, v)
+                keyValidator.invoke(k) to valueValidator.invoke(v)
             }.map { (l, r) -> Validation(l, r) })
         } else {
             return invalid(value, this, ValidationTexts.expectedInputMap(), listOf(MapInputType))
@@ -106,14 +103,14 @@ class MapValidator(val keyValidator: Validator,
     }
 }
 
-class MapPossibilitiesFunc(val keyValidator: PossibilitiesFunc,
-                           val valueValidator: PossibilitiesFunc) : PossibilitiesFunc {
+class MapPossibilitiesFunc(val keyValidator: Possibilities,
+                           val valueValidator: Possibilities) : Possibilities {
 
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> {
-        val list = mutableListOf<Pair<Possibility, Possibility>>()
+    override fun invoke(): List<Input> {
+        val list = mutableListOf<Pair<Input, Input>>()
 
-        val ks = keyValidator.invoke(parsed, current)
-        val vs = valueValidator.invoke(parsed, current)
+        val ks = keyValidator.invoke()
+        val vs = valueValidator.invoke()
 
         ks.forEach { k ->
             vs.forEach { v ->
@@ -124,7 +121,7 @@ class MapPossibilitiesFunc(val keyValidator: PossibilitiesFunc,
         if (list.isEmpty())
             return emptyList()
 
-        return listOf(MapPossibility(list))
+        return listOf(MapInput(list))
     }
 }
 
@@ -133,12 +130,12 @@ class MapPossibilitiesFunc(val keyValidator: PossibilitiesFunc,
  *
  * @property transformer Transformer of list elements.
  */
-class ListTransformer<out T>(val transformer: Transformer<T>) : Transformer<List<T>> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): List<T> =
+class ListTransformer<out T>(val transformer: Transformer<Input, T>) : Transformer<Input, List<T>> {
+    override fun invoke(value: Input): List<T> =
             when (value) {
-                is SingleInput -> mutableListOf(transformer(parsed, current, value))
+                is SingleInput -> mutableListOf(transformer(value))
                 is EmptyInput -> mutableListOf()
-                else -> (value as ListInput).input.map { transformer(parsed, current, it) }
+                else -> (value as ListInput).input.map { transformer(it) }
             }
 }
 
@@ -147,23 +144,23 @@ class ListTransformer<out T>(val transformer: Transformer<T>) : Transformer<List
  *
  * @property transformer Transformer of list elements.
  */
-class ListValidator(val validator: Validator) : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+class ListValidator(val validator: Validator<Input>) : Validator<Input> {
+    override fun invoke(value: Input): Validation =
             when (value) {
-                is SingleInput -> validator(parsed, current, value)
+                is SingleInput -> validator(value)
                 is EmptyInput -> valid()
-                is MapInput -> value.validate { validator(parsed, current, it) }
-                else -> (value as ListInput).validate { validator(parsed, current, it) }
+                is MapInput -> value.validate { validator(it) }
+                else -> (value as ListInput).validate { validator(it) }
             }
 }
 
 @Suppress("UNCHECKED_CAST")
-class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation {
+class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeInfo<*>) : Validator<Input> {
+    override fun invoke(value: Input): Validation {
         if (value is ListInput) {
             val get = storage.getArgumentType(subType)
 
-            return value.validate { get.validator(parsed, current, it) }
+            return value.validate { get.validator.invokeAsInputCapable(it) }
         }
 
         if (value !is SingleInput && value !is EmptyInput)
@@ -177,38 +174,26 @@ class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeIn
             valueStr.split(',').toList()
         else listOf(valueStr)
 
-        val currentArgs = mutableListOf<ArgumentContainer<*>>()
-
         val get = storage.getArgumentType(subType)
 
         return list.mapIndexed { index, it ->
-            val parsedArgs = parsed + currentArgs
-
             val pos = value.start + list.subList(0, index).sumBy { it.length + 1 } // 1 = ','
             val input = SingleInput(it, value.source, pos, pos + it.length)
 
-            val res = get.validator(parsedArgs, current, input)
-            if (res.isValid) {
-                currentArgs += ArgumentContainer(
-                        current as Argument<Any>,
-                        input,
-                        res,
-                        current.handler as ArgumentHandler<Any>?
-                )
-            }
-            res
+            get.validator.invokeAsInputCapable(input)
         }.reduce { acc, validation -> acc + validation }
     }
 
 }
 
 @Suppress("UNCHECKED_CAST")
-class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>) : Transformer<List<E>> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): List<E> {
+class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: TypeInfo<E>)
+    : Transformer<Input, List<E>> {
+    override fun invoke(value: Input): List<E> {
         if (value is ListInput) {
             val get = storage.getArgumentType(subType)
 
-            return value.input.map { get.transformer(parsed, current, it) }
+            return value.input.map { get.transformer.invokeAsInputCapable(it) } as List<E>
         }
 
         if (value !is SingleInput && value !is EmptyInput)
@@ -222,7 +207,6 @@ class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: Typ
             valueStr.split(',').toList()
         else listOf(valueStr)
 
-        var container: ArgumentContainer<*>? = null
         val mut = mutableListOf<E>()
 
         val get = storage.getArgumentType(subType)
@@ -231,23 +215,14 @@ class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: Typ
             val pos = value.start + list.subList(0, index).sumBy { it.length + 1 } // 1 = ','
             val input = SingleInput(it, value.source, pos, pos + it.length)
 
-            val currentArgs = if (container != null) parsed + container!! else parsed
-            val res = get.transformer(currentArgs, current, input)
-
-            container = ArgumentContainer(
-                    current as Argument<E>,
-                    input,
-                    res,
-                    current.handler as ArgumentHandler<E>?
-            )
-            res
+            get.transformer.invokeAsInputCapable(input) as E
         }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-class EnumValidator<T>(val type: Class<T>) : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation {
+class EnumValidator<T>(val type: Class<T>) : Validator<Input> {
+    override fun invoke(value: Input): Validation {
         if (value !is SingleInput)
             return invalid(value, this, ValidationTexts.expectedEnum(), listOf(SingleInputType))
         val consts = type.enumConstants as Array<Enum<*>>
@@ -257,37 +232,32 @@ class EnumValidator<T>(val type: Class<T>) : Validator {
 }
 
 @Suppress("UNCHECKED_CAST")
-class EnumTransformer<T>(val type: Class<T>) : Transformer<T> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): T {
-        if (value !is SingleInput)
-            throw IllegalStateException()
-
+class EnumTransformer<T>(val type: Class<T>) : Transformer<SingleInput, T> {
+    override fun invoke(value: SingleInput): T {
         val consts = type.enumConstants as Array<Enum<*>>
         return (consts.firstOrNull { it.name == value.input }
                 ?: consts.first { it.name.equals(value.input, true) }) as T
     }
 }
 
-class EnumPossibilitiesFunc(val type: Class<*>) : PossibilitiesFunc {
+class EnumPossibilitiesFunc(val type: Class<*>) : Possibilities {
     @Suppress("UNCHECKED_CAST")
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
-            (type.enumConstants as Array<Enum<*>>).map { SinglePossibility(it.name) }
+    override fun invoke(): List<Input> =
+            (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
 
 }
 
 @Suppress("UNCHECKED_CAST")
-fun enumPossibilities(type: Class<*>): List<Possibility> =
-        (type.enumConstants as Array<Enum<*>>).map { SinglePossibility(it.name) }
+fun enumPossibilities(type: Class<*>): List<Input> =
+        (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
 
 
 // Short
 val SHORT_DEFAULT_VALUE: Short = 0
 
-object ShortValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object ShortValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedShort(), listOf(SingleInputType))
                 value.input.toShortOrNull() == null ->
                     invalid(value, this, ValidationTexts.invalidShort(), listOf(SingleInputType))
                 else -> valid()
@@ -296,22 +266,20 @@ object ShortValidator : Validator {
 
 }
 
-object ShortTransformer : Transformer<Short> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Short =
-            (value as SingleInput).input.toShort()
+object ShortTransformer : Transformer<SingleInput, Short> {
+    override fun invoke(value: SingleInput): Short =
+            value.input.toShort()
 
 }
 
-object ShortPossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object ShortPossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Char
 val CHAR_DEFAULT_VALUE: Char = 0.toChar()
 
-object CharValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object CharValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedChar(), listOf(SingleInputType))
                 value.input.toCharArray().size != 1 ->
                     invalid(value, this, ValidationTexts.invalidChar(), listOf(SingleInputType))
                 else -> valid()
@@ -319,22 +287,20 @@ object CharValidator : Validator {
 
 }
 
-object CharTransformer : Transformer<Char> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Char =
-            (value as SingleInput).input.toCharArray().single()
+object CharTransformer : Transformer<SingleInput, Char> {
+    override fun invoke(value: SingleInput): Char =
+            value.input.toCharArray().single()
 
 }
 
-object CharPossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object CharPossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Byte
 val BYTE_DEFAULT_VALUE: Byte = 0.toByte()
 
-object ByteValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object ByteValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedByte(), listOf(SingleInputType))
                 value.input.toByteOrNull() == null ->
                     invalid(value, this, ValidationTexts.invalidByte(), listOf(SingleInputType))
                 else -> valid()
@@ -342,22 +308,20 @@ object ByteValidator : Validator {
 
 }
 
-object ByteTransformer : Transformer<Byte> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Byte =
-            (value as SingleInput).input.toByte()
+object ByteTransformer : Transformer<SingleInput, Byte> {
+    override fun invoke(value: SingleInput): Byte =
+            value.input.toByte()
 
 }
 
-object BytePossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object BytePossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Int
 val INT_DEFAULT_VALUE: Int = 0
 
-object IntValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object IntValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedInt(), listOf(SingleInputType))
                 value.input.toIntOrNull() == null ->
                     invalid(value, this, ValidationTexts.invalidInt(), listOf(SingleInputType))
                 else -> valid()
@@ -365,22 +329,20 @@ object IntValidator : Validator {
 
 }
 
-object IntTransformer : Transformer<Int> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Int =
-            (value as SingleInput).input.toInt()
+object IntTransformer : Transformer<SingleInput, Int> {
+    override fun invoke(value: SingleInput): Int =
+            value.input.toInt()
 
 }
 
-object IntPossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object IntPossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Float
 val FLOAT_DEFAULT_VALUE: Int = 0
 
-object FloatValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object FloatValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedFloat(), listOf(SingleInputType))
                 value.input.toFloatOrNull() == null ->
                     invalid(value, this, ValidationTexts.invalidFloat(), listOf(SingleInputType))
                 else -> valid()
@@ -388,22 +350,20 @@ object FloatValidator : Validator {
 
 }
 
-object FloatTransformer : Transformer<Float> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Float =
-            (value as SingleInput).input.toFloat()
+object FloatTransformer : Transformer<SingleInput, Float> {
+    override fun invoke(value: SingleInput): Float =
+            value.input.toFloat()
 
 }
 
-object FloatPossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object FloatPossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Double
 val DOUBLE_DEFAULT_VALUE: Double = 0.0
 
-object DoubleValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object DoubleValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedDouble(), listOf(SingleInputType))
                 value.input.toDoubleOrNull() == null ->
                     invalid(value, this, ValidationTexts.invalidDouble(), listOf(SingleInputType))
                 else -> valid()
@@ -411,22 +371,20 @@ object DoubleValidator : Validator {
 
 }
 
-object DoubleTransformer : Transformer<Double> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Double =
-            (value as SingleInput).input.toDouble()
+object DoubleTransformer : Transformer<SingleInput, Double> {
+    override fun invoke(value: SingleInput): Double =
+            value.input.toDouble()
 
 }
 
-object DoublePossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object DoublePossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Long
 val LONG_DEFAULT_VALUE: Long = 0L
 
-object LongValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object LongValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedLong(), listOf(SingleInputType))
                 value.input.toLongOrNull() == null ->
                     invalid(value, this, ValidationTexts.invalidLong(), listOf(SingleInputType))
                 else -> valid()
@@ -434,22 +392,20 @@ object LongValidator : Validator {
 
 }
 
-object LongTransformer : Transformer<Long> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Long =
-            (value as SingleInput).input.toLong()
+object LongTransformer : Transformer<SingleInput, Long> {
+    override fun invoke(value: SingleInput): Long =
+            value.input.toLong()
 
 }
 
-object LongPossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object LongPossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Boolean
 val BOOLEAN_DEFAULT_VALUE: Boolean = false
 
-object BooleanValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object BooleanValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
             when {
-                value !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedBoolean(), listOf(SingleInputType))
                 value.input != "true" && value.input != "false" ->
                     invalid(value, this, ValidationTexts.invalidBoolean(), listOf(SingleInputType))
                 else -> valid()
@@ -457,34 +413,30 @@ object BooleanValidator : Validator {
 
 }
 
-object BooleanTransformer : Transformer<Boolean> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Boolean =
-            (value as SingleInput).input.toBoolean()
+object BooleanTransformer : Transformer<SingleInput, Boolean> {
+    override fun invoke(value: SingleInput): Boolean =
+            value.input.toBoolean()
 
 }
 
-object BooleanPossibilities : PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
-            listOf(SinglePossibility("true"), SinglePossibility("false"))
+object BooleanPossibilities : Possibilities {
+    override fun invoke(): List<Input> =
+            listOf(SingleInput("true"), SingleInput("false"))
 }
 
 // String
 val STRING_DEFAULT_VALUE: String? = null
 
-object StringValidator : Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
-            when (value) {
-                !is SingleInput ->
-                    invalid(value, this, ValidationTexts.expectedString(), listOf(SingleInputType))
-                else -> valid()
-            }
+object StringValidator : Validator<SingleInput> {
+    override fun invoke(value: SingleInput): Validation =
+            valid()
 
 }
 
-object StringTransformer : Transformer<String> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): String =
-            (value as SingleInput).input
+object StringTransformer : Transformer<SingleInput, String> {
+    override fun invoke(value: SingleInput): String =
+            value.input
 
 }
 
-object StringPossibilities : PossibilitiesFunc by EmptyPossibilitesFunc
+object StringPossibilities : Possibilities by EmptyPossibilitesFunc

@@ -32,27 +32,30 @@ import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.possibilitiesFunc
+import com.github.jonathanxd.kwcommands.util.simpleArgumentType
 
 /**
  * Builder of [Argument].
  */
-class ArgumentBuilder<T> {
+class ArgumentBuilder<I: Input, T> {
 
     private lateinit var id: Any
     private var name: String = ""
     private var description: TextComponent = Text.single("")
     private var isOptional: Boolean = false
-    private lateinit var type: TypeInfo<out T>
+    private lateinit var typeInfo: TypeInfo<out T>
+    private var type: ArgumentType<*, T>? = null
     private var isMultiple: Boolean = false
     private var defaultValue: T? = null
-    private lateinit var validator: Validator
-    private lateinit var transformer: Transformer<T>
-    private var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
+    private lateinit var validator: Validator<*>
+    private lateinit var transformer: Transformer<*, T>
+    private var possibilities: Possibilities = possibilitiesFunc { emptyList() }
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private var handler: ArgumentHandler<out T>? = null
@@ -60,7 +63,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.id]
      */
-    fun id(id: Any): ArgumentBuilder<T> {
+    fun id(id: Any): ArgumentBuilder<I, T> {
         this.id = id
         return this
     }
@@ -68,7 +71,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.name]
      */
-    fun name(name: String): ArgumentBuilder<T> {
+    fun name(name: String): ArgumentBuilder<I, T> {
         this.name = name
         return this
     }
@@ -76,7 +79,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.description]
      */
-    fun description(description: TextComponent): ArgumentBuilder<T> {
+    fun description(description: TextComponent): ArgumentBuilder<I, T> {
         this.description = description
         return this
     }
@@ -84,7 +87,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.isOptional]
      */
-    fun optional(isOptional: Boolean): ArgumentBuilder<T> {
+    fun optional(isOptional: Boolean): ArgumentBuilder<I, T> {
         this.isOptional = isOptional
         return this
     }
@@ -92,7 +95,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.type]
      */
-    fun type(type: TypeInfo<out T>): ArgumentBuilder<T> {
+    fun type(type: ArgumentType<*, T>): ArgumentBuilder<I, T> {
         this.type = type
         return this
     }
@@ -100,7 +103,15 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.type]
      */
-    fun multiple(isMultiple: Boolean): ArgumentBuilder<T> {
+    fun type(type: TypeInfo<out T>): ArgumentBuilder<I, T> {
+        this.typeInfo = type
+        return this
+    }
+
+    /**
+     * Sets [Argument.type]
+     */
+    fun multiple(isMultiple: Boolean): ArgumentBuilder<I, T> {
         this.isMultiple = isMultiple
         return this
     }
@@ -108,7 +119,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.defaultValue]
      */
-    fun defaultValue(defaultValue: T?): ArgumentBuilder<T> {
+    fun defaultValue(defaultValue: T?): ArgumentBuilder<I, T> {
         this.defaultValue = defaultValue
         return this
     }
@@ -116,7 +127,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.validator]
      */
-    fun validator(validator: Validator): ArgumentBuilder<T> {
+    fun validator(validator: Validator<I>): ArgumentBuilder<I, T> {
         this.validator = validator
         return this
     }
@@ -124,7 +135,7 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.transformer]
      */
-    fun transformer(transformer: Transformer<T>): ArgumentBuilder<T> {
+    fun transformer(transformer: Transformer<I, T>): ArgumentBuilder<I, T> {
         this.transformer = transformer
         return this
     }
@@ -132,7 +143,7 @@ class ArgumentBuilder<T> {
     /**
      * Adds [Argument.possibilities]
      */
-    fun possibilities(possibilities: PossibilitiesFunc): ArgumentBuilder<T> {
+    fun possibilities(possibilities: Possibilities): ArgumentBuilder<I, T> {
         this.possibilities = possibilities
         return this
     }
@@ -140,7 +151,7 @@ class ArgumentBuilder<T> {
     /**
      * Adds [Argument.requirements]
      */
-    fun addRequirements(requirements: List<Requirement<*, *>>): ArgumentBuilder<T> {
+    fun addRequirements(requirements: List<Requirement<*, *>>): ArgumentBuilder<I, T> {
         this.requirements.addAll(requirements)
         return this
     }
@@ -148,7 +159,7 @@ class ArgumentBuilder<T> {
     /**
      * Adds a [Requirement][Argument.requirements]
      */
-    fun addRequirement(requirement: Requirement<*, *>): ArgumentBuilder<T> {
+    fun addRequirement(requirement: Requirement<*, *>): ArgumentBuilder<I, T> {
         this.requirements.add(requirement)
         return this
     }
@@ -156,7 +167,7 @@ class ArgumentBuilder<T> {
     /**
      * Removes a [Requirement][Argument.requirements]
      */
-    fun removeRequirement(requirement: Requirement<*, *>): ArgumentBuilder<T> {
+    fun removeRequirement(requirement: Requirement<*, *>): ArgumentBuilder<I, T> {
         this.requirements.remove(requirement)
         return this
     }
@@ -164,7 +175,7 @@ class ArgumentBuilder<T> {
     /**
      * Clear [Argument.requirements]
      */
-    fun clearRequirements(): ArgumentBuilder<T> {
+    fun clearRequirements(): ArgumentBuilder<I, T> {
         this.requirements.clear()
         return this
     }
@@ -172,7 +183,7 @@ class ArgumentBuilder<T> {
     /**
      * Adds [Command.requiredInfo].
      */
-    fun addRequiredInfo(requiredInfoList: List<RequiredInformation>): ArgumentBuilder<T> {
+    fun addRequiredInfo(requiredInfoList: List<RequiredInformation>): ArgumentBuilder<I, T> {
         this.requiredInfo.addAll(requiredInfoList)
         return this
     }
@@ -180,7 +191,7 @@ class ArgumentBuilder<T> {
     /**
      * Add a [Requirement][Command.requiredInfo].
      */
-    fun addRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<T> {
+    fun addRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<I, T> {
         this.requiredInfo.add(requiredInfo)
         return this
     }
@@ -188,7 +199,7 @@ class ArgumentBuilder<T> {
     /**
      * Removes a [Requirement][Command.requiredInfo].
      */
-    fun removeRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<T> {
+    fun removeRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<I, T> {
         this.requiredInfo.remove(requiredInfo)
         return this
     }
@@ -196,7 +207,7 @@ class ArgumentBuilder<T> {
     /**
      * Clear [Command.requiredInfo]
      */
-    fun clearRequiredInfo(): ArgumentBuilder<T> {
+    fun clearRequiredInfo(): ArgumentBuilder<I, T> {
         this.requiredInfo.clear()
         return this
     }
@@ -204,9 +215,16 @@ class ArgumentBuilder<T> {
     /**
      * Sets [Argument.handler]
      */
-    fun handler(handler: ArgumentHandler<out T>?): ArgumentBuilder<T> {
+    fun handler(handler: ArgumentHandler<out T>?): ArgumentBuilder<I, T> {
         this.handler = handler
         return this
+    }
+
+    private fun buildArgumentType(): ArgumentType<*, out T> {
+        if (this.type != null)
+            return this.type!!
+
+        return simpleArgumentType(transformer, validator, possibilities, this.typeInfo)
     }
 
     /**
@@ -217,12 +235,9 @@ class ArgumentBuilder<T> {
             name = this.name,
             description = this.description,
             isOptional = this.isOptional,
-            type = this.type,
+            type = this.buildArgumentType(),
             isMultiple = this.isMultiple,
             defaultValue = this.defaultValue,
-            validator = this.validator,
-            transformer = this.transformer,
-            possibilities = this.possibilities,
             requirements = this.requirements.toList(),
             requiredInfo = this.requiredInfo.toSet(),
             handler = this.handler

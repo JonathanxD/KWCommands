@@ -43,9 +43,7 @@ import com.github.jonathanxd.kwcommands.json.JsonCommandParser
 import com.github.jonathanxd.kwcommands.json.getCommandJsonObj
 import com.github.jonathanxd.kwcommands.json.resolveJsonString
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
@@ -116,7 +114,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getOrNull(type: TypeInfo<T>): ArgumentType<T>? =
-            this.argumentTypeProviders.getArgumentType(type) ?: getGlobalArgumentType(type)
+            this.argumentTypeProviders.getArgumentType(type) ?: getGlobalArgumentTypeOrNull(type)
 
 
     /**
@@ -258,9 +256,9 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     fun <T : Any> dispatchHandlersFrom(klass: Class<T>,
                                        instanceProvider: (Class<*>) -> Any?,
                                        includeInner: Boolean = true): List<DispatchHandler> =
-        mutableListOf<DispatchHandler>().also {
-            dispatchHandlersFrom(klass, instanceProvider, includeInner, it)
-        }
+            mutableListOf<DispatchHandler>().also {
+                dispatchHandlersFrom(klass, instanceProvider, includeInner, it)
+            }
 
     fun <T : Any> dispatchHandlersFrom(klass: Class<T>,
                                        instanceProvider: (Class<*>) -> Any?,
@@ -540,11 +538,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
             val defaultPoss = {
                 argumentType?.possibilities
-                        ?: possibilitiesFunc { _, _ -> emptyList() }
+                        ?: possibilitiesFunc { emptyList() }
             }
 
             val possibilities = argumentAnnotation?.possibilities
-                    ?.get(PossibilitiesFunc::class.java, defaultPoss)
+                    ?.get(Possibilities::class.java, defaultPoss)
                     ?: defaultPoss()
 
             val defaultTransformer = { argumentType.require(type).transformer }
@@ -573,11 +571,13 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     description = TextParser.parse(description),
                     isOptional = isOptional,
                     isMultiple = isMultiple,
-                    possibilities = possibilities,
-                    transformer = transformer,
-                    validator = validator,
                     defaultValue = defaultValue,
-                    type = type,
+                    type = simpleArgumentType(
+                            transformer as Transformer<SingleInput, Any?>,
+                            validator as Validator<SingleInput>,
+                            possibilities,
+                            type
+                    ),
                     requiredInfo = emptySet(),
                     requirements = argumentAnnotation?.requirements.orEmpty().toSpecs(),
                     handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
@@ -715,11 +715,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                     val defaultPoss = {
                         argumentType?.possibilities
-                                ?: possibilitiesFunc { _, _ -> emptyList() }
+                                ?: possibilitiesFunc { emptyList() }
                     }
 
                     val possibilities = argumentAnnotation.possibilities
-                            .get(PossibilitiesFunc::class.java, defaultPoss)
+                            .get(Possibilities::class.java, defaultPoss)
                             ?: defaultPoss()
 
                     val defaultTransformer = { argumentType.require(type).transformer }
@@ -736,19 +736,19 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val defaultValue = argumentType?.defaultValue
                     val requirements = argumentAnnotation.requirements.toSpecs()
 
+                    @Suppress("UNCHECKED_CAST")
                     val argument = Argument(
                             id = id,
                             name = "",
                             description = TextParser.parse(description),
                             isOptional = isOptional,
                             isMultiple = isMultiple,
-                            possibilities = possibilities,
-                            transformer = transformer,
-                            validator = validator,
                             defaultValue = defaultValue,
                             requirements = requirements,
                             requiredInfo = emptySet(),
-                            type = type
+                            type = simpleArgumentType(transformer as Transformer<SingleInput, Any?>,
+                                    validator as Validator<SingleInput>,
+                                    possibilities, type)
                     )
 
                     arguments += argument
@@ -842,8 +842,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                         provide(component)?.let { provided ->
                             @Suppress("UNCHECKED_CAST")
                             return ArgumentType(
-                                    ListValidator(provided.validator),
-                                    ListTransformer(provided.transformer),
+                                    ListValidator(provided.validator as Validator<Input>),
+                                    ListTransformer(provided.transformer as Transformer<Input, Any?>),
                                     provided.possibilities,
                                     listOf(provided.defaultValue)
                             ) as ArgumentType<T>
@@ -860,8 +860,10 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                         if (keyType != null && valueType != null) {
                             @Suppress("UNCHECKED_CAST")
                             return ArgumentType(
-                                    MapValidator(keyType.validator, valueType.validator),
-                                    MapTransformer(keyType.transformer, valueType.transformer),
+                                    MapValidator(keyType.validator as Validator<Input>,
+                                            valueType.validator as Validator<Input>),
+                                    MapTransformer(keyType.transformer as Transformer<Input, Any?>,
+                                            valueType.transformer as Transformer<Input, Any?>),
                                     MapPossibilitiesFunc(keyType.possibilities, valueType.possibilities),
                                     keyType.defaultValue?.let { k ->
                                         valueType.defaultValue?.let { v ->
@@ -932,7 +934,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     return ArgumentType(type,
                             ReflectListValidator(storage, component),
                             ReflectListTransform(storage, component),
-                            possibilitiesFunc { _, _ -> emptyList() },
+                            possibilitiesFunc { emptyList() },
                             mutableListOf<Any?>()).cast(type)
 
                 return null

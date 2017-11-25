@@ -34,7 +34,7 @@ import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
@@ -60,7 +60,7 @@ inline fun <reified T> Argument(id: Any,
                                 isMultiple: Boolean,
                                 validator: Validator,
                                 transformer: Transformer<T>,
-                                possibilities: PossibilitiesFunc,
+                                possibilities: Possibilities,
                                 requirements: List<Requirement<*, *>>,
                                 requiredInfo: Set<RequiredInformation>,
                                 handler: ArgumentHandler<T>? = null): Argument<T> =
@@ -80,7 +80,7 @@ inline fun <reified T> Argument(id: Any,
 
 inline fun <reified T> ArgumentType(validator: Validator,
                                     transformer: Transformer<T>,
-                                    possibilities: PossibilitiesFunc,
+                                    possibilities: Possibilities,
                                     defaultValue: T?): ArgumentType<T> =
         ArgumentType(typeInfo(), validator, transformer, possibilities, defaultValue)
 

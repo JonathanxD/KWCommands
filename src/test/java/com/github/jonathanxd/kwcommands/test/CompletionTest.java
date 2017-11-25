@@ -29,8 +29,6 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
-import com.github.jonathanxd.kwcommands.argument.Argument;
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.completion.Completion;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
@@ -38,8 +36,6 @@ import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
-import com.github.jonathanxd.kwcommands.parser.Input;
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -48,7 +44,6 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.util.KLocale;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.List;
@@ -79,12 +74,39 @@ public class CompletionTest {
         HelpInfoHandler localizedHandler = new CommonHelpInfoHandler();
         Printer localizedSysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        String s00 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]} --n2 2";
+        List<String> complete;
+
+        /*String s00 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]} --n2 2";
         String s0 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]";
         String s = "mapcmd 1 --values {a=\"man, i l u = {\", A=";
 
-        List<String> complete = completion.complete(s, null);
+        complete = completion.complete(s, null);
 
+        System.out.println("== Complete ==");
+
+        for (String s1 : complete) {
+            System.out.println(s1);
+        }
+
+        System.out.println("== Complete ==");*/
+
+
+        String x;
+/*
+        x = "mapcmd 1 --values {a=\"man, i l u = {\", ";
+        complete = completion.complete(x, null);
+
+        System.out.println("== Complete ==");
+
+        for (String s1 : complete) {
+            System.out.println(s1);
+        }
+
+        System.out.println("== Complete ==");
+*/
+
+        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=";
+        complete = completion.complete(x, null);
 
         System.out.println("== Complete ==");
 
@@ -99,6 +121,17 @@ public class CompletionTest {
     public void mapcmd(@Arg("n") int n,
                        @Arg(value = "values", multiple = true) Map<E, X> values,
                        @Arg("n2") int n2) {
+
+    }
+
+    // setmap {nome=Jonathan,valores={idade=18, linguagens_principais=[Java, Kotlin]}
+
+    @Cmd(description = "Set map test")
+    public void setmap(@Arg("n") int n,
+                       @Arg(value = "values", multiple = true,
+                               transformer = MyMapTransformer.class,
+                               validator = MyMapValidator.class,
+                               possibilities = MyMapPossibilities.class) Map<String, Object> values) {
 
     }
 

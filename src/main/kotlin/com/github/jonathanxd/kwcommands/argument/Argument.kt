@@ -28,11 +28,8 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
 import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
@@ -46,22 +43,16 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * @property isMultiple Whether the argument is a multiple argument or not. Varargs arguments takes values until
  * [validator] returns `false` to a value, the transformer should return mutable collection, there is a predefined
  * [Transformer] for lists: [com.github.jonathanxd.kwcommands.util.ListTransformer].
- * @property validator Argument value validator.
- * @property transformer Transformer of argument to a object of type [T].
  * @property requirements Requirements of this argument.
  * @property requiredInfo Identifications of required information for this argument work.
- * @property possibilities Possibilities of argument values.
  */
 data class Argument<out T>(val id: Any,
                            val name: String,
                            val description: TextComponent,
                            val isOptional: Boolean,
-                           val type: TypeInfo<out T>,
+                           val type: ArgumentType<out T>,
                            val defaultValue: T?,
                            val isMultiple: Boolean,
-                           val validator: Validator,
-                           val transformer: Transformer<T>,
-                           val possibilities: PossibilitiesFunc,
                            val requirements: List<Requirement<*, *>>,
                            val requiredInfo: Set<RequiredInformation>,
                            val handler: ArgumentHandler<out T>? = null) {

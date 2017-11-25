@@ -135,6 +135,9 @@ public class JsonAnnotationTest {
                 }, false));
 
         return commandResults.getRight();
+
+
+
     }
 
     public void register(@Arg("name") String name, @Arg("email") String email) {

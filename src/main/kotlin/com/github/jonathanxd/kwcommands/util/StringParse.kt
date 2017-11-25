@@ -33,10 +33,7 @@ import com.github.jonathanxd.iutils.opt.specialized.OptObject
 import com.github.jonathanxd.jwiutils.kt.*
 import com.github.jonathanxd.kwcommands.exception.ListParseException
 import com.github.jonathanxd.kwcommands.exception.MapParseException
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.ListInput
-import com.github.jonathanxd.kwcommands.parser.MapInput
-import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.kwcommands.parser.*
 
 const val ESCAPE = '\\'
 const val MAP_OPEN = '{'
@@ -215,7 +212,9 @@ fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
     this.jumpBlankSpace()
 
     if (!this.hasNext())
-        return left(NoMoreElementsInputParseFail(this))
+        return left(NoMoreElementsInputParseFail(ListInput(emptyList(), this.sourceString,
+                this.sourceIndex,
+                this.sourceIndex),this))
 
     val strBuilder = InputBuilder(this.sourceString)
     var lastIsEscape = false
@@ -317,6 +316,9 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
     while (this.hasNext()) {
         this.jumpBlankSpace()
 
+        if (!this.hasNext())
+            return left(ListElementNotFound(ListInput(list, this.sourceString, start, this.sourceIndex), this))
+
         val next = this.next()
 
         if (next == LIST_CLOSE)
@@ -340,11 +342,13 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
                     ListInput(list, this.sourceString, start, this.sourceIndex + if (define.isPresent) 1 else 0),
                     this))
 
-        if (elem.isLeft)
+        if (elem.isLeft) {
+            list += elem.left.input
             return left(NestedInputParseFail(
                     ListElementNotFound(ListInput(list, this.sourceString, start, this.sourceIndex), this),
                     elem.left
             ))
+        }
 
         list += elem.right
 
@@ -389,7 +393,7 @@ fun SourcedCharIterator.parseMapInput(escape: Char = '\\',
     this.next().also {
         if (it != MAP_OPEN)
             return left(MapTokenExpectedFail(listOf(MAP_OPEN), it.toString(),
-                    MapInput(emptyMap(), this.sourceString, this.sourceIndex - 1, this.sourceIndex - 1),
+                    MapInput(emptyList(), this.sourceString, this.sourceIndex - 1, this.sourceIndex - 1),
                     this))
     }
 
@@ -402,11 +406,14 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
                                                             openCloseChars: List<Char> = listOf('"', '\''))
         : Either<InputParseFail, MapInput> {
 
-    val map = mutableMapOf<Input, Input>()
+    val map = mutableListOf<Pair<Input, Input>>()
     val start = this.sourceIndex
 
     while (this.hasNext()) {
         this.jumpBlankSpace()
+
+        if (!this.hasNext())
+            return left(MapKeyNotFound(MapInput(map, this.sourceString, start, this.sourceIndex), this))
 
         val next = this.next()
 
@@ -418,11 +425,13 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
         val k =
                 this.parseSingleInput(escape, listOf(' ') + defineChar, openCloseChars)
 
-        if (k.isLeft)
+        if (k.isLeft) {
+            map += k.left.input to EmptyInput(this.sourceString)
             return left(NestedInputParseFail(
                     MapKeyNotFound(MapInput(map, this.sourceString, start, this.sourceIndex), this),
                     k.left
             ))
+        }
 
         this.jumpBlankSpace()
 
@@ -439,13 +448,15 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
                         separators,
                         true)
 
-        if (v.isLeft)
+        if (v.isLeft) {
+            map += k.right to v.left.input
             return left(NestedInputParseFail(
                     MapValueNotFound(k.right, MapInput(map, this.sourceString, start, this.sourceIndex), this),
                     v.left
             ))
+        }
 
-        map.put(k.right, v.right)
+        map += k.right to v.right
 
         this.jumpBlankSpace()
 
@@ -532,28 +543,28 @@ class InputBuilder(val source: String) {
     fun isNotEmpty() = this.builder.isNotEmpty()
 }
 
-abstract class InputParseFail(val iter: SourcedCharIterator) {
+abstract class InputParseFail(val input: Input, val iter: SourcedCharIterator) {
     override fun toString(): String =
-            "${this::class.java.simpleName}[iter=$iter]"
+            "${this::class.java.simpleName}[input=$input, iter=$iter]"
 }
 
-class InputMalformationParseFail(val input: Input, iter: SourcedCharIterator) : InputParseFail(iter) {
+class InputMalformationParseFail(input: Input, iter: SourcedCharIterator) : InputParseFail(input, iter) {
     override fun toString(): String =
             "InputMalformationParseFail[input=$input, iter=$iter]"
 }
 
 
-abstract class ListInputParseFail(val list: ListInput, iter: SourcedCharIterator) : InputParseFail(iter) {
+abstract class ListInputParseFail(list: ListInput, iter: SourcedCharIterator) : InputParseFail(list, iter) {
     override fun toString(): String =
-            "${this::class.java.simpleName}[list=$list, iter=$iter]"
+            "${this::class.java.simpleName}[list=$input, iter=$iter]"
 }
 
-abstract class MapInputParseFail(val map: MapInput, iter: SourcedCharIterator) : InputParseFail(iter) {
+abstract class MapInputParseFail(map: MapInput, iter: SourcedCharIterator) : InputParseFail(map, iter) {
     override fun toString(): String =
-            "${this::class.java.simpleName}[map=$map, iter=$iter]"
+            "${this::class.java.simpleName}[map=$input, iter=$iter]"
 }
 
-class NoMoreElementsInputParseFail(iter: SourcedCharIterator) : InputParseFail(iter)
+class NoMoreElementsInputParseFail(input: Input, iter: SourcedCharIterator) : InputParseFail(input, iter)
 
 class ListElementNotFound(list: ListInput, iter: SourcedCharIterator) : ListInputParseFail(list, iter)
 class MapKeyNotFound(map: MapInput, iter: SourcedCharIterator) : MapInputParseFail(map, iter)
@@ -562,14 +573,14 @@ class MapValueNotFound(val key: Input,
                        iter: SourcedCharIterator) : MapInputParseFail(map, iter)
 
 class NestedInputParseFail(val fail: InputParseFail,
-                           val fail2: InputParseFail) : InputParseFail(fail.iter)
+                           val fail2: InputParseFail) : InputParseFail(fail.input, fail.iter)
 
 class MapTokenExpectedFail(val tokens: List<Char>,
                            val foundToken: String,
                            map: MapInput,
                            iter: SourcedCharIterator) : MapInputParseFail(map, iter) {
     override fun toString(): String =
-            "MapTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, map=$map, iter=$iter]"
+            "MapTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, map=$input, iter=$iter]"
 }
 
 class ListTokenExpectedFail(val tokens: List<Char>,
@@ -577,5 +588,5 @@ class ListTokenExpectedFail(val tokens: List<Char>,
                             list: ListInput,
                             iter: SourcedCharIterator) : ListInputParseFail(list, iter) {
     override fun toString(): String =
-            "ListTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, list=$list, iter=$iter]"
+            "ListTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, list=$input, iter=$iter]"
 }

@@ -32,7 +32,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.json.DelegatedTypeResolver
 import com.github.jonathanxd.kwcommands.json.TypeResolver
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 
@@ -76,7 +76,7 @@ internal class ReflectTypeResolver(val type: Class<*>,
         return DynamicHandler(sub, handlerType, instanceProvider, type, reflectionEnvironment)
     }
 
-    override fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc =
+    override fun resolvePossibilitiesFunc(type: TypeInfo<*>): Possibilities =
             this.reflectionEnvironment.getOrNull(type)?.possibilities
                     ?: super.resolvePossibilitiesFunc(type)
 

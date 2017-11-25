@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.reflect
 
-import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
@@ -36,21 +35,22 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
-
 sealed class None
 
-object NoneValidator : None(), Validator {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+object NoneValidator : None(), Validator<Input> {
+    override fun invoke(value: Input): Validation =
             valid()
+
 }
 
-object NoneTransformer : None(), Transformer<Any> {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Any =
-        value
+object NoneTransformer : None(), Transformer<Input, Any> {
+    override fun invoke(value: Input): Any =
+            value.toPlain()
+
 }
 
-object NonePossibilities : None(), PossibilitiesFunc {
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Possibility> =
+object NonePossibilities : None(), Possibilities {
+    override fun invoke(): List<Input> =
             emptyList()
 }
 

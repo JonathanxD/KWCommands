@@ -31,7 +31,7 @@ import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.command.Handler
@@ -93,7 +93,7 @@ interface TypeResolver {
      *
      * Commonly resolves the singleton instance using [getSingletonInstance].
      */
-    fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc
+    fun resolvePossibilitiesFunc(type: TypeInfo<*>): Possibilities
 
     /**
      * Resolves the argument default value based on [type].
@@ -143,7 +143,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
     val singletonInstances = mutableMapOf<Class<*>, Any?>()
     val commandHandlerResolvers = mutableSetOf<(input: String) -> Handler?>()
     val argumentHandlerResolvers = mutableSetOf<(input: String) -> ArgumentHandler<*>?>()
-    val possibilitiesResolvers = mutableSetOf<(type: TypeInfo<*>) -> PossibilitiesFunc?>()
+    val possibilitiesResolvers = mutableSetOf<(type: TypeInfo<*>) -> Possibilities?>()
     val transformerResolvers = mutableSetOf<(type: TypeInfo<*>) -> Transformer<Any?>?>()
     val validatorResolvers = mutableSetOf<(type: TypeInfo<*>) -> Validator?>()
     val defaultValueResolvers = mutableSetOf<(type: TypeInfo<*>) -> Any?>()
@@ -200,7 +200,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
         return this.apply(input)?.let { this.getSingletonInstance(it) as ArgumentHandler<*> }
     }
 
-    override fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc {
+    override fun resolvePossibilitiesFunc(type: TypeInfo<*>): Possibilities {
 
         this.possibilitiesResolvers.forEach {
             it(type)?.let {

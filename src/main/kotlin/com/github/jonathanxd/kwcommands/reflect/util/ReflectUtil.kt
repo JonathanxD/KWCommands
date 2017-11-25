@@ -77,6 +77,10 @@ fun <T : Any> KClass<out T>.get(base: Class<T>, baseValue: () -> T?): T? =
             } else null
         } catch (e: Throwable) {
             null
+        } ?: try {
+            this.java.getDeclaredConstructor().newInstance()
+        } catch (e: Throwable) {
+            null
         } ?: Reflection.getInstance(this.java)
                 ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.")
 

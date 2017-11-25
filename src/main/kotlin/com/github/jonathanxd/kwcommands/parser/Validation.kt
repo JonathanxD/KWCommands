@@ -61,6 +61,9 @@ fun validation(validations: List<Validation>): Validation =
 fun invalid(input: Input, validator: Validator, message: TextComponent?, supported: List<InputType>): Validation =
         Validation(listOf(validatedElement(input, validator, message, supported)))
 
+fun invalid(input: Input, validator: Validator, message: TextComponent?, supported: InputType): Validation =
+        Validation(listOf(validatedElement(input, validator, message, listOf(supported))))
+
 @JvmOverloads
 fun validatedElement(input: Input,
                      validator: Validator,

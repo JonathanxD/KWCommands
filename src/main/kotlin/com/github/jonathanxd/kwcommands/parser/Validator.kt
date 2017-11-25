@@ -37,13 +37,16 @@ import java.util.*
  * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
  * are invalid.
  */
-interface Validator {
+interface Validator<in I: Input> {
     val name: TextComponent
         get() = Text.of(this::class.java.simpleName)
 
-    operator fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>,
-                        value: Input): Validation
+    operator fun invoke(value: I): Validation
+}
+/*
+
+interface MapValidator : Validator {
+    fun get()
 }
 
 abstract class SingleValidator(val expectedText: TextComponent,
@@ -68,4 +71,4 @@ abstract class SingleValidator(val expectedText: TextComponent,
     companion object {
         private val SINGLE_TYPE = Collections.unmodifiableList(listOf(SingleInputType))
     }
-}
+}*/
