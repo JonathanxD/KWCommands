@@ -40,7 +40,7 @@ import com.github.jonathanxd.kwcommands.util.InputParseFail
 class CommandInputParseFail(val command: Command,
                             val parsedArgs: List<ArgumentContainer<*>>,
                             val argument: Argument<*>,
-                            val inputType: InputType,
+                            val inputType: InputType<*>,
                             val fail: InputParseFail,
                             parsedCommands: List<CommandContainer>,
                             manager: CommandManager,

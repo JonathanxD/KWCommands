@@ -41,6 +41,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.parser.SingleInput;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
@@ -53,6 +54,10 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
@@ -75,7 +80,7 @@ public class Basic {
                     return Unit.INSTANCE;
                 })
                 .addRequiredInfo(new RequiredInformation(SPEAKER_INFO_ID))
-                .addArgument(Argument.<Music>builder()
+                .addArgument(Argument.<SingleInput, Music>builder()
                         .id("music")
                         .type(TypeInfo.of(Music.class))
                         .validator(new EnumValidator<>(Music.class))

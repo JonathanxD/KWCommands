@@ -40,7 +40,7 @@ import com.github.jonathanxd.kwcommands.util.KLocale
 import org.junit.Assert
 import org.junit.Test
 
-class MapTest {
+class MapTest2 {
     @Test
     fun test() {
         val printer = CommonPrinter(KLocale.localizer, ::println)
@@ -75,7 +75,7 @@ class MapTest {
                 +stringArg {
                     id { "userId" }
                     description { textOf("Identification of user to promote") }
-                    transformer { _, _, it -> (it as SingleInput).input.toLowerCase() }
+                    transformer { it.input.toLowerCase() }
                 }
                 +listArg(enumArg<DslTest.Group> {
                     id {"groupList"}

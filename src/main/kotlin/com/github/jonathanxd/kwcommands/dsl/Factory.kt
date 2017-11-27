@@ -127,12 +127,16 @@ class BuildingArgument<I : Input, T> {
         }
     }
 
+    @Deprecated("Will be removed before 1.3 release")
     @Suppress("NOTHING_TO_INLINE")
     inline fun buildArgumentType(): ArgumentType<*, out T> {
         if (this.type != null)
             return this.type!!
 
-        return simpleArgumentType(transformer, validator, possibilities, this.typeInfo!!)
+        return simpleArgumentType(transformer as Transformer<SingleInput, T>,
+                validator as Validator<SingleInput>,
+                possibilities,
+                this.typeInfo!!)
     }
 
     @Suppress("NOTHING_TO_INLINE")
@@ -402,7 +406,8 @@ inline fun <reified T> listArg(base: Argument<T>,
             //type = TypeInfo.builderOf(List::class.java).of(base.type).buildGeneric()
             isOptional = base.isOptional
             isMultiple = true
-            type = ListArgumentType(listOf(base.type), TypeInfo.builderOf(List::class.java).of(base.type.type).buildGeneric())
+            type = ListArgumentType(base.type,
+                    TypeInfo.builderOf(List::class.java).of(base.type.type).buildGeneric())
             /*
                 validator = ListValidator(base.validator)
                 transformer = ListTransformer(base.transformer)

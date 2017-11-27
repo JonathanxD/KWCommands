@@ -28,8 +28,8 @@
 package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeStorage
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
@@ -46,18 +46,18 @@ class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl
             return environment.registerProvider(argumentTypeProvider)
         }
 
-        override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>? {
+        override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<*, T>? {
             return environment.getArgumentTypeOrNull(type)
         }
 
-        override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T> {
+        override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<*, T> {
             return environment.getArgumentType(type)
         }
 
     }
 
     override fun <T> registerClass(klass: Class<T>, instance: T, owner: Any): Boolean {
-        val commands = environment.fromClass(klass, { if(it == klass) instance else null }, owner, false)
+        val commands = environment.fromClass(klass, { if (it == klass) instance else null }, owner, false)
         return this.environment.registerCommands(commands, owner)
     }
 

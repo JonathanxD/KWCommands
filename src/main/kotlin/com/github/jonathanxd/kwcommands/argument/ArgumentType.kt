@@ -28,12 +28,26 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.parser.*
 
-sealed class ArgumentType<I : Input, T>(val type: TypeInfo<out T>) {
-    abstract val transformer: Transformer<I, T>
-    abstract val validator: Validator<I>
-    abstract val possibilities: Possibilities
+sealed class ArgumentType<I : Input, out T>(val defaultValue: T?,
+                                            val inputType: InputType<I>,
+                                            val type: TypeInfo<out T>) {
+    protected abstract val transformer: Transformer<I, T>
+    protected abstract val validator: Validator<I>
+    protected abstract val possibilities: Possibilities
+
+    @Suppress("UNCHECKED_CAST")
+    fun transform(input: Input): T =
+            this.transformer.invoke(input as I)
+
+    @Suppress("UNCHECKED_CAST")
+    fun validate(input: Input): Validation =
+            this.validator.invoke(this, input as I)
+
+    fun possibilities(): List<Input> =
+            this.possibilities.invoke()
 }
 
 /**
@@ -45,52 +59,134 @@ sealed class BaseArgumentType<I : Input, T>(
         override val transformer: Transformer<I, T>,
         override val validator: Validator<I>,
         override val possibilities: Possibilities,
-        type: TypeInfo<out T>) : ArgumentType<I, T>(type)
+        defaultValue: T?,
+        inputType: InputType<I>,
+        type: TypeInfo<out T>) : ArgumentType<I, T>(defaultValue, inputType, type)
 
-class SingleArgumentType<I : Input, T>(
-        transformer: Transformer<I, T>,
-        validator: Validator<I>,
+class SingleArgumentType<T>(
+        transformer: Transformer<SingleInput, T>,
+        validator: Validator<SingleInput>,
         possibilities: Possibilities,
-        type: TypeInfo<out T>) : BaseArgumentType<I, T>(transformer, validator, possibilities, type)
+        defaultValue: T?,
+        type: TypeInfo<out T>)
+    : BaseArgumentType<SingleInput, T>(transformer, validator, possibilities, defaultValue, SingleInputType, type)
 
-class ListArgumentType<T>(val list: List<ArgumentType<*, *>>,
-                          type: TypeInfo<out List<T>>) : ArgumentType<ListInput, List<T>>(type) {
+// TODO: Any argument type and handle ComplexMapArgumentType
+// And add ExactListArgumentType to parse elements by respective ArgumentType
+
+class AnyArgumentType: ArgumentType<Input, Any?>(null, AnyInputType, typeInfo()) {
+    override val validator: Validator<Input> = object : Validator<Input> {
+        override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
+                valid()
+    }
+
+    override val transformer: Transformer<Input, Any?> = object : Transformer<Input, Any?> {
+        override fun invoke(value: Input): Any? =
+                value.toPlain()
+    }
+
+    override val possibilities: Possibilities = object : Possibilities {
+        override fun invoke(): List<Input> =
+                emptyList()
+    }
+
+}
+
+class ExactListArgumentType<T>(val elementTypes: List<ArgumentType<*, *>>,
+                               type: TypeInfo<out List<T>>)
+    : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
+    override val validator: Validator<ListInput> = ExactListValidator(this)
+    override val transformer: Transformer<ListInput, List<T>> = ExactListTransformer(this)
+    override val possibilities: Possibilities = ExactListPossibilities(this)
+}
+
+class ListArgumentType<T>(val elementType: ArgumentType<*, *>,
+                          type: TypeInfo<out List<T>>)
+    : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
     override val validator: Validator<ListInput> = ListValidator(this)
     override val transformer: Transformer<ListInput, List<T>> = ListTransformer(this)
     override val possibilities: Possibilities = ListPossibilities(this)
 }
 
-class MapArgumentType<K, V>(val pairs: List<Pair<ArgumentType<*, *>, ArgumentType<*, *>>>,
-                            type: TypeInfo<out Map<K, V>>) : ArgumentType<MapInput, Map<K, V>>(type) {
+class MapArgumentType<K, V>(val keyType: ArgumentType<*, *>,
+                            val valueType: ArgumentType<*, *>,
+                            type: TypeInfo<out Map<K, V>>)
+    : ArgumentType<MapInput, Map<K, V>>(emptyMap(), MapInputType, type) {
     override val possibilities: Possibilities = MapPossibilities(this)
     override val transformer: Transformer<MapInput, Map<K, V>> = MapTransformer(this)
     override val validator: Validator<MapInput> = MapValidator(this)
 }
 
-class PairArgumentType<A, B>(val pairType: ArgumentType<MapInput, Pair<A, B>>,
-                             type: TypeInfo<out Pair<A, B>>) : ArgumentType<MapInput, Pair<A, B>>(type) {
+class PairArgumentType<A, B>(val aPairType: ArgumentType<*, A>,
+                             val bPairType: ArgumentType<*, B>,
+                             val required: Boolean,
+                             type: TypeInfo<out Pair<A, B>>)
+    : ArgumentType<MapInput, Pair<A, B>>(null, MapInputType, type) {
+
+    constructor(aPairType: ArgumentType<*, A>,
+                bPairType: ArgumentType<*, B>,
+                type: TypeInfo<out Pair<A, B>>) : this(aPairType, bPairType, true, type)
+
     override val transformer: Transformer<MapInput, Pair<A, B>> = PairTransformer(this)
     override val validator: Validator<MapInput> = PairValidator(this)
     override val possibilities: Possibilities = PairPossibilities(this)
 }
 
 class ComplexMapArgumentType<K, V>(val types: List<PairArgumentType<*, *>>,
-                                   type: TypeInfo<out Map<K, V>>) : ArgumentType<MapInput, Map<K, V>>(type) {
+                                   type: TypeInfo<out Map<K, V>>)
+    : ArgumentType<MapInput, Map<K, V>>(emptyMap(), MapInputType, type) {
     override val transformer: Transformer<MapInput, Map<K, V>> = ComplexMapTransformer(this)
     override val validator: Validator<MapInput> = ComplexMapValidator(this)
     override val possibilities: Possibilities = ComplexMapPossibilities(this)
 }
 
+class ExactListValidator(val listArgumentType: ExactListArgumentType<*>) : Validator<ListInput> {
+    override fun invoke(argumentType: ArgumentType<ListInput, *>, value: ListInput): Validation {
+        val input = value.input
+        val elementTypes = listArgumentType.elementTypes
+
+        if (input.size < elementTypes.size) {
+            val missing = elementTypes.subList(input.size, elementTypes.size)
+
+            return invalid(value, listArgumentType, this, null,
+                    missing.map { it.inputType })
+        }
+
+        val invalids = input.mapIndexed { index_, input_ ->
+            elementTypes[index_].validate(input_).invalids
+        }.flatMap { it }
+
+        if (invalids.isNotEmpty())
+            return Validation(invalids)
+
+        return valid()
+    }
+}
+
+class ExactListTransformer<out T>(val listArgumentType: ExactListArgumentType<*>) : Transformer<ListInput, List<T>> {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun invoke(value: ListInput): List<T> {
+        val vInput = value.input
+        val elements = listArgumentType.elementTypes
+
+        return vInput.mapIndexed { index, input ->
+            elements[index].transform(input)
+        } as List<T>
+    }
+}
+
+class ExactListPossibilities(val listArgumentType: ExactListArgumentType<*>) : Possibilities {
+    override fun invoke(): List<Input> =
+            listArgumentType.elementTypes.map { ListInput(it.possibilities()) }
+
+}
 
 class ListValidator(val listArgumentType: ListArgumentType<*>) : Validator<ListInput> {
-    override fun invoke(value: ListInput): Validation {
-        val validations = value.input.map { input ->
-            val m = listArgumentType.list.map { it.validator.invokeAsInputCapable(input) }
-
-            if (m.none { it.isValid })
-                m
-            else emptyList()
-        }.flatMap { it }.filter { it.isInvalid }.flatMap { it.invalids }
+    override fun invoke(argumentType: ArgumentType<ListInput, *>, value: ListInput): Validation {
+        val validations = value.input.map {
+            listArgumentType.elementType.validate(it)
+        }.filter { it.isInvalid }.flatMap { it.invalids }
 
         if (validations.isNotEmpty())
             return Validation(validations)
@@ -101,34 +197,23 @@ class ListValidator(val listArgumentType: ListArgumentType<*>) : Validator<ListI
 
 class ListTransformer<out T>(val listArgumentType: ListArgumentType<*>) : Transformer<ListInput, List<T>> {
 
-    private fun getTransformer(value: Input): Transformer<*, *> =
-            listArgumentType.list.first { it.validator.invokeAsInputCapable(value).isValid }.transformer
-
     @Suppress("UNCHECKED_CAST")
     override fun invoke(value: ListInput): List<T> =
-            value.input.map { getTransformer(it).invokeAsInputCapable(it) } as List<T>
+            value.input.map { this.listArgumentType.elementType.transform(it) } as List<T>
 }
 
 class ListPossibilities(val listArgumentType: ListArgumentType<*>) : Possibilities {
     override fun invoke(): List<Input> =
-            this.listArgumentType.list.map { it.possibilities() }.flatMap { it }
-
+            listOf(ListInput(this.listArgumentType.elementType.possibilities()))
 }
 
 class MapValidator(val mapArgumentType: MapArgumentType<*, *>) : Validator<MapInput> {
-    override fun invoke(value: MapInput): Validation {
+    override fun invoke(argumentType: ArgumentType<MapInput, *>, value: MapInput): Validation {
 
         val validations = value.input.map { (k, v) ->
-            val m = mapArgumentType.pairs.map { (kType, vType) ->
-                kType.validator.invokeAsInputCapable(k) to vType.validator.invokeAsInputCapable(v)
-            }
-
-            if (m.none { (a, b) -> a.isValid && b.isValid })
-                m
-            else emptyList()
-        }.flatMap { it }
-                .filter { (a, b) -> a.isInvalid || b.isInvalid }
-                .flatMap { (a, b) -> a.invalids + b.invalids }
+            mapArgumentType.keyType.validate(k) +
+                    mapArgumentType.valueType.validate(v)
+        }.filter { it.isInvalid }.flatMap { it.invalids }
 
         if (validations.isNotEmpty())
             return Validation(validations)
@@ -138,61 +223,60 @@ class MapValidator(val mapArgumentType: MapArgumentType<*, *>) : Validator<MapIn
 }
 
 class MapTransformer<K, V>(val mapArgumentType: MapArgumentType<*, *>) : Transformer<MapInput, Map<K, V>> {
-    private fun getKeyTransformer(value: Input): Transformer<*, *> =
-            mapArgumentType.pairs.first { (it, _) -> it.validator.invokeAsInputCapable(value).isValid }
-                    .first.transformer
-
-    private fun getValueTransformer(value: Input): Transformer<*, *> =
-            mapArgumentType.pairs.first { (_, it) -> it.validator.invokeAsInputCapable(value).isValid }
-                    .second.transformer
-
     @Suppress("UNCHECKED_CAST")
     override fun invoke(value: MapInput): Map<K, V> =
             value.input.map { (k, v) ->
-                getKeyTransformer(k).invokeAsInputCapable(k) to getValueTransformer(v).invokeAsInputCapable(v)
+                this.mapArgumentType.keyType.transform(k) to
+                        this.mapArgumentType.valueType.transform(v)
             }.toMap() as Map<K, V>
 
 }
 
 class MapPossibilities(val mapArgumentType: MapArgumentType<*, *>) : Possibilities {
     override fun invoke(): List<Input> =
-            this.mapArgumentType.pairs.map { (k, v) ->
-                k.possibilities() to v.possibilities()
-            }.flatMap { p ->
-                val list = mutableListOf<Pair<Input, Input>>()
+            (this.mapArgumentType.keyType.possibilities() to
+                    this.mapArgumentType.valueType.possibilities()).let { p ->
+                val map = mutableListOf<Pair<Input, Input>>()
 
-                p.first.forEach { a ->
-                    p.second.forEach {  b ->
-                        list += a to b
+                for (input in p.first) {
+                    for (input2 in p.second) {
+                        map += input to input2
                     }
                 }
 
-                list
-            }.let { listOf(MapInput(it)) }
+                listOf(MapInput(map))
+            }
+}
+
+class PairValidator<A, B>(val pairArgumentType: PairArgumentType<A, B>) : Validator<MapInput> {
+    override fun invoke(argumentType: ArgumentType<MapInput, *>, value: MapInput): Validation =
+            value.input.single().let { (a, b) ->
+                this.pairArgumentType.aPairType.validate(a) +
+                        this.pairArgumentType.bPairType.validate(b)
+            }
 
 }
 
-class PairValidator<A, B>(val pairArgumentType: PairArgumentType<A, B>): Validator<MapInput> {
-    override fun invoke(value: MapInput): Validation =
-            this.pairArgumentType.pairType.validator.invoke(value)
-}
-
-class PairTransformer<A, B>(val pairArgumentType: PairArgumentType<A, B>): Transformer<MapInput, Pair<A, B>> {
+class PairTransformer<A, B>(val pairArgumentType: PairArgumentType<A, B>) : Transformer<MapInput, Pair<A, B>> {
     override fun invoke(value: MapInput): Pair<A, B> =
-            this.pairArgumentType.pairType.transformer.invoke(value)
+            value.input.single().let { (a, b) ->
+                this.pairArgumentType.aPairType.transform(a) to
+                        this.pairArgumentType.bPairType.transform(b)
+            }
 }
 
-class PairPossibilities(val pairArgumentType: PairArgumentType<*, *>): Possibilities {
+class PairPossibilities(val pairArgumentType: PairArgumentType<*, *>) : Possibilities {
     override fun invoke(): List<Input> =
-            this.pairArgumentType.pairType.possibilities.invoke()
+            this.pairArgumentType.aPairType.possibilities() +
+                    this.pairArgumentType.bPairType.possibilities()
 }
 
 class ComplexMapValidator(val complexMapArgumentType: ComplexMapArgumentType<*, *>) : Validator<MapInput> {
-    override fun invoke(value: MapInput): Validation {
+    override fun invoke(argumentType: ArgumentType<MapInput, *>, value: MapInput): Validation {
 
         val validations = value.input.map { (k, v) ->
             val m = this.complexMapArgumentType.types.map {
-                it.pairType.validator.invoke(MapInput(listOf(k to v)))
+                it.aPairType.validate(k) + it.bPairType.validate(v)
             }
 
             if (m.none { it.isValid })
@@ -209,13 +293,13 @@ class ComplexMapValidator(val complexMapArgumentType: ComplexMapArgumentType<*, 
 
 class ComplexMapTransformer<K, V>(val complexMapArgumentType: ComplexMapArgumentType<*, *>)
     : Transformer<MapInput, Map<K, V>> {
-    private fun getTransformer(value: Input): Transformer<*, Pair<Any?, Any?>> =
-            complexMapArgumentType.types.first { it.validator.invokeAsInputCapable(value).isValid }.transformer
+    private fun getTransformer(value: Input): PairArgumentType<*, *> =
+            complexMapArgumentType.types.first { it.validate(value).isValid }
 
     @Suppress("UNCHECKED_CAST")
     override fun invoke(value: MapInput): Map<K, V> =
             value.input.map { (k, v) ->
-                getTransformer(k).invokeAsInputCapableChecked(MapInput(listOf(k to v)))
+                getTransformer(k).transform(MapInput(listOf(k to v)))
             }.toMap() as Map<K, V>
 
 }
@@ -228,7 +312,7 @@ class ComplexMapPossibilities(val complexMapArgumentType: ComplexMapArgumentType
                 val list = mutableListOf<Pair<Input, Input>>()
 
                 p.first.forEach { a ->
-                    p.second.forEach {  b ->
+                    p.second.forEach { b ->
                         list += a to b
                     }
                 }
@@ -238,9 +322,15 @@ class ComplexMapPossibilities(val complexMapArgumentType: ComplexMapArgumentType
 
 }
 
+/*
 @Suppress("UNCHECKED_CAST")
-fun Validator<*>.invokeAsInputCapable(input: Input): Validation =
-        (this as Validator<Input>).invoke(input)
+fun Validator<*>.invokeAsInputCapable(argumentType: ArgumentType<Input, *>, input: Input): Validation =
+        (this as Validator<Input>).invoke(argumentType, input)
+*/
+
+@Suppress("UNCHECKED_CAST")
+fun <I : Input> Validator<I>.invokeAsInputCapable(argumentType: ArgumentType<I, *>, input: Input): Validation =
+        this.invoke(argumentType, input as I)
 
 @Suppress("UNCHECKED_CAST")
 fun Transformer<*, *>.invokeAsInputCapable(input: Input): Any? =

@@ -27,18 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
-import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
-import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
-import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 inline fun <reified T> InformationManager.registerInformation(tags: Array<String>, value: T, description: String? = null)
         = this.registerInformation(Information.Id(typeInfo(), tags), value, description)
@@ -48,41 +40,6 @@ inline fun <reified T> Information(tags: Array<String>, value: T, description: S
 
 inline fun <reified T> InformationId(tags: Array<String>): Information.Id<T> =
         Information.Id(typeInfo(), tags)
-
-/**
- * Reified function to create argument with a implicit [TypeInfo] of type [T].
- */
-inline fun <reified T> Argument(id: Any,
-                                name: String,
-                                description: TextComponent,
-                                isOptional: Boolean,
-                                defaultValue: T?,
-                                isMultiple: Boolean,
-                                validator: Validator,
-                                transformer: Transformer<T>,
-                                possibilities: Possibilities,
-                                requirements: List<Requirement<*, *>>,
-                                requiredInfo: Set<RequiredInformation>,
-                                handler: ArgumentHandler<T>? = null): Argument<T> =
-        Argument(id,
-                name,
-                description,
-                isOptional,
-                typeInfo(),
-                defaultValue,
-                isMultiple,
-                validator,
-                transformer,
-                possibilities,
-                requirements,
-                requiredInfo,
-                handler)
-
-inline fun <reified T> ArgumentType(validator: Validator,
-                                    transformer: Transformer<T>,
-                                    possibilities: Possibilities,
-                                    defaultValue: T?): ArgumentType<T> =
-        ArgumentType(typeInfo(), validator, transformer, possibilities, defaultValue)
 
 
 /**

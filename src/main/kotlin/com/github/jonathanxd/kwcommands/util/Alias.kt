@@ -27,16 +27,17 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 
 
-typealias ValidatorAlias<I> = (value: I) -> Validation
+typealias ValidatorAlias<I> = (argumentType: ArgumentType<I, *>, value: I) -> Validation
 typealias TransformerAlias<I, T> = (value: I) -> T
 typealias PossibilitiesFuncAlias = () -> List<Input>
 
-inline fun <I : Input> validator(crossinline func: (value: I) -> Validation) =
+inline fun <I : Input> validator(crossinline func: (argumentType: ArgumentType<I, *>, value: I) -> Validation) =
         object : Validator<I> {
-            override fun invoke(value: I): Validation = func(value)
+            override fun invoke(argumentType: ArgumentType<I, *>, value: I): Validation = func(argumentType, value)
         }
 
 inline fun <I : Input, T> transformer(crossinline func: (value: I) -> T) =
@@ -53,13 +54,14 @@ inline fun possibilitiesFunc(crossinline func: () -> List<Input>) =
 
 
 @JvmName("stringValidator")
-inline fun validator(crossinline func: (value: String) -> Boolean) =
+inline fun validator(crossinline func: (argumentType: ArgumentType<*, *>, value: String) -> Boolean) =
         object : Validator<Input> {
-            override fun invoke(value: Input): Validation =
-                    (value as? SingleInput)?.let {
-                        if (func(it.input)) valid()
-                        else invalid(value, this, null, listOf(SingleInputType))
-                    } ?: invalid(value, this, null, listOf(SingleInputType))
+            override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
+                (value as? SingleInput)?.let {
+                    if (func(argumentType, it.input)) valid()
+                    else invalid(value, argumentType, this, null, listOf(SingleInputType))
+                } ?: invalid(value, argumentType, this, null, listOf(SingleInputType))
+
         }
 
 @JvmName("stringTransformer")

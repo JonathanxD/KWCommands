@@ -29,8 +29,12 @@ package com.github.jonathanxd.kwcommands.completion
 
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.parser.*
+import com.github.jonathanxd.kwcommands.parser.CommandParser
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.OwnerProvider
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 
 interface Completion {
 
@@ -107,32 +111,37 @@ interface AutoCompleter {
      * Gets completions for [argument].
      */
     fun completeArgumentInput(command: Command,
-                         arguments: List<ArgumentContainer<*>>,
-                         argument: Argument<*>,
-                         base: Input,
-                         toComplete: Input,
-                         completions: Completions)
+                              arguments: List<ArgumentContainer<*>>,
+                              argument: Argument<*>,
+                              argumentType: ArgumentType<*, *>,
+                              completions: Completions)
 
     /**
-     * Gets completions for [toCompleteMap] input for [argument].
+     * Gets completions for [Map] key input for [argument].
      */
-    fun completeArgumentMap(command: Command,
-                            arguments: List<ArgumentContainer<*>>,
-                            argument: Argument<*>,
-                            base: Input,
-                            toCompleteMap: MapInput,
-                            key: Input?,
-                            completions: Completions)
+    fun completeArgumentMapKey(command: Command,
+                               arguments: List<ArgumentContainer<*>>,
+                               argument: Argument<*>,
+                               keyType: ArgumentType<*, *>,
+                               completions: Completions)
 
     /**
-     * Gets completions for [map] input for [argument].
+     * Gets completions for [Map] value input for [argument].
      */
-    fun completeArgumentList(command: Command,
-                             arguments: List<ArgumentContainer<*>>,
-                             argument: Argument<*>,
-                             base: Input,
-                             toCompleteList: ListInput,
-                             completions: Completions)
+    fun completeArgumentMapValue(command: Command,
+                               arguments: List<ArgumentContainer<*>>,
+                               argument: Argument<*>,
+                               valueType: ArgumentType<*, *>,
+                               completions: Completions)
+
+    /**
+     * Gets completions for [List] input for [argument].
+     */
+    fun completeArgumentListElement(command: Command,
+                                    arguments: List<ArgumentContainer<*>>,
+                                    argument: Argument<*>,
+                                    argumentType: ArgumentType<*, *>,
+                                    completions: Completions)
 
 
 }

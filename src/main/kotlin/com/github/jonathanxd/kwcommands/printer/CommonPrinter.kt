@@ -206,7 +206,9 @@ class CommonPrinter(override val localizer: TextLocalizer,
                     this.add(Text.single(it.nameOrId))
 
                     this.add(Text.single(": ")
-                            .append(Text.single(if (it.type.canResolve()) it.type.toString() else it.type.classLiteral)))
+                            .append(Text.single(
+                                    if (it.type.type.canResolve()) it.type.type.toString()
+                                    else it.type.type.classLiteral)))
 
                     this.add(Text.single(if (it.isOptional) ">" else "]"))
                 }

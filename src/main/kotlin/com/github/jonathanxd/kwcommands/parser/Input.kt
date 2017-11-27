@@ -39,7 +39,7 @@ sealed class Input {
     abstract val source: String
     abstract val start: Int
     abstract val end: Int
-    abstract val type: InputType
+    abstract val type: InputType<out Input>
 
     /**
      * `True` is this value was extracted from [source], false otherwise.
@@ -66,7 +66,7 @@ data class SingleInput(val input: String,
                        override val start: Int,
                        override val end: Int) : Input() {
 
-    override val type: InputType = SingleInputType
+    override val type: InputType<SingleInput> = SingleInputType
 
     constructor(input: String) : this(input, "", 0, 0)
 
@@ -92,7 +92,7 @@ data class ListInput(val input: List<Input>,
                      override val start: Int,
                      override val end: Int) : Input() {
 
-    override val type: InputType = ListInputType
+    override val type: InputType<ListInput> = ListInputType
 
     constructor(input: List<Input>) : this(input, "", 0, 0)
 
@@ -119,7 +119,7 @@ data class MapInput(val input: List<Pair<Input, Input>>,
                     override val start: Int,
                     override val end: Int) : Input() {
 
-    override val type: InputType = MapInputType
+    override val type: InputType<MapInput> = MapInputType
 
     constructor(input: List<Pair<Input, Input>>) : this(input, "", 0, 0)
 
@@ -149,7 +149,7 @@ data class MapInput(val input: List<Pair<Input, Input>>,
 class EmptyInput(override val source: String) : Input() {
     override val start: Int = 0
     override val end: Int = 0
-    override val type: InputType = EmptyInputType
+    override val type: InputType<EmptyInput> = EmptyInputType
 
     override fun toPlain(): Any = Empty
 
@@ -163,23 +163,43 @@ class EmptyInput(override val source: String) : Input() {
     object Empty
 }
 
-interface InputType {
+interface InputType<I: Input> {
     fun getTypeString(): TextComponent
+
+    fun isCompatible(other: InputType<*>): Boolean
 }
 
-object SingleInputType : InputType {
+object AnyInputType : InputType<Input> {
     override fun getTypeString(): TextComponent = Texts.getSingleTypeText()
+
+    override fun isCompatible(other: InputType<*>): Boolean = false
 }
 
-object ListInputType : InputType {
+object SingleInputType : InputType<SingleInput> {
+    override fun getTypeString(): TextComponent = Texts.getSingleTypeText()
+
+    override fun isCompatible(other: InputType<*>): Boolean =
+            other is SingleInputType || other is AnyInputType
+}
+
+object ListInputType : InputType<ListInput> {
     override fun getTypeString(): TextComponent = Texts.getListTypeText()
+
+    override fun isCompatible(other: InputType<*>): Boolean =
+            other is ListInputType || other is AnyInputType
 }
 
-object MapInputType : InputType {
+object MapInputType : InputType<MapInput> {
     override fun getTypeString(): TextComponent = Texts.getMapTypeText()
+
+    override fun isCompatible(other: InputType<*>): Boolean =
+            other is ListInputType || other is AnyInputType
 }
 
-object EmptyInputType : InputType {
+object EmptyInputType : InputType<EmptyInput> {
     override fun getTypeString(): TextComponent = Texts.getEmptyTypeText()
+
+    override fun isCompatible(other: InputType<*>): Boolean =
+            other is EmptyInputType || other is AnyInputType
 }
 

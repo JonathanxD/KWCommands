@@ -143,7 +143,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
 
-                val poss = argument.possibilities.invoke(parsed, argument)
+                val poss = argument.type.possibilities()
 
                 printPossibilities(poss, PrefixedPrinter(printer, "  - "))
 
@@ -313,7 +313,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
 
-                val poss = argument.possibilities.invoke(parsed, argument)
+                val poss = argument.type.possibilities()
 
                 printPossibilities(poss, PrefixedPrinter(printer, "  - "))
 
@@ -341,19 +341,13 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 printer.flush()
             }
 
-            is CommandInputParseFail -> {
+            is ArgumentInputParseFail -> {
                 val command = parseFail.command
                 val parsed = parseFail.parsedArgs
-                val argument = parseFail.argument
-                val inputType = parseFail.inputType
+                val argument = parseFail.arg
                 val start = parseFail.iter.sourceIndex
-                var cfail = parseFail.fail
-
-                while (cfail is NestedInputParseFail) {
-                    cfail = cfail.fail2
-                }
-
-                val fail = cfail
+                val fail = parseFail.inputParseFail
+                val inputType = parseFail.inputParseFail.argumentType.inputType
 
                 printer.printPlain(
                         Text.of(Texts.getMalformedInputText(inputType.getTypeString())))
@@ -417,7 +411,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
 
-                val poss = argument.possibilities.invoke(parsed, argument)
+                val poss = argument.type.possibilities()
 
                 printPossibilities(poss, PrefixedPrinter(printer, "  - "))
 
@@ -426,6 +420,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 printer.printFromRoot(command, 0)
                 printer.flush()
             }
+
         }
     }
 

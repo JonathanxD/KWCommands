@@ -35,6 +35,7 @@ import com.github.jonathanxd.iutils.text.TextComponent;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.Argument;
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
+import com.github.jonathanxd.kwcommands.argument.ArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.command.CommandContainer;
 import com.github.jonathanxd.kwcommands.command.Handler;
@@ -227,18 +228,16 @@ public class JsonTest {
             return Text.of("Email Validator");
         }
 
+        @NotNull
         @Override
-        public Validation invoke(@NotNull List<? extends ArgumentContainer<?>> parsed,
-                                 @NotNull Argument<?> current,
+        public Validation invoke(@NotNull ArgumentType argumentType,
                                  @NotNull Input value) {
-
             return value instanceof SingleInput && pred.test(((SingleInput) value).getInput())
                     ? ValidationKt.valid()
                     :
-                    ValidationKt.invalid(value, this, Text.of("Invalid email format"),
+                    ValidationKt.invalid(value, argumentType, this, Text.of("Invalid email format"),
                             Collections3.listOf(SingleInputType.INSTANCE)
                     );
-
         }
 
     }

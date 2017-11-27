@@ -37,7 +37,7 @@ import com.github.jonathanxd.kwcommands.parser.InputType
 open class ExpectedInputException(val command: Command,
                                   val parsedArgs: List<ArgumentContainer<*>>,
                                   val argument: Argument<*>,
-                                  val inputType: InputType,
+                                  val inputType: InputType<*>,
                                   parsedCommands: List<CommandContainer>,
                                   manager: CommandManager,
                                   message: String) : CommandException(parsedCommands, manager, message)

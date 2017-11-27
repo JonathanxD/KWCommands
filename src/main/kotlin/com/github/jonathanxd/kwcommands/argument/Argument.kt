@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
+import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
@@ -50,7 +51,7 @@ data class Argument<out T>(val id: Any,
                            val name: String,
                            val description: TextComponent,
                            val isOptional: Boolean,
-                           val type: ArgumentType<out T>,
+                           val type: ArgumentType<*, out T>,
                            val defaultValue: T?,
                            val isMultiple: Boolean,
                            val requirements: List<Requirement<*, *>>,
@@ -58,7 +59,7 @@ data class Argument<out T>(val id: Any,
                            val handler: ArgumentHandler<out T>? = null) {
     companion object {
         @JvmStatic
-        fun <T> builder() = ArgumentBuilder<T>()
+        fun <I: Input, T> builder() = ArgumentBuilder<I, T>()
     }
 
 }

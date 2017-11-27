@@ -28,14 +28,9 @@
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.NoneArgumentHandler
-import com.github.jonathanxd.kwcommands.reflect.NonePossibilities
-import com.github.jonathanxd.kwcommands.reflect.NoneTransformer
-import com.github.jonathanxd.kwcommands.reflect.NoneValidator
-import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.reflect.NoneArgumentType
 import kotlin.reflect.KClass
 
 /**
@@ -62,7 +57,5 @@ annotation class Arg(val value: String = "",
                      val optional: Boolean = false,
                      val multiple: Boolean = false,
                      val requirements: Array<Require> = arrayOf(),
-                     val validator: KClass<out Validator<*>> = NoneValidator::class,
-                     val transformer: KClass<out Transformer<*, *>> = NoneTransformer::class,
-                     val possibilities: KClass<out Possibilities> = NonePossibilities::class,
+                     val argumentType: KClass<out () -> ArgumentType<*, *>> = NoneArgumentType::class,
                      val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class)

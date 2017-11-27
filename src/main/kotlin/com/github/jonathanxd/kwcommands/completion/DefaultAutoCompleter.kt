@@ -29,22 +29,19 @@ package com.github.jonathanxd.kwcommands.completion
 
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.argument.ListArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.ListInput
 import com.github.jonathanxd.kwcommands.parser.MapInput
 import com.github.jonathanxd.kwcommands.parser.SingleInput
-import com.github.jonathanxd.kwcommands.util.nameOrId
 
 class DefaultAutoCompleter : AutoCompleter {
     override fun completeArgumentName(command: Command,
                                       arguments: List<ArgumentContainer<*>>,
                                       completions: Completions) {
-        val suggestions =
-                command.arguments
-                        .filterNot { a -> arguments.any { it.argument == a } }
-                        .map { it.nameOrId }
-
-        completions.addAll(suggestions)
+        TODO("not implemented")
     }
 
     override fun completeArgument(command: Command,
@@ -53,59 +50,48 @@ class DefaultAutoCompleter : AutoCompleter {
                                   base: Input,
                                   toComplete: SingleInput,
                                   completions: Completions) {
-        val suggestions =
-                argument.possibilities(arguments, argument)
-                        .map(Input::getString)
-
-        completions.addAll(suggestions)
+        TODO("not implemented")
     }
 
     override fun completeArgumentInput(command: Command,
                                        arguments: List<ArgumentContainer<*>>,
                                        argument: Argument<*>,
-                                       base: Input,
-                                       toComplete: Input,
+                                       argumentType: ArgumentType<*, *>,
                                        completions: Completions) {
+        val poss = argumentType.possibilities()
+
+        if (argumentType is ListArgumentType<*>) {
+            completions.add("[")
+        }
+
+        //completions.addAll(poss.map { it.getString() })
+    }
+
+    override fun completeArgumentListElement(command: Command,
+                                             arguments: List<ArgumentContainer<*>>,
+                                             argument: Argument<*>,
+                                             argumentType: ArgumentType<*, *>,
+                                             completions: Completions) {
+
+        val poss = (argumentType.possibilities().single() as ListInput).input
+
+        completions.addAll(poss.map { it.getString() })
+    }
+
+    override fun completeArgumentMapKey(command: Command,
+                                        arguments: List<ArgumentContainer<*>>,
+                                        argument: Argument<*>,
+                                        keyType: ArgumentType<*, *>,
+                                        completions: Completions) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun completeArgumentMap(command: Command,
-                                     arguments: List<ArgumentContainer<*>>,
-                                     argument: Argument<*>,
-                                     base: Input,
-                                     toCompleteMap: MapInput,
-                                     key: Input?,
-                                     completions: Completions) {
-
-        val suggestions =
-                argument.possibilities(arguments, argument)
-
-        if (base == toCompleteMap) {
-
-            if (key != null) {
-                filter.filtered.forEach {
-                    if (it is MapInput) {
-                        it.input.forEach { (k, v) ->
-                            if (key.getString() == k.getString())
-                                completions.add(v.getString())
-                        }
-                    }
-                }
-            } else {
-                filter.filtered.forEach {
-                    if (it is MapInput) {
-                        it.input.forEach { (it, _) ->
-                            completions.add(it.getString())
-                        }
-                    }
-                }
-            }
-        } else {
-
-            TODO()
-        }
-
+    override fun completeArgumentMapValue(command: Command,
+                                          arguments: List<ArgumentContainer<*>>,
+                                          argument: Argument<*>,
+                                          valueType: ArgumentType<*, *>,
+                                          completions: Completions) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
-
 
 }

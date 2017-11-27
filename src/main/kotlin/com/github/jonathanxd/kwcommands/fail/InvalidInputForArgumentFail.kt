@@ -34,6 +34,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.Validation
+import com.github.jonathanxd.kwcommands.util.InputParseFail
 import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
 class InvalidInputForArgumentFail(val command: Command,
@@ -44,3 +45,11 @@ class InvalidInputForArgumentFail(val command: Command,
                                   parsedCommands: List<CommandContainer>,
                                   manager: CommandManager,
                                   iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)
+
+class ArgumentInputParseFail(val command: Command,
+                             val parsedArgs: List<ArgumentContainer<*>>,
+                             val arg: Argument<*>,
+                             val inputParseFail: InputParseFail,
+                             parsedCommands: List<CommandContainer>,
+                             manager: CommandManager,
+                             iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)

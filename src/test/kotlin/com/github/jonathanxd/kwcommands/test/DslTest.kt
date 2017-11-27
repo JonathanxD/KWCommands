@@ -75,7 +75,7 @@ class DslTest {
                 +stringArg {
                     id { "userId" }
                     description { textOf("Identification of user to promote") }
-                    transformer { _, _, it -> (it as SingleInput).input.toLowerCase() }
+                    transformer { it.input.toLowerCase() }
                 }
                 +listArg(enumArg<Group> {
                     id {"groupList"}

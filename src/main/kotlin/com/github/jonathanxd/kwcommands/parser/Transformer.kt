@@ -28,6 +28,6 @@
 package com.github.jonathanxd.kwcommands.parser
 
 @FunctionalInterface
-interface Transformer<I: Input, out T> {
+interface Transformer<in I: Input, out T> {
     operator fun invoke(value: I): T
 }

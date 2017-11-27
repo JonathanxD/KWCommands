@@ -32,10 +32,7 @@ import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.possibilitiesFunc
 import com.github.jonathanxd.kwcommands.util.simpleArgumentType
@@ -53,8 +50,8 @@ class ArgumentBuilder<I: Input, T> {
     private var type: ArgumentType<*, T>? = null
     private var isMultiple: Boolean = false
     private var defaultValue: T? = null
-    private lateinit var validator: Validator<*>
-    private lateinit var transformer: Transformer<*, T>
+    private lateinit var validator: Validator<I>
+    private lateinit var transformer: Transformer<I, T>
     private var possibilities: Possibilities = possibilitiesFunc { emptyList() }
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
@@ -95,7 +92,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.type]
      */
-    fun type(type: ArgumentType<*, T>): ArgumentBuilder<I, T> {
+    fun argumentType(type: ArgumentType<*, T>): ArgumentBuilder<I, T> {
         this.type = type
         return this
     }
@@ -220,11 +217,16 @@ class ArgumentBuilder<I: Input, T> {
         return this
     }
 
+    @Deprecated(message = "Will be removed before 1.3 release.")
     private fun buildArgumentType(): ArgumentType<*, out T> {
         if (this.type != null)
             return this.type!!
 
-        return simpleArgumentType(transformer, validator, possibilities, this.typeInfo)
+        return simpleArgumentType(
+                transformer as Transformer<SingleInput, T>,
+                validator as Validator<SingleInput>,
+                possibilities,
+                this.typeInfo)
     }
 
     /**

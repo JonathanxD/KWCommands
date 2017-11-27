@@ -28,17 +28,21 @@
 package com.github.jonathanxd.kwcommands.test.reflect
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.kwcommands.parser.valid
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
-import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.reflect.env.cast
@@ -51,6 +55,14 @@ import org.junit.Assert
 import org.junit.Test
 
 class ReflectionTest {
+
+    val simplePlayerArgumentType = simpleArgumentType(
+            transformer { it: SingleInput -> SimplePlayer(it.input) },
+            validator { _, _: SingleInput -> valid() },
+            EmptyPossibilitesFunc,
+            null,
+            typeInfo()
+    )
 
     @Test
     fun test() {
@@ -70,7 +82,7 @@ class ReflectionTest {
         val processor = Processors.createCommonProcessor(manager)
 
         val result =
-                processor.parseAndDispatch("download https://askdsal.0/x.file 10", this, information)// ?
+                processor.parseAndDispatch("download https://askdsal.0/x.file 10", this, information) // ?
 
         Assert.assertTrue(result.isRight)
         Assert.assertTrue(result.right.any { it is UnsatisfiedRequirementsResult })
@@ -91,7 +103,7 @@ class ReflectionTest {
         val processor = Processors.createCommonProcessor(manager)
 
         val result =
-                processor.parseAndDispatch("download https://askdsal.0/x.file 10", this)// ?
+                processor.parseAndDispatch("download https://askdsal.0/x.file 10", this) // ?
 
         Assert.assertTrue(result.isRight)
         Assert.assertTrue(result.right.any {
@@ -123,12 +135,9 @@ class ReflectionTest {
                 .assertAll(listOf("setted block STONE at 10, 10, 0"))
 
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
-            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
                 if (type == TypeInfo.of(SimplePlayer::class.java)) {
-                    return ArgumentType(
-                            validator {_, _, _: String -> true },
-                            transformer {_, _, it: String -> SimplePlayer(it) },
-                            possibilitiesFunc { _, _ -> emptyList() }, null).cast(type)
+                    return simplePlayerArgumentType.cast(type)
                 }
 
                 return null

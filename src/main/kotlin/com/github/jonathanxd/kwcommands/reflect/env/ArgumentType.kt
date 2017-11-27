@@ -39,8 +39,10 @@ import com.github.jonathanxd.kwcommands.parser.*
  * An instance of argument type can be registered globally using [ReflectionEnvironment.registerGlobal] or per instance using
  * [ReflectionEnvironment.registerProvider].
  */
+/*
 data class ArgumentType<out T>(val type: TypeInfo<out T>,
                                val validator: Validator<*>,
                                val transformer: Transformer<*, T>,
                                val possibilities: Possibilities,
                                val defaultValue: T?)
+*/

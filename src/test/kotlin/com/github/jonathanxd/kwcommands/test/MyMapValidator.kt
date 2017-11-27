@@ -27,29 +27,50 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.iutils.text.Text
-import com.github.jonathanxd.jwiutils.kt.ifLeftSide
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.parser.*
-import com.github.jonathanxd.kwcommands.util.EnumPossibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.EnumValidator
-import com.github.jonathanxd.kwcommands.util.get
+import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.argument.ComplexMapArgumentType
+import com.github.jonathanxd.kwcommands.argument.ListArgumentType
+import com.github.jonathanxd.kwcommands.argument.PairArgumentType
+import com.github.jonathanxd.kwcommands.util.enumArgumentType
+import com.github.jonathanxd.kwcommands.util.intArgumentType
+import com.github.jonathanxd.kwcommands.util.stringArgumentType
 
-class MyMapValidator : Validator {
+val languagesListArgumentType = ListArgumentType(
+        enumArgumentType(Languages::class.java),
+        typeInfo<List<Languages>>()
+)
+
+val valuesMapArgumentType = ComplexMapArgumentType(
+        listOf(
+                PairArgumentType(stringArgumentType("age"), intArgumentType, false, typeInfo()),
+                PairArgumentType(stringArgumentType("languages"), languagesListArgumentType, typeInfo())
+        ),
+        typeInfo<Map<String, Any>>()
+)
+
+val myMapArgumentType = ComplexMapArgumentType(
+        listOf(
+                PairArgumentType(stringArgumentType("name"), stringArgumentType, typeInfo()),
+                PairArgumentType(stringArgumentType("values"), valuesMapArgumentType, typeInfo())
+        ),
+        typeInfo<Map<String, Any>>()
+)
+
+/*class MyMapValidator : Validator<MapInput> {
 
     val languagesValidator = EnumValidator(Languages::class.java)
 
-    override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation {
-        if (value !is MapInput)
-            return invalid(value, this, Text.of("Expected map"), MapInputType)
+    override fun invoke(argumentType: ArgumentType<MapInput, *>, value: MapInput): Validation {
 
         val input = value.input
 
         if (input.isEmpty())
-            invalid(value, this, Text.of("Input is empty"), MapInputType)
+            invalid(value, argumentType, this, Text.of("Input is empty"), MapInputType)
 
-        value.get("name", SingleInputType, this).also {
+        value.get("name",
+                SingleInputType,
+                stringArgumentType,
+                this).also {
             if (it.isLeft)
                 return it.left
         }
@@ -65,7 +86,7 @@ class MyMapValidator : Validator {
         if (getLanguages.isRight) {
             val languages = getLanguages.right.second as ListInput
 
-            val validate = languagesValidator.invoke(parsed, current, languages)
+            val validate = languagesValidator.invoke(languages)
 
             if (validate.isInvalid)
                 return validate
@@ -80,8 +101,7 @@ class MyMapPossibilities : Possibilities {
 
     val enumPossibilities = EnumPossibilitiesFunc(Languages::class.java)
 
-    override fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>): List<Input> {
+    override fun invoke(): List<Input> {
         return listOf(MapInput(listOf(
                 SingleInput("name") to SingleInput(""),
                 SingleInput("values") to MapInput(listOf(
@@ -99,7 +119,7 @@ class MyMapTransformer : Transformer<Map<String, Any>> {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-}
+}*/
 
 enum class Languages {
     Java,

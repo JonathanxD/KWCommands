@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
+import com.github.jonathanxd.kwcommands.argument.ArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.completion.Completion;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
@@ -48,6 +49,8 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+
+import kotlin.jvm.functions.Function0;
 
 public class CompletionTest {
 
@@ -105,7 +108,7 @@ public class CompletionTest {
         System.out.println("== Complete ==");
 */
 
-        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=";
+        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[a";
         complete = completion.complete(x, null);
 
         System.out.println("== Complete ==");
@@ -129,10 +132,18 @@ public class CompletionTest {
     @Cmd(description = "Set map test")
     public void setmap(@Arg("n") int n,
                        @Arg(value = "values", multiple = true,
-                               transformer = MyMapTransformer.class,
-                               validator = MyMapValidator.class,
-                               possibilities = MyMapPossibilities.class) Map<String, Object> values) {
+                               argumentType = MyMapArgTypeProvider.class) Map<String, Object> values) {
 
+    }
+
+    public static class MyMapArgTypeProvider implements Function0<ArgumentType<?, ?>> {
+
+        public static final MyMapArgTypeProvider INSTANCE = new MyMapArgTypeProvider();
+
+        @Override
+        public ArgumentType<?, ?> invoke() {
+            return MyMapValidatorKt.getMyMapArgumentType();
+        }
     }
 
     public static enum E {

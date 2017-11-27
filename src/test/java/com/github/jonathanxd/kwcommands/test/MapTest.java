@@ -30,8 +30,10 @@ package com.github.jonathanxd.kwcommands.test;
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.map.MapUtils;
 import com.github.jonathanxd.iutils.object.Either;
+import com.github.jonathanxd.kwcommands.argument.SingleArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.exception.CommandException;
+import com.github.jonathanxd.kwcommands.fail.ArgumentInputParseFail;
 import com.github.jonathanxd.kwcommands.fail.CommandInputParseFail;
 import com.github.jonathanxd.kwcommands.fail.InvalidInputForArgumentFail;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
@@ -41,6 +43,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.parser.ListInputType;
 import com.github.jonathanxd.kwcommands.parser.ValidatedElement;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
@@ -52,6 +55,8 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.util.KLocale;
 import com.github.jonathanxd.kwcommands.util.MapTokenExpectedFail;
+import com.github.jonathanxd.kwcommands.util.PrinterKt;
+import com.github.jonathanxd.kwcommands.util.UnexpectedInputForArgumentTypeFail;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -81,10 +86,13 @@ public class MapTest {
         Printer localizedSysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
         try {
-            processor.parseAndDispatch(
+            Either<ParseFail, List<CommandResult>> run;
+            run = processor.parseAndDispatch(
                     "mapcmd 897 { project = KWCommands } --n2 -8",
                     this,
                     informationManager);
+
+            PrinterKt.handleFail(localizedHandler, run, localizedSysOutWHF);
 
             Assert.assertEquals(897, this.n);
             Assert.assertEquals(MapUtils.mapOf("project", "KWCommands"), this.values);
@@ -114,12 +122,9 @@ public class MapTest {
             localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
 
             Assert.assertTrue(parse.isLeft());
-            Assert.assertTrue(parse.getLeft() instanceof CommandInputParseFail);
-            CommandInputParseFail fail = (CommandInputParseFail) parse.getLeft();
-            Assert.assertTrue(fail.getFail() instanceof MapTokenExpectedFail);
-
-            MapTokenExpectedFail mapTokenFail = (MapTokenExpectedFail) fail.getFail();
-            Assert.assertTrue(mapTokenFail.getTokens().equals(Collections3.listOf(',', '}')));
+            Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
+            ArgumentInputParseFail fail = (ArgumentInputParseFail) parse.getLeft();
+            Assert.assertTrue(fail.getInputParseFail() instanceof UnexpectedInputForArgumentTypeFail);
 
             parse = processor.parseAndDispatch(
                     "mapcmd " +
@@ -134,16 +139,16 @@ public class MapTest {
             localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
 
             Assert.assertTrue(parse.isLeft());
-            Assert.assertTrue(parse.getLeft() instanceof InvalidInputForArgumentFail);
-            InvalidInputForArgumentFail invalidInput = (InvalidInputForArgumentFail) parse.getLeft();
+            Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
 
-            List<ValidatedElement> invalids = invalidInput.getValidation().getInvalids();
+            fail = (ArgumentInputParseFail) parse.getLeft();
+            Assert.assertTrue(fail.getInputParseFail() instanceof UnexpectedInputForArgumentTypeFail);
 
-            Assert.assertTrue(invalids.size() == 1);
-            Assert.assertEquals(43, invalids.get(0).getInput().getStart());
-            Assert.assertEquals(47, invalids.get(0).getInput().getEnd());
-            Assert.assertEquals("[s,b]", invalids.get(0).getInput().getString());
-        } catch (CommandException e) {
+            UnexpectedInputForArgumentTypeFail unex = (UnexpectedInputForArgumentTypeFail) fail.getInputParseFail();
+            Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
+            Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
+            Assert.assertTrue(unex.getInput().getType() instanceof ListInputType);
+                    } catch (CommandException e) {
             localizedHandler.handleCommandException(e, localizedSysOutWHF);
             e.printStackTrace();
         }

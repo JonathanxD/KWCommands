@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.reflect
 
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
@@ -38,9 +39,8 @@ import com.github.jonathanxd.kwcommands.processor.ResultHandler
 sealed class None
 
 object NoneValidator : None(), Validator<Input> {
-    override fun invoke(value: Input): Validation =
+    override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
             valid()
-
 }
 
 object NoneTransformer : None(), Transformer<Input, Any> {
@@ -64,4 +64,12 @@ object NoneArgumentHandler : None(), ArgumentHandler<Any?> {
     override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer,
                         informationManager: InformationManager, resultHandler: ResultHandler): Any =
             Unit
+}
+
+
+class NoneArgumentType: None(), () -> ArgumentType<*, *> {
+    override fun invoke(): ArgumentType<*, *> {
+        throw IllegalStateException("none")
+    }
+
 }

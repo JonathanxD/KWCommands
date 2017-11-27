@@ -30,14 +30,18 @@ package com.github.jonathanxd.kwcommands.test
 import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.jwiutils.kt.asText
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
+import com.github.jonathanxd.kwcommands.dsl.argument
 import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.printer.Printers
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.Processors
@@ -136,18 +140,20 @@ class CommandTest {
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
-                        Argument(id = "name",
-                                name = "",
-                                description = "".asText(),
-                                isOptional = false,
-                                isMultiple = false,
-                                defaultValue = null,
-                                validator = validator { _, _, _: String -> true },
-                                transformer = transformer { _, _, it: String -> it },
-                                requirements = emptyList(),
-                                requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
-
+                        argument<SingleInput, String> {
+                            id = "name"
+                            description = "".asText()
+                            isOptional = false
+                            isMultiple = false
+                            defaultValue = null
+                            validator { _, _ ->
+                                true
+                            }
+                            transformer { it.input }
+                            requirements {}
+                            requiredInfo {}
+                            possibilities { emptyList() }
+                        }
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList())
@@ -178,20 +184,16 @@ class CommandTest {
                                 isOptional = false,
                                 defaultValue = null,
                                 isMultiple = false,
-                                validator = validator { _, _, _: String ->  true },
-                                transformer = transformer { _, _, it: String -> it },
+                                type = stringArgumentType,
                                 requirements = emptyList(),
-                                requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() }),
+                                requiredInfo = emptySet()),
                         Argument(id = "amount",
                                 name = "",
                                 description = "".asText(),
                                 isOptional = true,
                                 defaultValue = null,
                                 isMultiple = false,
-                                validator = validator { _, _, it: String ->  it.toIntOrNull() != null },
-                                transformer = transformer { _, _, it: String -> it.toInt() },
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() },
+                                type = intArgumentType,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
@@ -203,11 +205,9 @@ class CommandTest {
                                 isOptional = false,
                                 defaultValue = null,
                                 isMultiple = false,
-                                validator = validator { _, _, it: String -> it.toDoubleOrNull() != null },
-                                transformer = transformer { _, _, it: String -> it.toDouble() },
+                                type = doubleArgumentType,
                                 requirements = emptyList(),
-                                requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
+                                requiredInfo = emptySet())
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList()

@@ -32,22 +32,119 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.argument.SingleArgumentType
 import com.github.jonathanxd.kwcommands.dsl.stringTransformer
 import com.github.jonathanxd.kwcommands.dsl.stringValidator
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.SingleInput
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.parser.*
 
-val stringArgumentType = SingleArgumentType<SingleInput, String>(
+
+val charArgumentType = SingleArgumentType<Char>(
+        CharTransformer,
+        CharValidator,
+        CharPossibilities,
+        null,
+        TypeInfo.of(Char::class.java)
+)
+
+val byteArgumentType = SingleArgumentType<Byte>(
+        ByteTransformer,
+        ByteValidator,
+        BytePossibilities,
+        null,
+        TypeInfo.of(Byte::class.java)
+)
+
+val shortArgumentType = SingleArgumentType<Short>(
+        ShortTransformer,
+        ShortValidator,
+        ShortPossibilities,
+        null,
+        TypeInfo.of(Short::class.java)
+)
+
+val intArgumentType = SingleArgumentType<Int>(
+        IntTransformer,
+        IntValidator,
+        IntPossibilities,
+        null,
+        TypeInfo.of(Int::class.java)
+)
+
+val longArgumentType = SingleArgumentType<Long>(
+        LongTransformer,
+        LongValidator,
+        LongPossibilities,
+        null,
+        TypeInfo.of(Long::class.java)
+)
+
+val doubleArgumentType = SingleArgumentType<Double>(
+        DoubleTransformer,
+        DoubleValidator,
+        DoublePossibilities,
+        null,
+        TypeInfo.of(Double::class.java)
+)
+
+val floatArgumentType = SingleArgumentType<Float>(
+        FloatTransformer,
+        FloatValidator,
+        FloatPossibilities,
+        null,
+        TypeInfo.of(Float::class.java)
+)
+
+val booleanArgumentType = SingleArgumentType<Boolean>(
+        BooleanTransformer,
+        BooleanValidator,
+        BooleanPossibilities,
+        null,
+        TypeInfo.of(Boolean::class.java)
+)
+
+val stringArgumentType = SingleArgumentType<String>(
         stringTransformer,
         stringValidator,
         StringPossibilities,
+        null,
         TypeInfo.of(String::class.java)
+)
+
+fun stringArgumentType(str: String) = SingleArgumentType<String>(
+        stringTransformer,
+        ExactStringValidator(str),
+        StringPossibilities,
+        null,
+        TypeInfo.of(String::class.java)
+)
+
+fun <T> enumArgumentType(enumType: Class<T>) = SingleArgumentType<T>(
+        EnumTransformer(enumType),
+        EnumValidator(enumType),
+        EnumPossibilitiesFunc(enumType),
+        null,
+        TypeInfo.of(enumType)
 )
 
 fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
                            validator: Validator<SingleInput>,
                            possibilitiesFunc: Possibilities,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(transformer, validator, possibilitiesFunc, typeInfo)
+        SingleArgumentType(transformer, validator, possibilitiesFunc, null, typeInfo)
 
-//inline fun <reified T> simpleArgumentType()
+fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
+                           validator: Validator<SingleInput>,
+                           possibilitiesFunc: Possibilities,
+                           defaultValue: T?,
+                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
+        SingleArgumentType(transformer, validator, possibilitiesFunc, defaultValue, typeInfo)
+
+fun ArgumentType<*, *>.validate(input: Input): Validation {
+    if (this.inputType == input.type)
+        return this.validate(input)
+
+    return invalid(input, this, InputTypeValidator, null, listOf(this.inputType))
+}
+
+object InputTypeValidator : Validator<Input> {
+    override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
+            TODO("dummy")
+
+}

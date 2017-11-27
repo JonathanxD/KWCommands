@@ -28,10 +28,7 @@
 package com.github.jonathanxd.kwcommands.completion
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.fail.ArgumentNotFoundFail
-import com.github.jonathanxd.kwcommands.fail.CommandInputParseFail
-import com.github.jonathanxd.kwcommands.fail.InvalidInputForArgumentFail
-import com.github.jonathanxd.kwcommands.fail.ParseFail
+import com.github.jonathanxd.kwcommands.fail.*
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.util.*
 import java.util.*
@@ -94,7 +91,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
 
                 suggestion += completionList.filter { it.startsWith(input) }
             }
-            is InvalidInputForArgumentFail -> {
+            /*is InvalidInputForArgumentFail -> {
                 val command = parseFail.command
                 val argument = parseFail.arg
                 val parsedArgs = parseFail.parsedArgs
@@ -107,76 +104,41 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 }
 
                 // TODO
-            }
-            is CommandInputParseFail -> {
+            }*/
+            is ArgumentInputParseFail -> {
                 val command = parseFail.command
-                val argument = parseFail.argument
+                val argument = parseFail.arg
                 val parsedArgs = parseFail.parsedArgs
-                val input = parseFail.inputType
-                var tfail = parseFail.fail
-                var tmain: InputParseFail? = null
+                val fail = parseFail.inputParseFail
 
-                while (tfail is NestedInputParseFail) {
-                    if (tmain == null)
-                        tmain = tfail.fail
-
-                    if (tfail.fail2 is NoMoreElementsInputParseFail) {
-                        tfail = tfail.fail
-                        break
-                    }
-                    tfail = tfail.fail2
+                if (fail is ListElementTypeNotFound
+                        || fail is MapKeyTypeNotFound
+                        || fail is MapValueTypeNotFound) {
+                    return
                 }
-
-                val main = tmain ?: tfail
-                val fail = tfail
-                val mainInput = main.input
 
                 when (fail) {
-                    is MapKeyNotFound -> {
-                        this.autoCompleters.completeArgumentMap(command, parsedArgs, argument,
-                                mainInput,
-                                fail.input as MapInput,
-                                null,
+                    is ListTokenOrElementExpectedFail -> {
+                        suggestion += fail.tokens.map { it.toString() }
+
+                        this.autoCompleters.completeArgumentListElement(command,
+                                parsedArgs,
+                                argument,
+                                fail.argumentType,
                                 completions)
-
-                        suggestion += completionList
                     }
-                    is MapValueNotFound -> {
-                        this.autoCompleters.completeArgumentMap(command, parsedArgs, argument,
-                                mainInput,
-                                fail.input as MapInput,
-                                fail.key,
+                    is ListTokenExpectedFail -> {
+
+                    }
+                    else -> {
+                        this.autoCompleters.completeArgumentInput(command, parsedArgs,
+                                argument,
+                                fail.argumentType,
                                 completions)
-
-                        suggestion += completionList
-                    }
-                    is ListTokenExpectedFail, is MapTokenExpectedFail -> {
-                        val found = (fail as? ListTokenExpectedFail)?.foundToken
-                                ?: (fail as MapTokenExpectedFail).foundToken
-
-                        val tokens = (fail as? ListTokenExpectedFail)?.tokens
-                                    ?: (fail as MapTokenExpectedFail).tokens
-
-                        if (tokens.contains(',')) {
-                            if (fail is ListTokenExpectedFail) {
-                                this.autoCompleters.completeArgumentList(command, parsedArgs, argument,
-                                        mainInput,
-                                        fail.input as ListInput,
-                                        completions)
-                            } else if (fail is MapTokenExpectedFail) {
-                                this.autoCompleters.completeArgumentMap(command, parsedArgs, argument,
-                                        mainInput,
-                                        fail.input as MapInput,
-                                        null,
-                                        completions)
-                            }
-                        }
-
-                        completions.addAll(tokens.map { it.toString() })
-
-                        suggestion += completionList
                     }
                 }
+
+                suggestion += completionList
             }
         }
     }

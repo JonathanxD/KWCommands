@@ -33,8 +33,7 @@ import com.github.jonathanxd.iutils.reflection.Links
 import com.github.jonathanxd.iutils.string.TextParser
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler
@@ -51,6 +50,8 @@ import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 import com.github.jonathanxd.kwcommands.reflect.util.*
 import com.github.jonathanxd.kwcommands.util.*
+import com.github.jonathanxd.kwcommands.util.ListTransformer
+import com.github.jonathanxd.kwcommands.util.ListValidator
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.*
 import java.util.*
@@ -101,11 +102,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @param type Type of argument value.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> get(type: TypeInfo<T>): ArgumentType<T> =
+    fun <T> get(type: TypeInfo<T>): ArgumentType<*, T> =
             this.getOrNull(type) ?: throw IllegalArgumentException("No argument type provider for type: $type.")
 
-    override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>? = this.getOrNull(type)
-    override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T> = this.get(type)
+    override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<*, T>? = this.getOrNull(type)
+    override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<*, T> = this.get(type)
 
     /**
      * Gets optional argument specification.
@@ -113,7 +114,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @param type Type of argument value.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> getOrNull(type: TypeInfo<T>): ArgumentType<T>? =
+    fun <T> getOrNull(type: TypeInfo<T>): ArgumentType<*, T>? =
             this.argumentTypeProviders.getArgumentType(type) ?: getGlobalArgumentTypeOrNull(type)
 
 
@@ -121,7 +122,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * Throw exception if argument type is null.
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> ArgumentType<T>?.require(type: TypeInfo<*>): ArgumentType<T> =
+    fun <T> ArgumentType<*, T>?.require(type: TypeInfo<*>): ArgumentType<*, T> =
             this ?: throw IllegalArgumentException("No argument type provider for type: $type.")
 
     private val LOOKUP = MethodHandles.lookup()
@@ -533,9 +534,12 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             val isOptional = argumentAnnotation?.optional ?: typeIsOpt || typeIsOptInt || typeIsOptDouble || typeIsOptLong
             val isMultiple = argumentAnnotation?.multiple ?: false
             val argumentType = this.getOrNull(type)
+                            ?: argumentAnnotation?.argumentType?.get()?.invoke()
+                            ?: stringArgumentType
 
             val description = argumentAnnotation?.description ?: ""
 
+/*
             val defaultPoss = {
                 argumentType?.possibilities
                         ?: possibilitiesFunc { emptyList() }
@@ -554,9 +558,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             val validator = argumentAnnotation?.validator
                     ?.get(Validator::class.java, defaultValidator)
                     ?: defaultValidator()
+*/
 
+            val def = argumentType.defaultValue
             val defaultValue: Any? = when {
-                argumentType != null -> argumentType.defaultValue
+                def != null -> def
                 typeIsOpt -> Optional.empty<Any>()
                 typeIsOptInt -> OptionalInt.empty()
                 typeIsOptDouble -> OptionalDouble.empty()
@@ -572,12 +578,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     isOptional = isOptional,
                     isMultiple = isMultiple,
                     defaultValue = defaultValue,
-                    type = simpleArgumentType(
-                            transformer as Transformer<SingleInput, Any?>,
-                            validator as Validator<SingleInput>,
-                            possibilities,
-                            type
-                    ),
+                    type = argumentType,
                     requiredInfo = emptySet(),
                     requirements = argumentAnnotation?.requirements.orEmpty().toSpecs(),
                     handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
@@ -712,8 +713,10 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val isMultiple = argumentAnnotation.multiple
 
                     val argumentType = this.getOrNull(type)
+                            ?: argumentAnnotation.argumentType.get()?.invoke()
+                            ?: stringArgumentType
 
-                    val defaultPoss = {
+                    /*val defaultPoss = {
                         argumentType?.possibilities
                                 ?: possibilitiesFunc { emptyList() }
                     }
@@ -730,10 +733,10 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val defaultValidator = { argumentType.require(type).validator }
                     val validator = argumentAnnotation.validator
                             .get(Validator::class.java, defaultValidator)
-                            ?: defaultValidator()
+                            ?: defaultValidator()*/
 
 
-                    val defaultValue = argumentType?.defaultValue
+                    val defaultValue = argumentType.defaultValue
                     val requirements = argumentAnnotation.requirements.toSpecs()
 
                     @Suppress("UNCHECKED_CAST")
@@ -746,9 +749,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                             defaultValue = defaultValue,
                             requirements = requirements,
                             requiredInfo = emptySet(),
-                            type = simpleArgumentType(transformer as Transformer<SingleInput, Any?>,
-                                    validator as Validator<SingleInput>,
-                                    possibilities, type)
+                            type = argumentType
                     )
 
                     arguments += argument
@@ -780,11 +781,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 return this.set.add(argumentTypeProvider)
             }
 
-            override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>? {
+            override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<*, T>? {
                 return this.set.getArgumentType(type)
             }
 
-            override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T> {
+            override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<*, T> {
                 return this.set.getArgumentType(type) ?: throw IllegalArgumentException("No argument type provider for type: $type.")
             }
 
@@ -792,12 +793,12 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
 
         @Suppress("UNCHECKED_CAST")
-        fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>): ArgumentType<T>? =
+        fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>): ArgumentType<*, T>? =
                 (this.getFirstOrNull({ it.provide(type) }, { it != null }) ?: this.let {
                     it.filterIsInstance<ConcreteProvider>().forEach {
                         if (it.argumentType.type.typeParameters.isEmpty()
                                 && it.argumentType.type.classLiteral == type.classLiteral)
-                            return@let it.argumentType as? ArgumentType<T>
+                            return@let it.argumentType as? ArgumentType<*, T>
                     }
                     null
                 })
@@ -830,7 +831,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
         object DefaultProvider : ArgumentTypeProvider {
 
-            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
 
                 if (type.isResolved || type.canResolve()) {
                     val typeClass = type.typeClass
@@ -841,12 +842,13 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                         provide(component)?.let { provided ->
                             @Suppress("UNCHECKED_CAST")
-                            return ArgumentType(
+                            return ListArgumentType<Any?>(provided, type.cast()) as ArgumentType<*, T>
+                            /*return ArgumentType(
                                     ListValidator(provided.validator as Validator<Input>),
                                     ListTransformer(provided.transformer as Transformer<Input, Any?>),
                                     provided.possibilities,
                                     listOf(provided.defaultValue)
-                            ) as ArgumentType<T>
+                            ) as ArgumentType<*, T>*/
                         }
                     }
 
@@ -859,66 +861,58 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                         if (keyType != null && valueType != null) {
                             @Suppress("UNCHECKED_CAST")
-                            return ArgumentType(
-                                    MapValidator(keyType.validator as Validator<Input>,
-                                            valueType.validator as Validator<Input>),
-                                    MapTransformer(keyType.transformer as Transformer<Input, Any?>,
-                                            valueType.transformer as Transformer<Input, Any?>),
-                                    MapPossibilitiesFunc(keyType.possibilities, valueType.possibilities),
+                            return MapArgumentType<Any?, Any?>(keyType, valueType, type.cast()) as ArgumentType<*, T>
+                            /*ArgumentType(
+                                    MapValidator(keyType, valueType),
+                                    MapTransformer(keyType, valueType),
+                                    MapPossibilitiesFunc(keyType, valueType),
                                     keyType.defaultValue?.let { k ->
                                         valueType.defaultValue?.let { v ->
                                             mapOf(k to v)
                                         }
                                     }
-                            ) as ArgumentType<T>
+                            ) as ArgumentType<*, T>*/
 
                         }
                     }
 
                     if (typeClass.isEnum) {
-                        return ArgumentType(type, EnumValidator(typeClass),
+                        return simpleArgumentType(
                                 EnumTransformer(typeClass),
+                                EnumValidator(typeClass),
                                 EnumPossibilitiesFunc(typeClass),
-                                null).cast(type)
+                                type
+                        ).cast(type)
+
                     }
                 }
 
                 return when (type) {
                     TypeInfo.of(Short::class.javaObjectType),
-                    TypeInfo.of(Short::class.javaPrimitiveType)
-                    -> ArgumentType(type, ShortValidator, ShortTransformer, ShortPossibilities, SHORT_DEFAULT_VALUE)
+                    TypeInfo.of(Short::class.javaPrimitiveType) -> shortArgumentType
 
                     TypeInfo.of(Char::class.javaObjectType),
-                    TypeInfo.of(Char::class.javaPrimitiveType)
-                    -> ArgumentType(type, CharValidator, CharTransformer, CharPossibilities, CHAR_DEFAULT_VALUE)
+                    TypeInfo.of(Char::class.javaPrimitiveType) -> charArgumentType
 
                     TypeInfo.of(Byte::class.javaObjectType),
-                    TypeInfo.of(Byte::class.javaPrimitiveType)
-                    -> ArgumentType(type, ByteValidator, ByteTransformer, BytePossibilities, BYTE_DEFAULT_VALUE)
+                    TypeInfo.of(Byte::class.javaPrimitiveType) -> byteArgumentType
 
                     TypeInfo.of(Int::class.javaObjectType),
-                    TypeInfo.of(Int::class.javaPrimitiveType)
-                    -> ArgumentType(type, IntValidator, IntTransformer, IntPossibilities, INT_DEFAULT_VALUE)
+                    TypeInfo.of(Int::class.javaPrimitiveType) -> intArgumentType
 
                     TypeInfo.of(Float::class.javaObjectType),
-                    TypeInfo.of(Float::class.javaPrimitiveType)
-                    -> ArgumentType(type, FloatValidator, FloatTransformer, FloatPossibilities, FLOAT_DEFAULT_VALUE)
+                    TypeInfo.of(Float::class.javaPrimitiveType) -> floatArgumentType
 
                     TypeInfo.of(Double::class.javaObjectType),
-                    TypeInfo.of(Double::class.javaPrimitiveType)
-                    -> ArgumentType(type, DoubleValidator, DoubleTransformer, DoublePossibilities, DOUBLE_DEFAULT_VALUE)
+                    TypeInfo.of(Double::class.javaPrimitiveType) -> doubleArgumentType
 
                     TypeInfo.of(Long::class.javaObjectType),
-                    TypeInfo.of(Long::class.javaPrimitiveType)
-                    -> ArgumentType(type, LongValidator, LongTransformer, LongPossibilities, LONG_DEFAULT_VALUE)
+                    TypeInfo.of(Long::class.javaPrimitiveType) -> longArgumentType
 
                     TypeInfo.of(Boolean::class.javaObjectType),
-                    TypeInfo.of(Boolean::class.javaPrimitiveType)
-                    -> ArgumentType(type, BooleanValidator, BooleanTransformer, BooleanPossibilities,
-                            BOOLEAN_DEFAULT_VALUE)
+                    TypeInfo.of(Boolean::class.javaPrimitiveType) -> booleanArgumentType
 
-                    TypeInfo.of(String::class.java)
-                    -> ArgumentType(StringValidator, StringTransformer, StringPossibilities, STRING_DEFAULT_VALUE)
+                    TypeInfo.of(String::class.java) -> stringArgumentType
                     else -> null
                 }?.cast(type)
 
@@ -927,15 +921,16 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         }
 
         class CollectionProvider(val storage: ArgumentTypeStorage) : ArgumentTypeProvider {
-            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
                 val component = type.typeParameters.singleOrNull() ?: TypeInfo.of(String::class.java)
 
                 if (type.typeClass == List::class.java)
-                    return ArgumentType(type,
+                    return simpleArgumentType(
+                            ReflectListTransform(storage, component) as Transformer<SingleInput, *>,
                             ReflectListValidator(storage, component),
-                            ReflectListTransform(storage, component),
                             possibilitiesFunc { emptyList() },
-                            mutableListOf<Any?>()).cast(type)
+                            mutableListOf<Any?>(),
+                            type).cast(type)
 
                 return null
             }
@@ -962,14 +957,14 @@ interface ArgumentTypeStorage {
      *
      * @param type Type of argument value.
      */
-    fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<T>?
+    fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<*, T>?
 
     /**
      * Gets required argument specification.
      *
      * @param type Type of argument value.
      */
-    fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<T>
+    fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<*, T>
 }
 
 val ReflectInstanceProvider.checked: ReflectInstanceProvider

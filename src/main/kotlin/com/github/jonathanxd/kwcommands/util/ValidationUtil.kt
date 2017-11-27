@@ -31,6 +31,7 @@ import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.jwiutils.kt.left
 import com.github.jonathanxd.jwiutils.kt.right
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 
 fun ListInput.validate(validatorFunc: (Input) -> Validation): Validation =
@@ -47,16 +48,19 @@ fun MapInput.getStringKey(keyName: String): Pair<Input, Input>? =
         this.input.firstOrNull { (k, v) -> k is SingleInput && k.input == keyName }
 
 fun MapInput.get(keyName: String,
-                 valueType: InputType,
-                 validator: Validator): Either<Validation, Pair<Input, Input>> =
+                 valueType: InputType<*>,
+                 argumentType: ArgumentType<*, *>,
+                 validator: Validator<*>): Either<Validation, Pair<Input, Input>> =
         // TODO: Translate
         this.getStringKey(keyName).let {
             return when {
                 it == null ->
-                    left(invalid(this, validator, Text.of("String key '$keyName' not found in map."),
+                    left(invalid(this, argumentType, validator,
+                            Text.of("String key '$keyName' not found in map."),
                             SingleInputType))
                 it.second.type != valueType ->
-                    left(invalid(it.second, validator, Text.of("Value of key '$keyName' must be of type $valueType."),
+                    left(invalid(it.second, argumentType, validator,
+                            Text.of("Value of key '$keyName' must be of type $valueType."),
                             valueType))
                 else -> right(it)
             }

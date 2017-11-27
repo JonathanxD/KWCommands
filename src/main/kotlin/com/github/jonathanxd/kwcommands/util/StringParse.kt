@@ -31,6 +31,7 @@ import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.opt.specialized.OptChar
 import com.github.jonathanxd.iutils.opt.specialized.OptObject
 import com.github.jonathanxd.jwiutils.kt.*
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.exception.ListParseException
 import com.github.jonathanxd.kwcommands.exception.MapParseException
 import com.github.jonathanxd.kwcommands.parser.*
@@ -187,7 +188,8 @@ enum class Mode {
 
 const val EMPTY_STR = ""
 
-private fun SourcedCharIterator.parseMapOrList(ch: Char,
+private fun SourcedCharIterator.parseMapOrList(argumentType: ArgumentType<*, *>,
+                                               ch: Char,
                                                escape: Char = '\\',
                                                defineChar: List<Char> = listOf(':', '='),
                                                separators: List<Char> = listOf(','),
@@ -195,26 +197,28 @@ private fun SourcedCharIterator.parseMapOrList(ch: Char,
         : Either<InputParseFail, out Input> =
 
         if (ch == LIST_OPEN)
-            this.parseListInputUncheckedStart(escape, defineChar, separators, openCloseChars)
+            this.parseListInputUncheckedStart(argumentType, escape, defineChar, separators, openCloseChars)
         else
-            this.parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
+            this.parseMapInputUncheckedStart(argumentType, escape, defineChar, separators, openCloseChars)
 
 fun SourcedCharIterator.callPrevious(): SourcedCharIterator = this.apply { previous() }
 
-fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
+fun SourcedCharIterator.parseSingleInput(argumentType: ArgumentType<*, *>,
+                                         escape: Char = '\\',
                                          separators: List<Char> = listOf(' '),
                                          openCloseChars: List<Char> = listOf('"', '\''),
                                          mapDefineChar: List<Char> = listOf(':', '='),
                                          listMapSeparators: List<Char> = listOf(','),
-                                         parseData: Boolean = false):
-        Either<InputParseFail, out Input> {
+                                         parseData: Boolean = false): Either<InputParseFail, out Input> {
 
     this.jumpBlankSpace()
 
     if (!this.hasNext())
         return left(NoMoreElementsInputParseFail(ListInput(emptyList(), this.sourceString,
                 this.sourceIndex,
-                this.sourceIndex),this))
+                this.sourceIndex),
+                argumentType,
+                this))
 
     val strBuilder = InputBuilder(this.sourceString)
     var lastIsEscape = false
@@ -242,19 +246,34 @@ fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
             }
             separators.any { separator -> it == separator } -> {
                 this.previous()
-                return right(strBuilder.build(this.sourceIndex))
+
+                val build = strBuilder.build(this.sourceIndex)
+
+                argumentType.validate(build).also {
+                    if (it.isInvalid)
+                        return left(InvalidInputForArgumentTypeFail(it, build, argumentType, this))
+                }
+
+                return right(build)
             }
             (it == MAP_OPEN || it == LIST_OPEN) && parseData -> {
 
                 if (strBuilder.isNotEmpty())
-                    return left(InputMalformationParseFail(strBuilder.build(this.sourceIndex - 1), this))
+                    return left(InputMalformationParseFail(strBuilder.build(this.sourceIndex - 1),
+                            argumentType,
+                            this))
 
-                val parse =
-                        this.parseMapOrList(it, escape, mapDefineChar, listMapSeparators, openCloseChars)
-
+                val parse = this.parseMapOrList(argumentType, it, escape, mapDefineChar,
+                        listMapSeparators, openCloseChars)
 
                 if (parse.isLeft)
                     return left(parse.left)
+
+                argumentType.validate(parse.right).also {
+                    if (it.isInvalid)
+                        return left(InvalidInputForArgumentTypeFail(it, parse.right, argumentType, this))
+                }
+
 
                 return right(parse.right)
             }
@@ -286,7 +305,8 @@ fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
  *
  * This function will thrown [ListParseException] for malformed maps.
  */
-fun SourcedCharIterator.parseListInput(escape: Char = '\\',
+fun SourcedCharIterator.parseListInput(argumentType: ArgumentType<*, *>,
+                                       escape: Char = '\\',
                                        mapDefineChar: List<Char> = listOf(':', '='),
                                        separators: List<Char> = listOf(','),
                                        openCloseChars: List<Char> = listOf('"', '\''))
@@ -295,16 +315,24 @@ fun SourcedCharIterator.parseListInput(escape: Char = '\\',
 
     this.next().also {
         if (it != LIST_OPEN)
-            return left(ListTokenExpectedFail(listOf(LIST_OPEN),
+            return left(TokenExpectedFail(listOf(LIST_OPEN),
+                    it.toString(),
+                    EmptyInput(this.sourceString),
+                    argumentType,
+                    this.callPrevious()
+            ))
+                    /*ListTokenExpectedFail(listOf(LIST_OPEN),
                     it.toString(),
                     ListInput(emptyList(), this.sourceString, this.sourceIndex, this.sourceIndex),
-                    this.callPrevious()))
+                    argumentType,
+                    this.callPrevious()))*/
     }
 
-    return parseListInputUncheckedStart(escape, mapDefineChar, separators, openCloseChars)
+    return parseListInputUncheckedStart(argumentType, escape, mapDefineChar, separators, openCloseChars)
 }
 
-private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\',
+private fun SourcedCharIterator.parseListInputUncheckedStart(argumentType: ArgumentType<*, *>,
+                                                             escape: Char = '\\',
                                                              mapDefineChar: List<Char> = listOf(':', '='),
                                                              separators: List<Char> = listOf(','),
                                                              openCloseChars: List<Char> = listOf('"', '\''))
@@ -312,12 +340,39 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
 
     val list = mutableListOf<Input>()
     val start = this.sourceIndex
+    var index = 0
+
+    fun createListInput(add: Int = 0) =
+            ListInput(list, this.sourceString, start, this.sourceIndex + add)
+
+    if (!this.hasNext())
+        return left(ListTokenOrElementExpectedFail(
+                listOf(LIST_CLOSE),
+                "",
+                createListInput(),
+                argumentType,
+                this
+        ))
+
+    val typeGetter: TypeGetter = when (argumentType) {
+        is ListArgumentType<*> -> SingleTypeGetter(argumentType.elementType)
+        is AnyArgumentType -> SingleTypeGetter(argumentType)
+        is ExactListArgumentType<*> -> ListTypeGetter(argumentType.elementTypes)
+        else -> return left(UnexpectedInputForArgumentTypeFail(
+                ListInput(list, this.sourceString, start, this.sourceIndex),
+                argumentType,
+                this
+        ))
+    }
 
     while (this.hasNext()) {
+        val elementType = typeGetter.get(index)
+                ?: return left(ListElementTypeNotFound(createListInput(), argumentType, this))
+
         this.jumpBlankSpace()
 
         if (!this.hasNext())
-            return left(ListElementNotFound(ListInput(list, this.sourceString, start, this.sourceIndex), this))
+            return left(ListElementNotFound(createListInput(), argumentType, this))
 
         val next = this.next()
 
@@ -326,11 +381,27 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
 
         this.previous()
 
-        val elem =
-                this.parseSingleInput(escape, listOf(' ') + separators + LIST_CLOSE, openCloseChars,
-                        mapDefineChar,
-                        separators,
-                        true)
+        this.jumpBlankSpace()
+
+        if (!this.hasNext())
+            return left(ListElementNotFound(createListInput(), elementType, this))
+
+        val elem = this.parseSingleInput(elementType,
+                escape,
+                listOf(' ') + separators + LIST_CLOSE,
+                openCloseChars,
+                mapDefineChar,
+                separators,
+                true)
+
+        if (elem.isLeft) {
+            list += elem.left.input
+            return left(elem.left)
+        } else {
+            list += elem.right
+        }
+
+
 
         this.jumpBlankSpace()
 
@@ -339,21 +410,14 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
         if (!define.isPresent
                 || (separators.none { it == define.value } && define.value != LIST_CLOSE))
             return left(ListTokenExpectedFail(separators + LIST_CLOSE, define.toOptString().orElse(EMPTY_STR),
-                    ListInput(list, this.sourceString, start, this.sourceIndex + if (define.isPresent) 1 else 0),
+                    createListInput(if (define.isPresent) 1 else 0),
+                    argumentType,
                     this))
 
-        if (elem.isLeft) {
-            list += elem.left.input
-            return left(NestedInputParseFail(
-                    ListElementNotFound(ListInput(list, this.sourceString, start, this.sourceIndex), this),
-                    elem.left
-            ))
-        }
-
-        list += elem.right
 
         if (define.isPresent && define.value == LIST_CLOSE)
             break
+        ++index
     }
 
     return right(ListInput(list, this.sourceString, start, this.sourceIndex))
@@ -383,7 +447,8 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
  *
  * This function will thrown [MapParseException] for malformed maps.
  */
-fun SourcedCharIterator.parseMapInput(escape: Char = '\\',
+fun SourcedCharIterator.parseMapInput(argumentType: ArgumentType<*, *>,
+                                      escape: Char = '\\',
                                       defineChar: List<Char> = listOf(':', '='),
                                       separators: List<Char> = listOf(','),
                                       openCloseChars: List<Char> = listOf('"', '\''))
@@ -394,13 +459,15 @@ fun SourcedCharIterator.parseMapInput(escape: Char = '\\',
         if (it != MAP_OPEN)
             return left(MapTokenExpectedFail(listOf(MAP_OPEN), it.toString(),
                     MapInput(emptyList(), this.sourceString, this.sourceIndex - 1, this.sourceIndex - 1),
+                    argumentType,
                     this))
     }
 
-    return parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
+    return parseMapInputUncheckedStart(argumentType, escape, defineChar, separators, openCloseChars)
 }
 
-private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
+private fun SourcedCharIterator.parseMapInputUncheckedStart(argumentType: ArgumentType<*, *>,
+                                                            escape: Char = '\\',
                                                             defineChar: List<Char> = listOf(':', '='),
                                                             separators: List<Char> = listOf(','),
                                                             openCloseChars: List<Char> = listOf('"', '\''))
@@ -408,29 +475,67 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
 
     val map = mutableListOf<Pair<Input, Input>>()
     val start = this.sourceIndex
+    var index = 0
+
+    fun createMapInput(add: Int = 0): MapInput =
+            MapInput(map, this.sourceString, start, this.sourceIndex + add)
+
+    if (!this.hasNext())
+        return left(MapTokenOrKeyExpectedFail(
+                listOf(MAP_CLOSE),
+                "",
+                createMapInput(),
+                argumentType,
+                this
+        ))
+
+    val typeGetter = when (argumentType) {
+        is MapArgumentType<*, *> -> SingleMapTypeGetter(argumentType.keyType, argumentType.valueType)
+        is AnyArgumentType -> SingleMapTypeGetter(argumentType, argumentType)
+        is ComplexMapArgumentType<*, *> -> ListMapTypeGetter(argumentType.types)
+        else -> return left(UnexpectedInputForArgumentTypeFail(
+                createMapInput(),
+                argumentType,
+                this
+        ))
+    }
 
     while (this.hasNext()) {
         this.jumpBlankSpace()
 
         if (!this.hasNext())
-            return left(MapKeyNotFound(MapInput(map, this.sourceString, start, this.sourceIndex), this))
+            return left(InputMalformationParseFail(
+                    createMapInput(),
+                    argumentType,
+                    this))
+
 
         val next = this.next()
 
         if (next == MAP_CLOSE)
-            return right(MapInput(map, this.sourceString, start, this.sourceIndex))
+            return right(createMapInput())
 
         this.previous()
 
-        val k =
-                this.parseSingleInput(escape, listOf(' ') + defineChar, openCloseChars)
+        val keyType = typeGetter.getKey(index)
+                ?: return left(MapKeyTypeNotFound(createMapInput(), argumentType, this))
+
+        this.jumpBlankSpace()
+
+        if (!this.hasNext())
+            return left(MapKeyNotFound(createMapInput(), keyType, this))
+
+        val k = this.parseSingleInput(keyType,
+                escape,
+                listOf(' ') + defineChar,
+                openCloseChars,
+                defineChar,
+                separators,
+                true)
 
         if (k.isLeft) {
             map += k.left.input to EmptyInput(this.sourceString)
-            return left(NestedInputParseFail(
-                    MapKeyNotFound(MapInput(map, this.sourceString, start, this.sourceIndex), this),
-                    k.left
-            ))
+            return left(k.left)
         }
 
         this.jumpBlankSpace()
@@ -439,21 +544,29 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
 
         if (!define.isPresent || defineChar.none { it == define.value })
             return left(MapTokenExpectedFail(defineChar, define.toOptString().orElse(EMPTY_STR),
-                    MapInput(map, this.sourceString, start,
-                            this.sourceIndex + if (define.isPresent) 1 else 0), this))
+                    createMapInput(if (define.isPresent) 1 else 0),
+                    argumentType,
+                    this))
 
-        val v =
-                this.parseSingleInput(escape, listOf(' ') + separators + MAP_CLOSE, openCloseChars,
-                        defineChar,
-                        separators,
-                        true)
+        val valueType = typeGetter.getValue(index)
+                ?: return left(MapValueTypeNotFound(k.right, createMapInput(), keyType, this))
+
+        this.jumpBlankSpace()
+
+        if (!this.hasNext())
+            return left(MapValueNotFound(k.right, createMapInput(), valueType, this))
+
+        val v = this.parseSingleInput(valueType,
+                escape,
+                listOf(' ') + separators + MAP_CLOSE,
+                openCloseChars,
+                defineChar,
+                separators,
+                true)
 
         if (v.isLeft) {
             map += k.right to v.left.input
-            return left(NestedInputParseFail(
-                    MapValueNotFound(k.right, MapInput(map, this.sourceString, start, this.sourceIndex), this),
-                    v.left
-            ))
+            return left(v.left)
         }
 
         map += k.right to v.right
@@ -466,11 +579,14 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
                 || (separators.none { it == defineV.value } && defineV.value != MAP_CLOSE))
             return left(MapTokenExpectedFail(separators + MAP_CLOSE,
                     defineV.toOptString().orElse(EMPTY_STR),
-                    MapInput(map, this.sourceString, start,
-                            this.sourceIndex + if (defineV.isPresent) 1 else 0), this))
+                    createMapInput(if (defineV.isPresent) 1 else 0),
+                    argumentType,
+                    this))
 
         if (defineV.isPresent && defineV.value == MAP_CLOSE)
             break
+
+        ++index
     }
 
     return right(MapInput(map, this.sourceString, start, this.sourceIndex))
@@ -543,50 +659,159 @@ class InputBuilder(val source: String) {
     fun isNotEmpty() = this.builder.isNotEmpty()
 }
 
-abstract class InputParseFail(val input: Input, val iter: SourcedCharIterator) {
+abstract class InputParseFail(val input: Input,
+                              val argumentType: ArgumentType<*, *>,
+                              val iter: SourcedCharIterator) {
     override fun toString(): String =
-            "${this::class.java.simpleName}[input=$input, iter=$iter]"
+            "${this::class.java.simpleName}[input=$input, argumentType=$argumentType, iter=$iter]"
 }
 
-class InputMalformationParseFail(input: Input, iter: SourcedCharIterator) : InputParseFail(input, iter) {
+class InvalidInputForArgumentTypeFail(val validation: Validation,
+                                      input: Input,
+                                      argumentType: ArgumentType<*, *>,
+                                      iter: SourcedCharIterator) : InputParseFail(input, argumentType, iter) {
     override fun toString(): String =
-            "InputMalformationParseFail[input=$input, iter=$iter]"
+            "InvalidInputForArgumentTypeFail[argumentType=$argumentType, input=$input, iter=$iter]"
+}
+
+class UnexpectedInputForArgumentTypeFail(input: Input,
+                                         argumentType: ArgumentType<*, *>,
+                                         iter: SourcedCharIterator) : InputParseFail(input, argumentType, iter) {
+    override fun toString(): String =
+            "UnexpectedInputForArgumentTypeFail[argumentType=$argumentType, input=$input, iter=$iter]"
+}
+
+class InputMalformationParseFail(input: Input,
+                                 argumentType: ArgumentType<*, *>,
+                                 iter: SourcedCharIterator) : InputParseFail(input, argumentType, iter) {
+    override fun toString(): String =
+            "InputMalformationParseFail[input=$input, argumentType=$argumentType, iter=$iter]"
 }
 
 
-abstract class ListInputParseFail(list: ListInput, iter: SourcedCharIterator) : InputParseFail(list, iter) {
+abstract class ListInputParseFail(list: ListInput,
+                                  argumentType: ArgumentType<*, *>,
+                                  iter: SourcedCharIterator) : InputParseFail(list, argumentType, iter) {
     override fun toString(): String =
-            "${this::class.java.simpleName}[list=$input, iter=$iter]"
+            "${this::class.java.simpleName}[list=$input, argumentType=$argumentType, iter=$iter]"
 }
 
-abstract class MapInputParseFail(map: MapInput, iter: SourcedCharIterator) : InputParseFail(map, iter) {
+abstract class MapInputParseFail(map: MapInput,
+                                 argumentType: ArgumentType<*, *>,
+                                 iter: SourcedCharIterator) : InputParseFail(map, argumentType, iter) {
     override fun toString(): String =
-            "${this::class.java.simpleName}[map=$input, iter=$iter]"
+            "${this::class.java.simpleName}[map=$input, argumentType=$argumentType, iter=$iter]"
 }
 
-class NoMoreElementsInputParseFail(input: Input, iter: SourcedCharIterator) : InputParseFail(input, iter)
+class NoMoreElementsInputParseFail(input: Input,
+                                   argumentType: ArgumentType<*, *>,
+                                   iter: SourcedCharIterator) : InputParseFail(input, argumentType, iter)
 
-class ListElementNotFound(list: ListInput, iter: SourcedCharIterator) : ListInputParseFail(list, iter)
-class MapKeyNotFound(map: MapInput, iter: SourcedCharIterator) : MapInputParseFail(map, iter)
+class TokenExpectedFail(val tokens: List<Char>,
+                        val currentToken: String,
+                        input: Input,
+                        argumentType: ArgumentType<*, *>,
+                        iter: SourcedCharIterator): InputParseFail(input, argumentType, iter)
+
+
+class ListElementTypeNotFound(list: ListInput,
+                          argumentType: ArgumentType<*, *>,
+                          iter: SourcedCharIterator) : ListInputParseFail(list, argumentType, iter)
+
+class ListElementNotFound(list: ListInput,
+                          argumentType: ArgumentType<*, *>,
+                          iter: SourcedCharIterator) : ListInputParseFail(list, argumentType, iter)
+
+class MapKeyTypeNotFound(map: MapInput,
+                     argumentType: ArgumentType<*, *>,
+                     iter: SourcedCharIterator) : MapInputParseFail(map, argumentType, iter)
+
+class MapValueTypeNotFound(val key: Input,
+                           map: MapInput,
+                         argumentType: ArgumentType<*, *>,
+                         iter: SourcedCharIterator) : MapInputParseFail(map, argumentType, iter)
+
+class MapKeyNotFound(map: MapInput,
+                     argumentType: ArgumentType<*, *>,
+                     iter: SourcedCharIterator) : MapInputParseFail(map, argumentType, iter)
+
 class MapValueNotFound(val key: Input,
                        map: MapInput,
-                       iter: SourcedCharIterator) : MapInputParseFail(map, iter)
+                       argumentType: ArgumentType<*, *>,
+                       iter: SourcedCharIterator) : MapInputParseFail(map, argumentType, iter)
 
-class NestedInputParseFail(val fail: InputParseFail,
-                           val fail2: InputParseFail) : InputParseFail(fail.input, fail.iter)
+class MapTokenOrKeyExpectedFail(val tokens: List<Char>,
+                           val foundToken: String,
+                           map: MapInput,
+                           argumentType: ArgumentType<*, *>,
+                           iter: SourcedCharIterator) : MapInputParseFail(map, argumentType, iter) {
+    override fun toString(): String =
+            "MapTokenOrKeyExpectedFail[tokens=$tokens, foundToken=$foundToken, map=$input," +
+                    " argumentType=$argumentType, iter=$iter]"
+}
 
 class MapTokenExpectedFail(val tokens: List<Char>,
                            val foundToken: String,
                            map: MapInput,
-                           iter: SourcedCharIterator) : MapInputParseFail(map, iter) {
+                           argumentType: ArgumentType<*, *>,
+                           iter: SourcedCharIterator) : MapInputParseFail(map, argumentType, iter) {
     override fun toString(): String =
-            "MapTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, map=$input, iter=$iter]"
+            "MapTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, map=$input," +
+                    " argumentType=$argumentType, iter=$iter]"
 }
 
 class ListTokenExpectedFail(val tokens: List<Char>,
                             val foundToken: String,
                             list: ListInput,
-                            iter: SourcedCharIterator) : ListInputParseFail(list, iter) {
+                            argumentType: ArgumentType<*, *>,
+                            iter: SourcedCharIterator) : ListInputParseFail(list, argumentType, iter) {
     override fun toString(): String =
-            "ListTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, list=$input, iter=$iter]"
+            "ListTokenExpectedFail[tokens=$tokens, foundToken=$foundToken, list=$input," +
+                    " argumentType=$argumentType, iter=$iter]"
 }
+
+class ListTokenOrElementExpectedFail(val tokens: List<Char>,
+                            val foundToken: String,
+                            list: ListInput,
+                            argumentType: ArgumentType<*, *>,
+                            iter: SourcedCharIterator) : ListInputParseFail(list, argumentType, iter) {
+    override fun toString(): String =
+            "ListTokenOrElementExpectedFail[tokens=$tokens, foundToken=$foundToken, list=$input," +
+                    " argumentType=$argumentType, iter=$iter]"
+}
+
+class ListTypeGetter(val types: List<ArgumentType<*, *>>) : TypeGetter {
+    override fun get(index: Int): ArgumentType<*, *>? =
+            if (types.size < index) null else types[index]
+}
+
+class SingleTypeGetter(val type: ArgumentType<*, *>) : TypeGetter {
+    override fun get(index: Int): ArgumentType<*, *>? = type
+}
+
+interface TypeGetter {
+    fun get(index: Int): ArgumentType<*, *>?
+}
+
+class ListMapTypeGetter(val types: List<PairArgumentType<*, *>>) : MapTypeGetter {
+    override fun getKey(index: Int): ArgumentType<*, *>? =
+            if (types.size < index) null else types[index].aPairType
+
+    override fun getValue(index: Int): ArgumentType<*, *>? =
+            if (types.size < index) null else types[index].bPairType
+
+}
+
+class SingleMapTypeGetter(val keyType: ArgumentType<*, *>,
+                          val valueType: ArgumentType<*, *>) : MapTypeGetter {
+    override fun getKey(index: Int): ArgumentType<*, *>? = keyType
+    override fun getValue(index: Int): ArgumentType<*, *>? = valueType
+}
+
+
+interface MapTypeGetter {
+    fun getKey(index: Int): ArgumentType<*, *>?
+    fun getValue(index: Int): ArgumentType<*, *>?
+}
+
+

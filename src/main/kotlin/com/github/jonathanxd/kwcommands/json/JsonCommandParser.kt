@@ -32,12 +32,14 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentBuilder
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandBuilder
 import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
+import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementBuilder
 import com.github.jonathanxd.kwcommands.parser.Possibilities
@@ -208,19 +210,15 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
     override fun parseArgument(jsonObject: JSONObject): Argument<*> {
         val type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY))
 
-        return ArgumentBuilder<Any?>()
+        @Suppress("UNCHECKED_CAST")
+        return ArgumentBuilder<Input, Any?>()
                 .type(type as TypeInfo<out Any?>)
                 .id(jsonObject.getRequired<String>(ID_KEY))
                 .name(jsonObject.getAs(NAME_KEY) ?: jsonObject.getRequired(ID_KEY))
                 .description(TextParser.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
                 .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
-                .validator(jsonObject.getAsSingleton<Validator>(VALIDATOR_KEY, this.typeResolver)
-                        ?: this.typeResolver.resolveValidator(type))
-                .transformer(jsonObject.getAsSingleton<Transformer<Any?>>(TRANSFORMER_KEY, this.typeResolver)
-                        ?: this.typeResolver.resolveTransformer(type))
-                .possibilities(jsonObject.getAsSingleton<Possibilities>(POSSIBILITIES_KEY, this.typeResolver)
-                        ?: this.typeResolver.resolvePossibilitiesFunc(type))
-                .defaultValue(this.typeResolver.resolveDefaultValue(type))
+                .argumentType(jsonObject.getAsSingleton<ArgumentType<*, Any?>>(ARGUMENT_TYPE_KEY, this.typeResolver)
+                        ?: this.typeResolver.resolveArgumentType(type) as ArgumentType<*, Any?>)
                 .handler(jsonObject.getArgumentHandler(HANDLER_KEY, this))
                 .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
                 .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
@@ -290,6 +288,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
         const val DATA_KEY = "data"
         const val TAGS_KEY = "tags"
 
+        const val ARGUMENT_TYPE_KEY = "argumentType"
         const val HANDLER_KEY = "handler"
         const val NAME_KEY = "name"
         const val OPTIONAL_KEY = "optional"
