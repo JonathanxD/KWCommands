@@ -85,11 +85,11 @@ public class JsonTest {
             "  \"handler\": \"MyHandler\",\n" +
             "  \"arguments\": [\n" +
             "    {\n" +
-            "      \"id\": \"name\",\n" +
+            "      \"name\": \"name\",\n" +
             "      \"type\": \"String\"\n" +
             "    },\n" +
             "    {\n" +
-            "      \"id\": \"email\",\n" +
+            "      \"name\": \"email\",\n" +
             "      \"type\": \"String\",\n" +
             "      \"validator\": \"EmailValidator\"\n" +
             "    }\n" +
@@ -235,9 +235,7 @@ public class JsonTest {
             return value instanceof SingleInput && pred.test(((SingleInput) value).getInput())
                     ? ValidationKt.valid()
                     :
-                    ValidationKt.invalid(value, argumentType, this, Text.of("Invalid email format"),
-                            Collections3.listOf(SingleInputType.INSTANCE)
-                    );
+                    ValidationKt.invalid(value, argumentType, this, Text.of("Invalid email format"));
         }
 
     }

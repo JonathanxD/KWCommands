@@ -31,12 +31,12 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.parser.*
 
-sealed class ArgumentType<I : Input, out T>(val defaultValue: T?,
-                                            val inputType: InputType<I>,
-                                            val type: TypeInfo<out T>) {
-    protected abstract val transformer: Transformer<I, T>
-    protected abstract val validator: Validator<I>
-    protected abstract val possibilities: Possibilities
+abstract class ArgumentType<I : Input, out T>(val defaultValue: T?,
+                                              val inputType: InputType<I>,
+                                              val type: TypeInfo<out T>) {
+    abstract val transformer: Transformer<I, T>
+    abstract val validator: Validator<I>
+    abstract val possibilities: Possibilities
 
     @Suppress("UNCHECKED_CAST")
     fun transform(input: Input): T =
@@ -44,10 +44,18 @@ sealed class ArgumentType<I : Input, out T>(val defaultValue: T?,
 
     @Suppress("UNCHECKED_CAST")
     fun validate(input: Input): Validation =
-            this.validator.invoke(this, input as I)
+            if (input.type.isCompatible(this.inputType))
+                this.validator.invoke(this, input as I)
+            else invalid(input, this, this.validator, null)
 
     fun possibilities(): List<Input> =
             this.possibilities.invoke()
+
+    abstract fun hasType(index: Int): Boolean
+    abstract fun getMapKeyType(index: Int): ArgumentType<*, *>
+    abstract fun getMapValueType(index: Int): ArgumentType<*, *>
+    abstract fun getListType(index: Int): ArgumentType<*, *>
+
 }
 
 /**
@@ -69,12 +77,42 @@ class SingleArgumentType<T>(
         possibilities: Possibilities,
         defaultValue: T?,
         type: TypeInfo<out T>)
-    : BaseArgumentType<SingleInput, T>(transformer, validator, possibilities, defaultValue, SingleInputType, type)
+    : BaseArgumentType<SingleInput, T>(transformer, validator, possibilities, defaultValue, SingleInputType, type) {
+    override fun getListType(index: Int): ArgumentType<*, *> = this
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> = this
+    override fun getMapValueType(index: Int): ArgumentType<*, *> = this
+    override fun hasType(index: Int): Boolean = true
+}
 
-// TODO: Any argument type and handle ComplexMapArgumentType
-// And add ExactListArgumentType to parse elements by respective ArgumentType
+class CustomArgumentType<T, I: Input, V>(
+        val converter: (V) -> T,
+        defaultValue: T?,
+        val argumentType: ArgumentType<I, V>,
+        type: TypeInfo<T>): ArgumentType<I, T>(defaultValue, argumentType.inputType, type) {
+    override val transformer: Transformer<I, T> = ConverterTransformer()
+    override val validator: Validator<I> = argumentType.validator
+    override val possibilities: Possibilities = argumentType.possibilities
 
-class AnyArgumentType: ArgumentType<Input, Any?>(null, AnyInputType, typeInfo()) {
+    inner class ConverterTransformer : Transformer<I, T> {
+        override fun invoke(value: I): T =
+                converter(argumentType.transform(value))
+    }
+
+    override fun hasType(index: Int): Boolean =
+            argumentType.hasType(index)
+
+    override fun getListType(index: Int): ArgumentType<*, *> =
+            argumentType.getListType(index)
+
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> =
+            argumentType.getMapKeyType(index)
+
+    override fun getMapValueType(index: Int): ArgumentType<*, *> =
+            argumentType.getMapValueType(index)
+
+}
+
+object AnyArgumentType : ArgumentType<Input, Any?>(null, AnyInputType, typeInfo()) {
     override val validator: Validator<Input> = object : Validator<Input> {
         override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
                 valid()
@@ -90,6 +128,11 @@ class AnyArgumentType: ArgumentType<Input, Any?>(null, AnyInputType, typeInfo())
                 emptyList()
     }
 
+    override fun hasType(index: Int): Boolean = true
+    override fun getListType(index: Int): ArgumentType<*, *> = this
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> = this
+    override fun getMapValueType(index: Int): ArgumentType<*, *> = this
+
 }
 
 class ExactListArgumentType<T>(val elementTypes: List<ArgumentType<*, *>>,
@@ -98,6 +141,18 @@ class ExactListArgumentType<T>(val elementTypes: List<ArgumentType<*, *>>,
     override val validator: Validator<ListInput> = ExactListValidator(this)
     override val transformer: Transformer<ListInput, List<T>> = ExactListTransformer(this)
     override val possibilities: Possibilities = ExactListPossibilities(this)
+
+    override fun hasType(index: Int): Boolean =
+            index < this.elementTypes.size
+
+    override fun getListType(index: Int): ArgumentType<*, *> =
+            elementTypes.getOrNull(index) ?: AnyArgumentType
+
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> =
+            elementTypes.getOrNull(index) ?: AnyArgumentType
+
+    override fun getMapValueType(index: Int): ArgumentType<*, *> =
+            elementTypes.getOrNull(index) ?: AnyArgumentType
 }
 
 class ListArgumentType<T>(val elementType: ArgumentType<*, *>,
@@ -106,6 +161,11 @@ class ListArgumentType<T>(val elementType: ArgumentType<*, *>,
     override val validator: Validator<ListInput> = ListValidator(this)
     override val transformer: Transformer<ListInput, List<T>> = ListTransformer(this)
     override val possibilities: Possibilities = ListPossibilities(this)
+
+    override fun hasType(index: Int): Boolean = true
+    override fun getListType(index: Int): ArgumentType<*, *> = elementType
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> = elementType
+    override fun getMapValueType(index: Int): ArgumentType<*, *> = elementType
 }
 
 class MapArgumentType<K, V>(val keyType: ArgumentType<*, *>,
@@ -115,6 +175,12 @@ class MapArgumentType<K, V>(val keyType: ArgumentType<*, *>,
     override val possibilities: Possibilities = MapPossibilities(this)
     override val transformer: Transformer<MapInput, Map<K, V>> = MapTransformer(this)
     override val validator: Validator<MapInput> = MapValidator(this)
+
+    override fun hasType(index: Int): Boolean = true
+    override fun getListType(index: Int): ArgumentType<*, *> = keyType
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> = keyType
+    override fun getMapValueType(index: Int): ArgumentType<*, *> = valueType
+
 }
 
 class PairArgumentType<A, B>(val aPairType: ArgumentType<*, A>,
@@ -130,6 +196,11 @@ class PairArgumentType<A, B>(val aPairType: ArgumentType<*, A>,
     override val transformer: Transformer<MapInput, Pair<A, B>> = PairTransformer(this)
     override val validator: Validator<MapInput> = PairValidator(this)
     override val possibilities: Possibilities = PairPossibilities(this)
+
+    override fun hasType(index: Int): Boolean = true
+    override fun getListType(index: Int): ArgumentType<*, *> = aPairType
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> = aPairType
+    override fun getMapValueType(index: Int): ArgumentType<*, *> = bPairType
 }
 
 class ComplexMapArgumentType<K, V>(val types: List<PairArgumentType<*, *>>,
@@ -138,6 +209,18 @@ class ComplexMapArgumentType<K, V>(val types: List<PairArgumentType<*, *>>,
     override val transformer: Transformer<MapInput, Map<K, V>> = ComplexMapTransformer(this)
     override val validator: Validator<MapInput> = ComplexMapValidator(this)
     override val possibilities: Possibilities = ComplexMapPossibilities(this)
+
+    override fun hasType(index: Int): Boolean =
+            index < this.types.size
+
+    override fun getListType(index: Int): ArgumentType<*, *> =
+            types.getOrNull(index) ?: AnyArgumentType
+
+    override fun getMapKeyType(index: Int): ArgumentType<*, *> =
+            types.getOrNull(index)?.aPairType ?: AnyArgumentType
+
+    override fun getMapValueType(index: Int): ArgumentType<*, *> =
+            types.getOrNull(index)?.bPairType ?: AnyArgumentType
 }
 
 class ExactListValidator(val listArgumentType: ExactListArgumentType<*>) : Validator<ListInput> {
@@ -146,10 +229,7 @@ class ExactListValidator(val listArgumentType: ExactListArgumentType<*>) : Valid
         val elementTypes = listArgumentType.elementTypes
 
         if (input.size < elementTypes.size) {
-            val missing = elementTypes.subList(input.size, elementTypes.size)
-
-            return invalid(value, listArgumentType, this, null,
-                    missing.map { it.inputType })
+            return invalid(value, listArgumentType, this, null)
         }
 
         val invalids = input.mapIndexed { index_, input_ ->
@@ -274,7 +354,13 @@ class PairPossibilities(val pairArgumentType: PairArgumentType<*, *>) : Possibil
 class ComplexMapValidator(val complexMapArgumentType: ComplexMapArgumentType<*, *>) : Validator<MapInput> {
     override fun invoke(argumentType: ArgumentType<MapInput, *>, value: MapInput): Validation {
 
-        val validations = value.input.map { (k, v) ->
+        val validations = value.input.mapIndexed { index, (k, v) ->
+            val type = this.complexMapArgumentType.types[index]
+            type.aPairType.validate(k) + type.bPairType.validate(v)
+        }/*.flatMap { it }*/.filter { it.isInvalid }.flatMap { it.invalids }
+
+        /*
+         { (k, v) ->
             val m = this.complexMapArgumentType.types.map {
                 it.aPairType.validate(k) + it.bPairType.validate(v)
             }
@@ -282,7 +368,8 @@ class ComplexMapValidator(val complexMapArgumentType: ComplexMapArgumentType<*, 
             if (m.none { it.isValid })
                 m
             else emptyList()
-        }.flatMap { it }.filter { it.isInvalid }.flatMap { it.invalids }
+        }
+         */
 
         if (validations.isNotEmpty())
             return Validation(validations)
@@ -298,10 +385,16 @@ class ComplexMapTransformer<K, V>(val complexMapArgumentType: ComplexMapArgument
 
     @Suppress("UNCHECKED_CAST")
     override fun invoke(value: MapInput): Map<K, V> =
-            value.input.map { (k, v) ->
-                getTransformer(k).transform(MapInput(listOf(k to v)))
+            value.input.mapIndexed { index, (k, v) ->
+                complexMapArgumentType.types[index].transform(MapInput(listOf(k to v)))
+                //getTransformer(k).transform(MapInput(listOf(k to v)))
             }.toMap() as Map<K, V>
 
+    /*
+     { (k, v) ->
+                getTransformer(k).transform(MapInput(listOf(k to v)))
+            }.toMap()
+     */
 }
 
 class ComplexMapPossibilities(val complexMapArgumentType: ComplexMapArgumentType<*, *>) : Possibilities {
@@ -321,21 +414,3 @@ class ComplexMapPossibilities(val complexMapArgumentType: ComplexMapArgumentType
             }.let { listOf(MapInput(it)) }
 
 }
-
-/*
-@Suppress("UNCHECKED_CAST")
-fun Validator<*>.invokeAsInputCapable(argumentType: ArgumentType<Input, *>, input: Input): Validation =
-        (this as Validator<Input>).invoke(argumentType, input)
-*/
-
-@Suppress("UNCHECKED_CAST")
-fun <I : Input> Validator<I>.invokeAsInputCapable(argumentType: ArgumentType<I, *>, input: Input): Validation =
-        this.invoke(argumentType, input as I)
-
-@Suppress("UNCHECKED_CAST")
-fun Transformer<*, *>.invokeAsInputCapable(input: Input): Any? =
-        (this as Transformer<Input, Any?>).invoke(input)
-
-@Suppress("UNCHECKED_CAST")
-fun <T> Transformer<*, T>.invokeAsInputCapableChecked(input: Input): T =
-        (this as Transformer<Input, T>).invoke(input)

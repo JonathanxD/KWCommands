@@ -33,7 +33,6 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.information.Information
@@ -94,12 +93,11 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
         this.parents.let {
             if (it.isEmpty()) null else {
                 var cmd = manager.getCommand(it.first(), owner)
-                        ?: throw NoCommandException("Specified parent command ${it.first()} was not found.")
+                        ?: return null
 
                 if (it.size > 1) {
                     for (x in it.copyOfRange(1, it.size)) {
-                        cmd = manager.getSubCommand(cmd, x)
-                                ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
+                        cmd = manager.getSubCommand(cmd, x) ?: return null
                     }
                 }
 
@@ -118,13 +116,13 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?, annotatedElement: A
         this.parents.let {
             if (it.isEmpty()) null else {
                 var cmd = manager.getCommand(it.first(), owner)
-                        ?: other.find { (_, _, cmdName) -> cmdName.compareTo(this.getName(annotatedElement)) == 0 }
-                        ?: return null/*throw CommandNotFoundException("Specified parent command ${it.first()} was not found.")*/
+                        ?: other.find { (_, _, cmdName) -> cmdName == it.first() }
+                        ?: return null
 
                 if (it.size > 1) {
                     for (x in it.copyOfRange(1, it.size)) {
                         cmd = manager.getSubCommand(cmd, x)
-                                ?: return null/*throw CommandNotFoundException("Specified parent command $x was not found in command $cmd.")*/
+                                ?: return null
                     }
                 }
 
@@ -148,16 +146,18 @@ fun Cmd.toKCommand(manager: CommandManager,
     val description = this.description
     val parent = this.resolveParents(manager, owner)
 
-    return Command(parent = parent ?: superCommand,
+    val cmd = Command(parent = parent ?: superCommand,
             order = order,
-            name = CommandName.StringName(name),
+            name = name,
             description = TextParser.parse(description),
             handler = handler,
             arguments = arguments,
             requirements = this.getRequirements(),
             requiredInfo = reqInfo,
-            alias = alias.map { CommandName.StringName(it) }.toList())
+            alias = alias.toList())
 
+    cmd.parent?.addSubCommand(cmd)
+    return cmd
 }
 
 /**
@@ -242,10 +242,11 @@ fun Cmd.getPath(annotatedElement: AnnotatedElement): Array<String> {
     return this.parents + this.getName(annotatedElement)
 }
 
-fun Cmd.getName(annotatedElement: AnnotatedElement) = if (this.name.isNotEmpty()) this.name else
-    when (annotatedElement) {
-        is Class<*> -> annotatedElement.simpleName.decapitalize()
-        is Field -> annotatedElement.name
-        is Method -> annotatedElement.name
-        else -> throw IllegalArgumentException("@Cmd requires a name if the annotated element is not a class, field or method.")
-    }
+fun Cmd.getName(annotatedElement: AnnotatedElement) =
+        if (this.name.isNotEmpty()) this.name else
+            when (annotatedElement) {
+                is Class<*> -> annotatedElement.simpleName.decapitalize()
+                is Field -> annotatedElement.name
+                is Method -> annotatedElement.name
+                else -> throw IllegalArgumentException("@Cmd requires a name if the annotated element is not a class, field or method.")
+            }

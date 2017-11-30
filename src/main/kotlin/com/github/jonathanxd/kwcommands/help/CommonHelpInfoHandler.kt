@@ -35,7 +35,6 @@ import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
-import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.fail.*
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.printer.Printer
@@ -46,160 +45,11 @@ import com.github.jonathanxd.kwcommands.util.*
 
 class CommonHelpInfoHandler : HelpInfoHandler {
 
-    override fun handleCommandException(commandException: CommandException, printer: Printer) {
-        when (commandException) {
-            is ArgumentsMissingException -> {
-                val command = commandException.command
-                val providedArgs = commandException.providedArgs
-                val missing = command.arguments.filter { arg ->
-                    !arg.isOptional && providedArgs.none { it.argument == arg }
-                }
-
-                printer.printPlain(Texts.getArgumentCommandsMissingText(command.fullname))
-
-                if (providedArgs.isNotEmpty()) {
-                    val args = providedArgs.joinToString { it.argument.id.toString() }
-                    printer.printPlain(Text.of("  ", Texts.getProvidedArgumentsText(), ": ", args))
-                }
-
-                printer.printPlain(Text.of("  ", Texts.getMissingArgumentText(), ": ",
-                        missing.joinToString { it.id.toString() }))
-                printer.printEmpty()
-                printer.printPlain(Texts.getCommandSpecificationText())
-                printer.printFromRoot(command, 0)
-                printer.flush()
-            }
-
-            is CommandNotFoundException -> {
-                printer.printPlain(Texts.getMissingCommandText(commandException.commandStr.toInputString()))
-
-                if (commandException.parsedCommands.isNotEmpty()) {
-                    printer.printPlain(Text.of(
-                            Texts.getProcessedCommandsText(),
-                            ": ",
-                            commandException.parsedCommands.joinToString(
-                                    prefix = "'",
-                                    separator = ",",
-                                    postfix = "'") {
-                                "${it.command.fullname} ${it.arguments.filter { it.isDefined }.joinToString { it.input.toString() }}"
-                            }))
-                }
-
-                printer.printPlain(Text.of(Texts.getAvailableCommandsText(), ":"))
-                commandException.manager.createListWithAllCommands().forEach {
-                    printer.printCommand(it, it.level)
-                }
-                printer.flush()
-            }
-
-            is InvalidInputForArgumentException -> {
-                val command = commandException.command
-                val parsed = commandException.parsedArgs
-                val argument = commandException.arg
-                val input = commandException.input
-                val validation = commandException.validation
-
-                printer.printPlain(Texts.getInvalidInputValueText(input.toInputString(), argument.nameOrId, command.fullname))
-
-                if (parsed.isNotEmpty()) {
-                    printer.printPlain(Text.of("  ",
-                            Texts.getParsedArgumentsText(),
-                            ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
-                }
-
-                if (validation.invalids.isNotEmpty()) {
-                    printer.printEmpty()
-                    printer.printPlain(Texts.getInvalidInputsText().and(Text.of(":")))
-                    for ((input, validator, msg, supported) in validation.invalids) {
-                        printer.printEmpty()
-
-                        val rangeText = Text.of(
-                                Texts.getInputRangeText(input.start.toString(), input.end.toString()), ": ")
-                        val text = printer.localizer.localize(rangeText)
-                        val range = (text.length + input.start)..(text.length + input.end)
-                        printer.printPlain(Text.of(
-                                " | ",
-                                text,
-                                input.source,
-                                " | ",
-                                Texts.getInputText(), ": ", input.toInputString()))
-                        printer.printPlain(Text.of(" | ", point(range)))
-
-                        printer.printPlain(Text.of(" | ", Texts.getInputTypeText(),
-                                ": ", input.type.getTypeString()))
-
-                        val supportedText = supported.map { it.getTypeString() }
-                                .reduce { acc, textComponent -> acc.append(", ").append(textComponent) }
-
-                        printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
-                                ": ", supportedText
-                        ))
-                        msg?.let { printer.printPlain(Text.of(" | ", Texts.getMessageText(), ": ", it)) }
-                        printer.printPlain(Text.of(" | ", Texts.getValidatorText(), ": ", validator.name))
-                    }
-                    printer.printEmpty()
-                }
-
-                printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
-
-                val poss = argument.type.possibilities()
-
-                printPossibilities(poss, PrefixedPrinter(printer, "  - "))
-
-                printer.printEmpty()
-                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(": ")))
-                printer.printFromRoot(command, 0)
-                printer.flush()
-            }
-
-            is NoInputForArgumentException -> {
-                val command = commandException.command
-                val parsed = commandException.parsedArgs
-                val arg = commandException.arg
-                printer.printPlain(Texts.getNoInputForArgumentText(arg.nameOrId, command.fullname))
-
-                if (parsed.isNotEmpty()) {
-                    printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
-                            ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
-                }
-
-                printer.printEmpty()
-                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(":")))
-                printer.printFromRoot(command, 0)
-                printer.flush()
-            }
-
-            is ArgumentNotFoundException -> {
-                val command = commandException.command
-                val parsed = commandException.parsedArgs
-                val input = commandException.input
-                printer.printPlain(Texts.getArgumentNotFoundText(input, command.fullname))
-
-                if (parsed.isNotEmpty()) {
-                    printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
-                            ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
-                }
-
-                printer.printEmpty()
-                printer.printPlain(Texts.getCommandSpecificationText().and(Text.of(":")))
-                printer.printFromRoot(command, 0)
-                printer.flush()
-            }
-
-            else -> throw commandException
-        }
-
-
-    }
-
     override fun handleFail(parseFail: ParseFail, printer: Printer) {
         when (parseFail) {
             is ArgumentsMissingFail -> {
                 val command = parseFail.command
-                val providedArgs = parseFail.providedArgs
+                val providedArgs = parseFail.parsedArgs
                 val missing = command.arguments.filter { arg ->
                     !arg.isOptional && providedArgs.none { it.argument == arg }
                 }
@@ -207,12 +57,12 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 printer.printPlain(Texts.getArgumentCommandsMissingText(command.fullname))
 
                 if (providedArgs.isNotEmpty()) {
-                    val args = providedArgs.joinToString { it.argument.id.toString() }
+                    val args = providedArgs.joinToString { it.argument.name.toString() }
                     printer.printPlain(Text.of("  ", Texts.getProvidedArgumentsText(), ": ", args))
                 }
 
                 printer.printPlain(Text.of("  ", Texts.getMissingArgumentText(), ": ",
-                        missing.joinToString { it.id.toString() }))
+                        missing.joinToString { it.name.toString() }))
                 printer.printEmpty()
                 printer.printPlain(Texts.getCommandSpecificationText())
                 printer.printFromRoot(command, 0)
@@ -228,7 +78,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 if (parsed.isNotEmpty()) {
                     printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
+                            parsed.joinToString { it.argument.name.toString() }))
                 }
 
                 printer.printEmpty()
@@ -269,19 +119,19 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val input = parseFail.input
                 val validation = parseFail.validation
 
-                printer.printPlain(Texts.getInvalidInputValueText(input.toInputString(), argument.nameOrId, command.fullname))
+                printer.printPlain(Texts.getInvalidInputValueText(input.toInputString(), argument.name, command.fullname))
 
                 if (parsed.isNotEmpty()) {
                     printer.printPlain(Text.of("  ",
                             Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
+                            parsed.joinToString { it.argument.name.toString() }))
                 }
 
                 if (validation.invalids.isNotEmpty()) {
                     printer.printEmpty()
                     printer.printPlain(Texts.getInvalidInputsText().and(Text.of(":")))
-                    for ((input, validator, msg, supported) in validation.invalids) {
+                    for ((input, argType, validator, msg, supported) in validation.invalids) {
                         printer.printEmpty()
 
                         val rangeText = Text.of(
@@ -299,8 +149,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                         printer.printPlain(Text.of(" | ", Texts.getInputTypeText(),
                                 ": ", input.type.getTypeString()))
 
-                        val supportedText = supported.map { it.getTypeString() }
-                                .reduce { acc, textComponent -> acc.append(", ").append(textComponent) }
+                        val supportedText = Text.of(supported.getTypeString())
 
                         printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
                                 ": ", supportedText
@@ -313,7 +162,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
 
-                val poss = argument.type.possibilities()
+                val poss = argument.argumentType.possibilities()
 
                 printPossibilities(poss, PrefixedPrinter(printer, "  - "))
 
@@ -327,12 +176,12 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val command = parseFail.command
                 val parsed = parseFail.parsedArgs
                 val arg = parseFail.arg
-                printer.printPlain(Texts.getNoInputForArgumentText(arg.nameOrId, command.fullname))
+                printer.printPlain(Texts.getNoInputForArgumentText(arg.name, command.fullname))
 
                 if (parsed.isNotEmpty()) {
                     printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
+                            parsed.joinToString { it.argument.name.toString() }))
                 }
 
                 printer.printEmpty()
@@ -347,6 +196,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val argument = parseFail.arg
                 val start = parseFail.iter.sourceIndex
                 val fail = parseFail.inputParseFail
+                val input = fail.input
                 val inputType = parseFail.inputParseFail.argumentType.inputType
 
                 printer.printPlain(
@@ -356,7 +206,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                     printer.printPlain(Text.of("  ",
                             Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.id.toString() }))
+                            parsed.joinToString { it.argument.name }))
                 }
 
                 printer.printEmpty()
@@ -364,9 +214,9 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val source = parseFail.iter.sourceString
 
                 val rangeText = Text.of(
-                        Texts.getInputRangeText(start.toString(), (source.length - 1).toString()), ": ")
+                        Texts.getInputRangeText(input.start.toString(), input.end.toString()), ": ")
                 val text = printer.localizer.localize(rangeText)
-                val range = (text.length + start)..(text.length + source.length - 1)
+                val range = (text.length + input.start)..(text.length + input.end)
                 printer.printPlain(Text.of(" | ", text, source))
                 printer.printPlain(Text.of(" | ", point(range)))
                 printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
@@ -374,12 +224,10 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 ))
 
                 when (fail) {
-                    is ListTokenExpectedFail, is MapTokenExpectedFail -> {
-                        val tokens = (fail as? ListTokenExpectedFail)?.tokens
-                                ?: (fail as MapTokenExpectedFail).tokens
+                    is TokenExpectedFail -> {
+                        val tokens = fail.tokens
 
-                        val foundToken = (fail as? ListTokenExpectedFail)?.foundToken
-                                ?: (fail as MapTokenExpectedFail).foundToken
+                        val foundToken = fail.currentToken
 
                         if (tokens.isNotEmpty()) {
                             printer.printPlain(Text.of(" | ", Texts.getExpectedTokensText(), ": ",
@@ -390,13 +238,13 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                                 "'", foundToken, "'."))
 
                         when {
-                            fail is ListTokenExpectedFail && (fail.input as ListInput).input.isNotEmpty() -> {
+                            fail.input is ListInput && fail.input.input.isNotEmpty() -> {
                                 val list = fail.input.input.joinToString(prefix = "[", postfix = "]") {
                                     it.getString()
                                 }
                                 printer.printPlain(Text.of(" | ", Texts.getParsedListText(), ": ", list, "."))
                             }
-                            fail is MapTokenExpectedFail && (fail.input as MapInput).input.isNotEmpty() -> {
+                            fail.input is MapInput && fail.input.input.isNotEmpty() -> {
                                 val map = fail.input.input.joinToString(prefix = "{", postfix = "}") {
                                     "${it.first.getString()}=${it.second.getString()}"
                                 }
@@ -411,7 +259,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printPlain(Text.of(Texts.getArgumentTypeText(), ": ", argument.typeStr))
 
-                val poss = argument.type.possibilities()
+                val poss = argument.argumentType.possibilities()
 
                 printPossibilities(poss, PrefixedPrinter(printer, "  - "))
 
@@ -478,7 +326,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
         fun Container.containerStr(): TextComponent = when (this) {
 
             is CommandContainer -> Text.of(Texts.getCommandText().decapitalize(), " ", this.command.fullname)
-            is ArgumentContainer<*> -> Text.of(Texts.getArgumentText().decapitalize(), " ", this.argument.nameOrId)
+            is ArgumentContainer<*> -> Text.of(Texts.getArgumentText().decapitalize(), " ", this.argument.name)
             else -> Text.of(this.toString())
         }
 

@@ -30,7 +30,6 @@ package com.github.jonathanxd.kwcommands.test;
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.kwcommands.command.Command;
-import com.github.jonathanxd.kwcommands.exception.CommandException;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;

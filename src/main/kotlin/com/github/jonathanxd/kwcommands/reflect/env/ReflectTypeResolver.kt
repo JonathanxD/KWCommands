@@ -33,6 +33,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.json.DelegatedTypeResolver
 import com.github.jonathanxd.kwcommands.json.TypeResolver
+import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
@@ -50,7 +51,7 @@ import com.github.jonathanxd.kwcommands.parser.Validator
  * @see [DynamicHandler]
  */
 internal class ReflectTypeResolver(val type: Class<*>,
-                                   val instanceProvider: (Class<*>) -> Any?,
+                                   val instanceProvider: InstanceProvider,
                                    val reflectionEnvironment: ReflectionEnvironment,
                                    delegate: TypeResolver) : DelegatedTypeResolver(delegate) {
 

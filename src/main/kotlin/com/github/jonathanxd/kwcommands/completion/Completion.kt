@@ -31,6 +31,10 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.fail.ParseFail
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.OwnerProvider
@@ -48,13 +52,17 @@ interface Completion {
     /**
      * Gets suggestions to complete [input].
      */
-    fun complete(input: String, owner: Any?): List<String> =
-            this.completeWithOwnerFunc(input) { owner }
+    fun complete(input: String,
+                 owner: Any?,
+                 informationManager: InformationManager): List<String> =
+            this.completeWithOwnerFunc(input, {owner}, informationManager)
 
     /**
      * Gets suggestions to complete [input].
      */
-    fun completeWithOwnerFunc(input: String, ownerProvider: OwnerProvider): List<String>
+    fun completeWithOwnerFunc(input: String,
+                              ownerProvider: OwnerProvider,
+                              informationManager: InformationManager): List<String>
 
 }
 
@@ -87,25 +95,36 @@ interface Completions {
  * Example, supposing that we have a command `hello` with argument `name` that can receive `WCommands` and `KWCommands`,
  * when `hello KW` is sent to completer to get suggestions, the implementation of this interface should return
  * `WCommands` and `KWCommands`, and the implementation of [Completion] will choose only `KWCommands` as completion.
+ *
+ * This class also receives an [InformationManager] to provide some values, this is not used by default
+ * implementation.
  */
 interface AutoCompleter {
+
+    /**
+     * Handles a non-completable case. A non-completable case is the case where the parsing
+     * cannot be finished because of a fail at the mid of it (example, trying to complete
+     * an invalid input).
+     */
+    fun handleNonCompletable(fail: ParseFail,
+                             informationManager: InformationManager) = Unit
+
+    /**
+     * Gets sub-command completion for [command].
+     */
+    fun completeCommand(command: Command?,
+                        commandContainers: List<CommandContainer>,
+                        completions: Completions,
+                        commandManager: CommandManager,
+                        informationManager: InformationManager) = Unit
 
     /**
      * Gets completions for argument name (without `--`).
      */
     fun completeArgumentName(command: Command,
                              arguments: List<ArgumentContainer<*>>,
-                             completions: Completions)
-
-    /**
-     * Gets completions for [argument].
-     */
-    fun completeArgument(command: Command,
-                         arguments: List<ArgumentContainer<*>>,
-                         argument: Argument<*>,
-                         base: Input,
-                         toComplete: SingleInput,
-                         completions: Completions)
+                             completions: Completions,
+                             informationManager: InformationManager) = Unit
 
     /**
      * Gets completions for [argument].
@@ -114,34 +133,10 @@ interface AutoCompleter {
                               arguments: List<ArgumentContainer<*>>,
                               argument: Argument<*>,
                               argumentType: ArgumentType<*, *>,
-                              completions: Completions)
+                              input: Input?,
+                              completions: Completions,
+                              informationManager: InformationManager) = Unit
 
-    /**
-     * Gets completions for [Map] key input for [argument].
-     */
-    fun completeArgumentMapKey(command: Command,
-                               arguments: List<ArgumentContainer<*>>,
-                               argument: Argument<*>,
-                               keyType: ArgumentType<*, *>,
-                               completions: Completions)
-
-    /**
-     * Gets completions for [Map] value input for [argument].
-     */
-    fun completeArgumentMapValue(command: Command,
-                               arguments: List<ArgumentContainer<*>>,
-                               argument: Argument<*>,
-                               valueType: ArgumentType<*, *>,
-                               completions: Completions)
-
-    /**
-     * Gets completions for [List] input for [argument].
-     */
-    fun completeArgumentListElement(command: Command,
-                                    arguments: List<ArgumentContainer<*>>,
-                                    argument: Argument<*>,
-                                    argumentType: ArgumentType<*, *>,
-                                    completions: Completions)
 
 
 }

@@ -27,11 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.jwiutils.kt.ifLeftSide
 import com.github.jonathanxd.jwiutils.kt.textOf
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.dsl.intArg
 import com.github.jonathanxd.kwcommands.dsl.stringArg
-import com.github.jonathanxd.kwcommands.exception.CommandException
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
@@ -48,15 +48,13 @@ class ArgParseTest {
         val handler = CommonHelpInfoHandler()
 
         val cmd = command {
-            stringName { "example" }
+            name { "example" }
             description { textOf("Test command") }
             arguments {
                 +intArg {
-                    id { "value" }
                     name { "value" }
                 }
                 +stringArg {
-                    id { "name" }
                     name { "name" }
                     description { textOf("String argument") }
                 }
@@ -75,10 +73,8 @@ class ArgParseTest {
 
         manager.registerCommand(cmd, this)
 
-        try {
-            processor.parseAndDispatch("example Hello 9", this, infoManager)
-        } catch (ex: CommandException) {
-            handler.handleCommandException(ex, printer)
+        processor.parseAndDispatch("example Hello 9", this, infoManager).ifLeftSide {
+            handler.handleFail(it, printer)
         }
 
     }

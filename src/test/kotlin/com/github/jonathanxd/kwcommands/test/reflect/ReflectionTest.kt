@@ -32,10 +32,7 @@ import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InstanceProvider
-import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
+import com.github.jonathanxd.kwcommands.manager.*
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.parser.valid
@@ -72,7 +69,7 @@ class ReflectionTest {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
-        env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(Download::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -93,7 +90,8 @@ class ReflectionTest {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
-        env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(Download::class, instanceProvider { it.newInstance() },
+                this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -122,7 +120,7 @@ class ReflectionTest {
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
 
-        env.registerCommands(env.fromClass(World::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(World::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -166,7 +164,7 @@ class ReflectionTest {
         val manager = ReflectCommandManagerImpl()
 
         manager.registerClassWithInner(InnerCommands::class.java, object : InstanceProvider {
-            override fun <T> get(type: Class<T>): T = type.newInstance()
+            override fun invoke(type: Class<*>): Any? = type.newInstance()
         }, this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
@@ -193,7 +191,7 @@ class ReflectionTest {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
-        env.registerCommands(env.fromClass(TestOptInfo::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(TestOptInfo::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 

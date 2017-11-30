@@ -41,21 +41,21 @@ import kotlin.reflect.KClass
  * the specified [validator] instead of the determined one.
  *
  * @property value Identification and name of argument
+ * @property alias Alias to argument
  * @property description Argument description.
  * @property optional Whether this argument is optional.
  * @property requirements Requirements of the argument.
- * @property validator Custom validator to use for argument.
- * @property transformer Custom transformer to use for argument.
- * @property possibilities Custom possibilities provider to use for argument.
+ * @property argumentType Type of argument.
  * @property handler Argument handler (if this annotated element is a field, an field setter handler will
  * be used as default handler instead of [NoneArgumentHandler]) (**this property overrides default handler**).
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
 annotation class Arg(val value: String = "",
+                     val alias: Array<String> = [],
                      val description: String = "",
                      val optional: Boolean = false,
                      val multiple: Boolean = false,
-                     val requirements: Array<Require> = arrayOf(),
+                     val requirements: Array<Require> = [],
                      val argumentType: KClass<out () -> ArgumentType<*, *>> = NoneArgumentType::class,
                      val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class)

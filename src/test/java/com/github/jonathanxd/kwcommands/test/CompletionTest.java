@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
+import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
 import com.github.jonathanxd.kwcommands.argument.ArgumentType;
@@ -45,33 +46,32 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.util.KLocale;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import kotlin.collections.ArraysKt;
 import kotlin.jvm.functions.Function0;
 
 public class CompletionTest {
 
     @Test
     public void test() {
-        AIO aio = KWCommands.INSTANCE.createAio();
+        AIO aio = KWCommands.INSTANCE.createAio(this);
         CommandManager commandManager = aio.getCommandManager();
         CommandProcessor processor = aio.getProcessor();
         ReflectionEnvironment reflectionEnvironment = aio.getReflectionEnvironment();
         InformationManager informationManager = new InformationManagerImpl();
         Completion completion = aio.getCompletion();
 
-        //a b c [a
-        // a = command
-        // b = command
-        // c = argument
-        // [a = argument
-
         List<Command> commands = reflectionEnvironment.fromClass(CompletionTest.class, aClass -> this, this);
 
-        commandManager.registerAll(commands, this);
+        for (Command command : commands) {
+            commandManager.registerCommand(command, this);
+        }
 
         KLocale.INSTANCE.getLocalizer().setDefaultLocale(KLocale.INSTANCE.getPtBr());
         HelpInfoHandler localizedHandler = new CommonHelpInfoHandler();
@@ -79,45 +79,152 @@ public class CompletionTest {
 
         List<String> complete;
 
-        /*String s00 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]} --n2 2";
-        String s0 = "mapcmd 1 --values {a=\"man, i l u = {\", uhu=[s,b]";
-        String s = "mapcmd 1 --values {a=\"man, i l u = {\", A=";
-
-        complete = completion.complete(s, null);
-
-        System.out.println("== Complete ==");
-
-        for (String s1 : complete) {
-            System.out.println(s1);
-        }
-
-        System.out.println("== Complete ==");*/
-
-
         String x;
-/*
+
         x = "mapcmd 1 --values {a=\"man, i l u = {\", ";
-        complete = completion.complete(x, null);
+        complete = completion.complete(x, null, informationManager);
 
-        System.out.println("== Complete ==");
+        Assert.assertEquals(Collections3.listOf(), complete);
 
-        for (String s1 : complete) {
-            System.out.println(s1);
-        }
+        x = "mapcmd 1 --values {a=C, ";
+        complete = completion.complete(x, null, informationManager);
 
-        System.out.println("== Complete ==");
-*/
+        Assert.assertEquals(Collections3.listOf("A", "B"), complete);
 
-        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[a";
-        complete = completion.complete(x, null);
+        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=";
+        complete = completion.complete(x, null, informationManager);
 
-        System.out.println("== Complete ==");
+        Assert.assertEquals(Collections3.listOf("["), complete);
 
-        for (String s1 : complete) {
-            System.out.println(s1);
-        }
+        x = "setmap 1 --values {name=Jonathan,values={age=18,";
+        complete = completion.complete(x, null, informationManager);
 
-        System.out.println("== Complete ==");
+        Assert.assertEquals(Collections3.listOf("languages"), complete);
+
+        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[";
+        complete = completion.complete(x, null, informationManager);
+
+        List<String> expected = Collections3.listOf("]");
+        expected.addAll(ArraysKt.map(Languages.values(), Languages::name));
+        Assert.assertEquals(expected, complete);
+
+        x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[Ja";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                ArraysKt.map(Languages.values(), Languages::name).stream()
+                        .filter(name -> name.startsWith("Ja"))
+                        .collect(Collectors.toList()),
+                complete);
+
+        x = "";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertTrue(complete.containsAll(Collections3.listOf("mapcmd", "setmap")));
+
+        x = "m";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("mapcmd"),
+                complete);
+
+        x = "mc";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertTrue(complete.containsAll(Collections3.listOf("mapcmd", "setmap")));
+
+        x = "mapcmd";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "mapcmd ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("a", "--n", "--values", "--n2"),
+                complete);
+
+        x = "mapcmd 1";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "mapcmd 1 ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("--values", "--n2", "{"),
+                complete);
+
+        x = "mapcmd 1 {";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("}", "A", "B"),
+                complete);
+
+        x = "mapcmd 1 { ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("}", "A", "B"),
+                complete);
+
+        x = "completeTest1";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "completeTest1 ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertTrue(Collections3.listOf("completeTest2", "completeTest2_5").containsAll(complete));
+
+        x = "completeTest1 completeTest2";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "completeTest1 completeTest2 ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertTrue(Collections3.listOf("completeTest3", "completeTest4").containsAll(complete));
+
+        x = "completeTest1 completeTest2 completeTest3";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(),
+                complete);
+
+        x = "completeTest1 completeTest2 completeTest4";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "completeTest1 completeTest2 completeTest4 ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("--name"),
+                complete);
+    }
+
+    @Cmd(description = "Complete Test 1")
+    public void completeTest1() {
+
     }
 
     @Cmd(description = "Vararg test")
@@ -136,14 +243,29 @@ public class CompletionTest {
 
     }
 
-    public static class MyMapArgTypeProvider implements Function0<ArgumentType<?, ?>> {
+    @Cmd(parents = "mapcmd")
+    public void a(@Arg("s") String s) {
 
-        public static final MyMapArgTypeProvider INSTANCE = new MyMapArgTypeProvider();
+    }
 
-        @Override
-        public ArgumentType<?, ?> invoke() {
-            return MyMapValidatorKt.getMyMapArgumentType();
-        }
+    @Cmd(description = "Complete Test 2", parents = {"completeTest1"})
+    public void completeTest2() {
+
+    }
+
+    @Cmd(description = "Complete Test 2.5", parents = {"completeTest1"})
+    public void completeTest2_5() {
+
+    }
+
+    @Cmd(description = "Complete Test 3", parents = {"completeTest1", "completeTest2"})
+    public void completeTest3() {
+
+    }
+
+    @Cmd(description = "Complete Test 4", parents = {"completeTest1", "completeTest2"})
+    public void completeTest4(@Arg(value = "name", optional = true) String name) {
+
     }
 
     public static enum E {
@@ -154,6 +276,16 @@ public class CompletionTest {
     public static enum X {
         C,
         D
+    }
+
+    public static class MyMapArgTypeProvider implements Function0<ArgumentType<?, ?>> {
+
+        public static final MyMapArgTypeProvider INSTANCE = new MyMapArgTypeProvider();
+
+        @Override
+        public ArgumentType<?, ?> invoke() {
+            return MyMapValidatorKt.getMyMapArgumentType();
+        }
     }
 
 

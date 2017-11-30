@@ -34,22 +34,3 @@ interface Possibilities {
      */
     operator fun invoke(): List<Input>
 }
-
-sealed class Possibility {
-    abstract fun getString(): String
-}
-
-data class SinglePossibility(val input: String) : Possibility() {
-    override fun getString(): String = input
-}
-
-data class ListPossibility(val possibilities: List<Possibility>) : Possibility() {
-    override fun getString(): String = "[${this.possibilities.joinToString(",") { it.getString() }}]"
-}
-
-data class MapPossibility(val possibilities: List<Pair<Possibility, Possibility>>) : Possibility() {
-    override fun getString(): String = "{${
-    this.possibilities.joinToString(",") {
-        "${it.first.getString()}=${it.second.getString()}"
-    }}}"
-}

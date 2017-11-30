@@ -29,47 +29,72 @@ package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.requirement.Requirement
-import com.github.jonathanxd.kwcommands.util.possibilitiesFunc
-import com.github.jonathanxd.kwcommands.util.simpleArgumentType
 
 /**
  * Builder of [Argument].
  */
 class ArgumentBuilder<I: Input, T> {
 
-    private lateinit var id: Any
     private var name: String = ""
+    private var alias = mutableListOf<String>()
     private var description: TextComponent = Text.single("")
     private var isOptional: Boolean = false
-    private lateinit var typeInfo: TypeInfo<out T>
-    private var type: ArgumentType<*, T>? = null
+    private lateinit var argumentType: ArgumentType<*, T>
     private var isMultiple: Boolean = false
     private var defaultValue: T? = null
-    private lateinit var validator: Validator<I>
-    private lateinit var transformer: Transformer<I, T>
-    private var possibilities: Possibilities = possibilitiesFunc { emptyList() }
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private var handler: ArgumentHandler<out T>? = null
-
-    /**
-     * Sets [Argument.id]
-     */
-    fun id(id: Any): ArgumentBuilder<I, T> {
-        this.id = id
-        return this
-    }
 
     /**
      * Sets [Argument.name]
      */
     fun name(name: String): ArgumentBuilder<I, T> {
         this.name = name
+        return this
+    }
+
+    /**
+     * Sets [Argument.alias]
+     */
+    fun alias(alias: List<String>): ArgumentBuilder<I, T> {
+        this.alias = alias.toMutableList()
+        return this
+    }
+
+    /**
+     * Adds [Argument.alias].
+     */
+    fun addAlias(aliases: List<String>): ArgumentBuilder<I, T> {
+        this.alias.addAll(aliases)
+        return this
+    }
+
+    /**
+     * Adds an [Alias][Argument.alias]
+     */
+    fun addAlias(alias: String): ArgumentBuilder<I, T> {
+        this.alias.add(alias)
+        return this
+    }
+
+    /**
+     * Removes an [Alias][Argument.alias]
+     */
+    fun removeAlias(alias: String): ArgumentBuilder<I, T> {
+        this.alias.remove(alias)
+        return this
+    }
+
+    /**
+     * Clear [Argument.alias]
+     */
+    fun clearAlias(): ArgumentBuilder<I, T> {
+        this.alias.clear()
         return this
     }
 
@@ -90,58 +115,18 @@ class ArgumentBuilder<I: Input, T> {
     }
 
     /**
-     * Sets [Argument.type]
+     * Sets [Argument.argumentType]
      */
     fun argumentType(type: ArgumentType<*, T>): ArgumentBuilder<I, T> {
-        this.type = type
+        this.argumentType = type
         return this
     }
 
     /**
-     * Sets [Argument.type]
-     */
-    fun type(type: TypeInfo<out T>): ArgumentBuilder<I, T> {
-        this.typeInfo = type
-        return this
-    }
-
-    /**
-     * Sets [Argument.type]
+     * Sets [Argument.argumentType]
      */
     fun multiple(isMultiple: Boolean): ArgumentBuilder<I, T> {
         this.isMultiple = isMultiple
-        return this
-    }
-
-    /**
-     * Sets [Argument.defaultValue]
-     */
-    fun defaultValue(defaultValue: T?): ArgumentBuilder<I, T> {
-        this.defaultValue = defaultValue
-        return this
-    }
-
-    /**
-     * Sets [Argument.validator]
-     */
-    fun validator(validator: Validator<I>): ArgumentBuilder<I, T> {
-        this.validator = validator
-        return this
-    }
-
-    /**
-     * Sets [Argument.transformer]
-     */
-    fun transformer(transformer: Transformer<I, T>): ArgumentBuilder<I, T> {
-        this.transformer = transformer
-        return this
-    }
-
-    /**
-     * Adds [Argument.possibilities]
-     */
-    fun possibilities(possibilities: Possibilities): ArgumentBuilder<I, T> {
-        this.possibilities = possibilities
         return this
     }
 
@@ -217,29 +202,15 @@ class ArgumentBuilder<I: Input, T> {
         return this
     }
 
-    @Deprecated(message = "Will be removed before 1.3 release.")
-    private fun buildArgumentType(): ArgumentType<*, out T> {
-        if (this.type != null)
-            return this.type!!
-
-        return simpleArgumentType(
-                transformer as Transformer<SingleInput, T>,
-                validator as Validator<SingleInput>,
-                possibilities,
-                this.typeInfo)
-    }
-
     /**
      * Builds argument.
      */
     fun build(): Argument<T> = Argument(
-            id = this.id,
             name = this.name,
+            alias = this.alias,
             description = this.description,
             isOptional = this.isOptional,
-            type = this.buildArgumentType(),
-            isMultiple = this.isMultiple,
-            defaultValue = this.defaultValue,
+            argumentType = this.argumentType,
             requirements = this.requirements.toList(),
             requiredInfo = this.requiredInfo.toSet(),
             handler = this.handler

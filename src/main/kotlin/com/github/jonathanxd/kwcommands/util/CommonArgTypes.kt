@@ -29,10 +29,12 @@ package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.argument.CustomArgumentType
 import com.github.jonathanxd.kwcommands.argument.SingleArgumentType
 import com.github.jonathanxd.kwcommands.dsl.stringTransformer
 import com.github.jonathanxd.kwcommands.dsl.stringValidator
 import com.github.jonathanxd.kwcommands.parser.*
+import java.util.*
 
 
 val charArgumentType = SingleArgumentType<Char>(
@@ -107,10 +109,26 @@ val stringArgumentType = SingleArgumentType<String>(
         TypeInfo.of(String::class.java)
 )
 
+fun <I: Input, T> optArgumentType(argumentType: ArgumentType<I, T>): ArgumentType<I, Optional<T>> =
+        CustomArgumentType({ Optional.of(it) }, Optional.empty(), argumentType,
+                TypeInfo.builderOf(Optional::class.java).of(argumentType.type).buildGeneric())
+
+fun <I: Input> optIntArgumentType(argumentType: ArgumentType<I, Int>): ArgumentType<I, OptionalInt> =
+        CustomArgumentType({ OptionalInt.of(it) }, OptionalInt.empty(), argumentType,
+                TypeInfo.builderOf(OptionalInt::class.java).build())
+
+fun <I: Input> optDoubleArgumentType(argumentType: ArgumentType<I, Double>): ArgumentType<I, OptionalDouble> =
+        CustomArgumentType({ OptionalDouble.of(it) }, OptionalDouble.empty(), argumentType,
+                TypeInfo.builderOf(OptionalDouble::class.java).build())
+
+fun <I: Input> optLongArgumentType(argumentType: ArgumentType<I, Long>): ArgumentType<I, OptionalLong> =
+        CustomArgumentType({ OptionalLong.of(it) }, OptionalLong.empty(), argumentType,
+                TypeInfo.builderOf(OptionalLong::class.java).build())
+
 fun stringArgumentType(str: String) = SingleArgumentType<String>(
         stringTransformer,
         ExactStringValidator(str),
-        StringPossibilities,
+        ExactStringPossibilities(str),
         null,
         TypeInfo.of(String::class.java)
 )
@@ -135,13 +153,6 @@ fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
                            defaultValue: T?,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
         SingleArgumentType(transformer, validator, possibilitiesFunc, defaultValue, typeInfo)
-
-fun ArgumentType<*, *>.validate(input: Input): Validation {
-    if (this.inputType == input.type)
-        return this.validate(input)
-
-    return invalid(input, this, InputTypeValidator, null, listOf(this.inputType))
-}
 
 object InputTypeValidator : Validator<Input> {
     override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =

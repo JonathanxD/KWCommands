@@ -29,47 +29,15 @@ package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
-import java.util.*
 
 /**
  * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
  * are invalid.
  */
-interface Validator<in I: Input> {
+interface Validator<in I : Input> {
     val name: TextComponent
         get() = Text.of(this::class.java.simpleName)
 
     operator fun invoke(argumentType: ArgumentType<@UnsafeVariance I, *>, value: I): Validation
 }
-/*
-
-interface MapValidator : Validator {
-    fun get()
-}
-
-abstract class SingleValidator(val expectedText: TextComponent,
-                               val invalidText: TextComponent) : Validator {
-
-    abstract fun validateSingle(parsed: List<ArgumentContainer<*>>,
-                                current: Argument<*>,
-                                value: SingleInput): Boolean
-
-    override fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>,
-                        value: Input): Validation {
-        if (value !is SingleInput)
-            return invalid(value, this, expectedText, SINGLE_TYPE)
-
-        if (!this.validateSingle(parsed, current, value))
-            return invalid(value, this, invalidText, SINGLE_TYPE)
-
-        return valid()
-    }
-
-    companion object {
-        private val SINGLE_TYPE = Collections.unmodifiableList(listOf(SingleInputType))
-    }
-}*/

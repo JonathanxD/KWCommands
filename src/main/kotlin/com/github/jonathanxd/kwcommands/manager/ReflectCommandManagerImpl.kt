@@ -39,6 +39,9 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
  */
 class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl()) : ReflectCommandManager {
 
+    override val registeredCommands: Set<Command>
+        get() = this.manager.registeredCommands
+
     private val environment: ReflectionEnvironment = ReflectionEnvironment(this)
     override val argumentTypeStorage: ArgumentTypeStorage = object : ArgumentTypeStorage {
 
@@ -57,21 +60,22 @@ class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl
     }
 
     override fun <T> registerClass(klass: Class<T>, instance: T, owner: Any): Boolean {
-        val commands = environment.fromClass(klass, { if (it == klass) instance else null }, owner, false)
+        val commands = environment.fromClass(klass, instanceProvider { if (it == klass) instance else null },
+                owner, false)
         return this.environment.registerCommands(commands, owner)
     }
 
     override fun <T> registerClassWithInner(klass: Class<T>, instanceProvider: InstanceProvider, owner: Any): Boolean {
-        val commands = environment.fromClass(klass, { instanceProvider.get(it) }, owner, true)
+        val commands = environment.fromClass(klass, instanceProvider, owner, true)
         return this.environment.registerCommands(commands, owner)
     }
 
     override fun <T> unregisterClass(klass: Class<T>, owner: Any?): Boolean {
-        val allStatic = environment.fromClass(klass, { null }, owner).all {
+        val allStatic = environment.fromClass(klass, instanceProvider { null }, owner).all {
             this.manager.unregisterCommand(it, owner)
         }
 
-        return allStatic && environment.fromClass(klass, { Unit }, owner).all {
+        return allStatic && environment.fromClass(klass, instanceProvider { Unit }, owner).all {
             this.manager.unregisterCommand(it, owner)
         }
     }

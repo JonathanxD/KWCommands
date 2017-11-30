@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.reflect
 
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.reflect.env.Checker
 import java.util.*
 
 
@@ -37,8 +38,6 @@ import java.util.*
  * checks and tries to add `queued commands` to `created command list` list when you get [command list][commands].
  *
  * This class is used to avoid premature dependency checking (earlier than the dependent command can be registered).
- *
- * Obs: This class uses the same strategy as WCommands.
  */
 class CommandFactoryQueue {
 
@@ -81,7 +80,7 @@ class CommandFactoryQueue {
      * @param dependencyCheck    Dependency checker. (first argument is a immutable version of `created commands list`.
      * @param dependencyProvider Dependency path provider.
      */
-    fun queueCommand(location: Any, name: String, factory: (createdCommands: List<Command>) -> Command, dependencyCheck: (createdCommands: List<Command>) -> Boolean, dependencyProvider: () -> String) {
+    fun queueCommand(location: Any, name: String, factory: (createdCommands: List<Command>) -> Command, dependencyCheck: Checker, dependencyProvider: () -> String) {
         if (dependencyCheck(this.createdUnmod))
             this.created_.add(factory(this.createdUnmod))
         else
@@ -93,24 +92,33 @@ class CommandFactoryQueue {
      * Resolves all `queued commands`.
      */
     private fun createAll() {
-        var lastSize = -1
+        var modified = true
 
         while (queued_.isNotEmpty()) {
-            if (lastSize == -1)
-                lastSize = queued_.size
-            else if (lastSize == queued_.size)
-                throw IllegalStateException("Recursive dependency found. Queued commands: <${this.queued_}>. Created commands: <${this.created_}>")
+            if (!modified)
+                throw IllegalStateException("Recursive dependency found or dependency missing. Queued commands:" +
+                        " ${this.queued_.joinToString(prefix = "[", postfix = "]") { it.name }}." +
+                        " Created commands:" +
+                        " ${this.created_.joinToString(prefix = "[", postfix = "]") { it.name }}")
 
+            modified = false
 
             val copy = queued_.toList()
 
             for (it in copy) {
                 if (it.create()) {
-                    lastSize = queued_.size
+                    modified = true
                     break
+                } else {
+                    modified = false
                 }
             }
         }
+    }
+
+    fun clear() {
+        this.queued_.clear()
+        this.created_.clear()
     }
 
     /**
@@ -133,4 +141,4 @@ class CommandFactoryQueue {
 
 }
 
-internal data class QueuedCommand(val location: Any, val name: String, val factory: (List<Command>) -> Command, val dependencyCheck: (List<Command>) -> Boolean, val dependencyProvider: () -> String)
+internal data class QueuedCommand(val location: Any, val name: String, val factory: (List<Command>) -> Command, val dependencyCheck: Checker, val dependencyProvider: () -> String)

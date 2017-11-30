@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
 typealias OwnerProvider = (commandName: String) -> Any?
 
@@ -47,7 +48,7 @@ interface CommandParser {
     val options: Options
 
     /**
-     * Process command string list.
+     * Process command string.
      *
      * @param commandString Command line string, with commands and arguments of commands.
      * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
@@ -57,7 +58,7 @@ interface CommandParser {
             parseWithOwnerFunction(commandString, { owner })
 
     /**
-     * Process command string list.
+     * Process command string.
      *
      * This provides a way to specify owner based on command input string (`commandName`).
      *
@@ -67,6 +68,19 @@ interface CommandParser {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun parseWithOwnerFunction(commandString: String,
+                               ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>>
+
+    /**
+     * Process command string from iterator.
+     *
+     * This provides a way to specify owner based on command input string (`commandName`).
+     *
+     * @param commandIter Iterator with command string.
+     * @param ownerProvider Provider of the owner of the input command.
+     * The owner is used to lookup for the command in the [commandManager], if a
+     * null owner is provided, the [commandManager] will return the first found command.
+     */
+    fun parseWithOwnerFunction(commandIter: SourcedCharIterator,
                                ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>>
 
 }

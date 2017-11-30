@@ -32,14 +32,8 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
-import com.github.jonathanxd.kwcommands.argument.invokeAsInputCapable
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
-import com.github.jonathanxd.kwcommands.util.*
 import java.util.function.Function
 
 interface TypeResolver {

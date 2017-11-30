@@ -57,10 +57,10 @@ inline fun possibilitiesFunc(crossinline func: () -> List<Input>) =
 inline fun validator(crossinline func: (argumentType: ArgumentType<*, *>, value: String) -> Boolean) =
         object : Validator<Input> {
             override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
-                (value as? SingleInput)?.let {
-                    if (func(argumentType, it.input)) valid()
-                    else invalid(value, argumentType, this, null, listOf(SingleInputType))
-                } ?: invalid(value, argumentType, this, null, listOf(SingleInputType))
+                    (value as? SingleInput)?.let {
+                        if (func(argumentType, it.input)) valid()
+                        else invalid(value, argumentType, this, null)
+                    } ?: invalid(value, argumentType, this, null)
 
         }
 

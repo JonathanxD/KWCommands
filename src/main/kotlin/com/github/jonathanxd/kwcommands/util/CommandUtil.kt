@@ -51,19 +51,18 @@ val Command.level: Int
 fun Command.toStr() = this.fullname
 
 fun Iterable<Argument<*>>.toStr() = this.joinToString { it.toStr() }
-fun Argument<*>.toStr() = this.nameOrId
+fun Argument<*>.toStr() = this.name
 
-val Argument<*>.nameOrId get() = if (this.name.isEmpty()) this.id.toString() else this.name
-val Argument<*>.nameOrIdWithType
+val Argument<*>.nameWithType
     get() =
-        "${this.nameOrId}: ${this.typeStr}"
+        "${this.name}: ${this.typeStr}"
 
 val Argument<*>.typeStr: String
-    get() = if (this.type.type.canResolve()) this.type.type.toString() else this.type.type.classLiteral
+    get() = if (this.argumentType.type.canResolve()) this.argumentType.type.toString() else this.argumentType.type.classLiteral
 
 fun Argument<*>.isBoolean(): Boolean =
-        this.type is SingleArgumentType<*>
-                && this.type.type.canResolve()
-                && (this.type.type.typeClass == Boolean::class.javaObjectType
-                || this.type.type.typeClass == Boolean::class.javaPrimitiveType)
-                && this.type.validate(SingleInput("true", "true", 0, 4)).isValid
+        this.argumentType is SingleArgumentType<*>
+                && this.argumentType.type.canResolve()
+                && (this.argumentType.type.typeClass == Boolean::class.javaObjectType
+                || this.argumentType.type.typeClass == Boolean::class.javaPrimitiveType)
+                && this.argumentType.validate(SingleInput("true", "true", 0, 4)).isValid

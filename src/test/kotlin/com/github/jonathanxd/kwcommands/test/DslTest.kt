@@ -27,16 +27,18 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.jwiutils.kt.ifLeftSide
 import com.github.jonathanxd.jwiutils.kt.textOf
+import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.argument.CustomArgumentType
 import com.github.jonathanxd.kwcommands.dsl.*
-import com.github.jonathanxd.kwcommands.exception.CommandException
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
-import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.util.KLocale
+import com.github.jonathanxd.kwcommands.util.stringArgumentType
 import org.junit.Assert
 import org.junit.Test
 
@@ -47,9 +49,9 @@ class DslTest {
         val handler = CommonHelpInfoHandler()
 
         val helloCommand = command {
-            name { string("hello") }
+            name { "hello" }
             arguments {
-                +stringArg { id { "name" } }
+                +stringArg { name { "name" } }
             }
             handlerWithContext {
                 println("Hello ${it.getArg<String>("name")}")
@@ -57,7 +59,7 @@ class DslTest {
         }
 
         val runCommand = command {
-            name { string("promote") }
+            name { "promote" }
             requiredInfo {
                 requireInfo<Group> {
                     id(informationId<Group> { tags { +"group" } })
@@ -73,12 +75,12 @@ class DslTest {
             }
             arguments {
                 +stringArg {
-                    id { "userId" }
+                    name { "userId" }
                     description { textOf("Identification of user to promote") }
-                    transformer { it.input.toLowerCase() }
+                    type = CustomArgumentType({it.toLowerCase()}, null, stringArgumentType, typeInfo())
                 }
                 +listArg(enumArg<Group> {
-                    id {"groupList"}
+                    name {"groupList"}
                     description { textOf("Groups to add user to") }
                 })
             }
@@ -96,39 +98,36 @@ class DslTest {
         manager.registerCommand(helloCommand, this)
         manager.registerCommand(runCommand, this)
 
-        try {
             processor.parseAndDispatch("hello KWCommands", this, infoManager).let {
                 if (it.isRight) {
                     handler.handleResults(it.right, printer)
                     Assert.assertTrue(it.right.isEmpty())
                 }
+                it
+            }.ifLeftSide {
+                handler.handleFail(it, printer)
+                throw AssertionError()
             }
-        } catch (ex: CommandException) {
-            handler.handleCommandException(ex, printer)
-            throw AssertionError()
-        }
 
-        try {
             processor.parseAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
                 if (it.isRight) {
                     handler.handleResults(it.right, printer)
                     Assert.assertTrue(it.right.isEmpty())
                 }
+                it
+            }.ifLeftSide {
+                handler.handleFail(it, printer)
+                throw AssertionError()
             }
-        } catch (ex: CommandException) {
-            handler.handleCommandException(ex, printer)
-            throw AssertionError()
-        }
 
-        try {
-            processor.parseAndDispatch("promote KWCommands x", this, infoManager).let {
-                if (it.isRight) {
-                    handler.handleResults(it.right, printer)
-                    Assert.assertTrue(it.right.isEmpty())
-                }
+        processor.parseAndDispatch("promote KWCommands x", this, infoManager).let {
+            if (it.isRight) {
+                handler.handleResults(it.right, printer)
+                Assert.assertTrue(it.right.isEmpty())
             }
-        } catch (ex: CommandException) {
-            handler.handleCommandException(ex, printer)
+            it
+        }.ifLeftSide {
+            handler.handleFail(it, printer)
         }
     }
 

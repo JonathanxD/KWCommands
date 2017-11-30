@@ -33,12 +33,4 @@ import com.github.jonathanxd.iutils.option.Option
 /**
  * Options for the parser of processor
  */
-object KWParserOptions {
-    /**
-     * Debug option to enable exceptions in parser instead of using [Either],
-     * this option may only be used for debug purpose and does not work with `Completion System`.
-     *
-     * This option may be removed in future without advice.
-     */
-    val DEBUG_ENABLE_EXCEPTIONS = Option(false)
-}
+object KWParserOptions

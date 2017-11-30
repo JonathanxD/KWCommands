@@ -32,10 +32,8 @@ import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.jwiutils.kt.asText
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.dsl.argument
 import com.github.jonathanxd.kwcommands.fail.ParseFail
@@ -134,25 +132,21 @@ class CommandTest {
 
         val command = Command(
                 parent = null,
-                name = CommandName.StringName("open"),
+                name = "open",
                 description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
                         argument<SingleInput, String> {
-                            id = "name"
+                            name = "name"
                             description = "".asText()
                             isOptional = false
                             isMultiple = false
                             defaultValue = null
-                            validator { _, _ ->
-                                true
-                            }
-                            transformer { it.input }
+                            type = stringArgumentType
                             requirements {}
                             requiredInfo {}
-                            possibilities { emptyList() }
                         }
                 ),
                 requiredInfo = emptySet(),
@@ -160,7 +154,7 @@ class CommandTest {
 
         command.addSubCommand(Command(
                 parent = command,
-                name = CommandName.StringName("door"),
+                name = "door",
                 description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
@@ -172,40 +166,34 @@ class CommandTest {
 
         command.addSubCommand(Command(
                 parent = command,
-                name = CommandName.StringName("window"),
+                name = "window",
                 description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
-                        Argument(id = "name",
-                                name = "",
+                        Argument(name = "name",
+                                alias = emptyList(),
                                 description = "".asText(),
                                 isOptional = false,
-                                defaultValue = null,
-                                isMultiple = false,
-                                type = stringArgumentType,
+                                argumentType = stringArgumentType,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet()),
-                        Argument(id = "amount",
-                                name = "",
+                        Argument(name = "amount",
+                                alias = emptyList(),
                                 description = "".asText(),
                                 isOptional = true,
-                                defaultValue = null,
-                                isMultiple = false,
-                                type = intArgumentType,
+                                argumentType = intArgumentType,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
                                     return@create arg.value!!
                                 }),
-                        Argument(id = "double",
-                                name = "",
+                        Argument(name = "double",
+                                alias = emptyList(),
                                 description = "".asText(),
                                 isOptional = false,
-                                defaultValue = null,
-                                isMultiple = false,
-                                type = doubleArgumentType,
+                                argumentType = doubleArgumentType,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet())
                 ),

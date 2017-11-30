@@ -66,10 +66,17 @@ interface ReflectCommandManager : CommandManager {
 /**
  * Provider of instances.
  */
+@FunctionalInterface
 interface InstanceProvider {
 
     /**
      * Gets provided instance for [type].
      */
-    fun <T> get(type: Class<T>): T
+    operator fun invoke(type: Class<*>): Any?
 }
+
+inline fun instanceProvider(crossinline resolver: (Class<*>) -> Any?): InstanceProvider =
+        object : InstanceProvider {
+            override fun invoke(type: Class<*>): Any? = resolver(type)
+
+        }

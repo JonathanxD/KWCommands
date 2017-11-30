@@ -29,7 +29,6 @@ package com.github.jonathanxd.kwcommands.test.welcome;
 
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.command.Command;
-import com.github.jonathanxd.kwcommands.exception.CommandException;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.information.Information;
@@ -68,11 +67,9 @@ public class WelcomeTests {
         HelpInfoHandler handler = this.getHelper();
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        try {
-            processor.parseAndDispatch("welcome", this, informationManager);
-        } catch (CommandException e) {
-            handler.handleCommandException(e, sysOutWHF);
-        }
+        processor.parseAndDispatch("welcome", this, informationManager).ifLeft(f -> {
+            handler.handleFail(f, sysOutWHF);
+        });
     }
 
     @Test
@@ -99,12 +96,9 @@ public class WelcomeTests {
         HelpInfoHandler handler = this.getHelper();
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        try {
-            processor.parseAndDispatch("mycommands welcome",
-                    this, informationManager);
-        } catch (CommandException e) {
-            handler.handleCommandException(e, sysOutWHF);
-        }
+        processor.parseAndDispatch("mycommands welcome", this, informationManager).ifLeft(f -> {
+            handler.handleFail(f, sysOutWHF);
+        });
     }
 
     private HelpInfoHandler getHelper() {

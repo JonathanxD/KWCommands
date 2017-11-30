@@ -56,12 +56,10 @@ fun MapInput.get(keyName: String,
             return when {
                 it == null ->
                     left(invalid(this, argumentType, validator,
-                            Text.of("String key '$keyName' not found in map."),
-                            SingleInputType))
+                            Text.of("String key '$keyName' not found in map.")))
                 it.second.type != valueType ->
                     left(invalid(it.second, argumentType, validator,
-                            Text.of("Value of key '$keyName' must be of type $valueType."),
-                            valueType))
+                            Text.of("Value of key '$keyName' must be of type $valueType.")))
                 else -> right(it)
             }
         }

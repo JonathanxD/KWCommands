@@ -27,12 +27,15 @@
  */
 package com.github.jonathanxd.kwcommands.completion
 
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.*
+import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.util.*
 import java.util.*
-import kotlin.collections.ArrayList
 
 class CompletionImpl(override val parser: CommandParser) : Completion {
 
@@ -55,25 +58,118 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         this.autoCompleterList_.remove(completer)
     }
 
-    override fun completeWithOwnerFunc(input: String, ownerProvider: OwnerProvider): List<String> {
+    override fun completeWithOwnerFunc(input: String,
+                                       ownerProvider: OwnerProvider,
+                                       informationManager: InformationManager): List<String> {
         val suggestions = mutableListOf<String>()
+        val iter = IndexedSourcedCharIter(input)
 
-        val parse = parser.parseWithOwnerFunction(input, ownerProvider)
+        val parse = parser.parseWithOwnerFunction(iter, ownerProvider)
 
         if (parse.isRight) {
-            complete(parse.right, suggestions)
+            complete(parse.right, iter, suggestions, informationManager)
         } else {
-            complete(parse.left, suggestions)
+            complete(parse.left, suggestions, informationManager)
         }
 
-        return suggestions//.distinct()
+        return suggestions //.distinct()
     }
 
-    private fun complete(commandContainers: List<CommandContainer>, suggestion: MutableList<String>) {
+    private fun complete(commandContainers: List<CommandContainer>,
+                         iter: SourcedCharIterator,
+                         suggestion: MutableList<String>,
+                         informationManager: InformationManager) {
+        val completions = ListCompletionsImpl()
+        val last = commandContainers.lastOrNull()
 
+        this.autoCompleters.completeCommand(last?.command,
+                commandContainers,
+                completions,
+                this.parser.commandManager,
+                informationManager)
+
+        if (last != null) {
+            suggestArguments(last.command,
+                    last.arguments.filter { it.isDefined },
+                    commandContainers,
+                    iter,
+                    completions,
+                    informationManager)
+        }
+
+        if (completions.list.isNotEmpty()) {
+            if (iter.suggestBlankSpace()) {
+                suggestion += " "
+            } else {
+                suggestion += completions.list
+            }
+        }
     }
 
-    private fun complete(parseFail: ParseFail, suggestion: MutableList<String>) {
+    private fun SourcedCharIterator.suggestBlankSpace(): Boolean {
+        val prev =
+                if (!this.hasPrevious()) null
+                else this.runAndRestore {
+                    val prev = this.previous()
+                    if (this.hasPrevious() && this.previous() == ' ') null
+                    else prev
+                }
+
+        return prev == null || prev != ' '
+    }
+
+    private fun suggestArguments(command: Command,
+                                 parsedArgs: List<ArgumentContainer<*>>,
+                                 parsedCommands: List<CommandContainer>,
+                                 iter: SourcedCharIterator,
+                                 completions: ListCompletionsImpl,
+                                 informationManager: InformationManager) {
+        val completions2 = ListCompletionsImpl()
+        this.autoCompleters.completeArgumentName(command, parsedArgs, completions2, informationManager)
+
+        completions2.retainIfAnyMatch { parsedArgs.none { arg -> arg.argument.name == it } }
+        completions2.map { "--$it" }
+
+        completions.merge(completions2)
+
+        var index = 0
+        var next: Argument<*>? = null
+        for (argument in command.arguments) {
+            if (index < parsedArgs.size) {
+                if (parsedArgs[index].argument == argument) {
+                    ++index
+                }
+            } else {
+                next = argument
+                break
+            }
+        }
+
+        if (next != null) {
+            when (next.argumentType.inputType) {
+                is SingleInputType -> {
+                    this.autoCompleters.completeArgumentInput(command,
+                            parsedArgs,
+                            next,
+                            next.argumentType,
+                            EmptyInput(iter.sourceString),
+                            completions,
+                            informationManager)
+                }
+                is MapInputType -> {
+                    completions.add("{")
+                }
+                is ListInputType -> {
+                    completions.add("[")
+                }
+            }
+
+        }
+    }
+
+    private fun complete(parseFail: ParseFail,
+                         suggestion: MutableList<String>,
+                         informationManager: InformationManager) {
         val parsedCommands = parseFail.parsedCommands
         val manager = parseFail.manager
         val iter = parseFail.iter
@@ -81,66 +177,114 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         val completions = ListCompletionsImpl()
         val completionList = completions.list
 
+        if (parseFail.iter.hasNext()) {
+            this.autoCompleters.handleNonCompletable(parseFail, informationManager)
+            return
+        }
+
         when (parseFail) {
+            is CommandNotFoundFail -> {
+                val cmd = parseFail.commandStr.getString()
+
+                this.autoCompleters.completeCommand(null,
+                        parseFail.parsedCommands,
+                        completions,
+                        parseFail.manager,
+                        informationManager)
+
+                completions.retainIfAnyMatch { it.startsWith(cmd) }
+            }
+            is ArgumentsMissingFail -> {
+                val command = parseFail.command
+                val parsedArgs = parseFail.parsedArgs
+
+                if (iter.suggestBlankSpace()) {
+                    suggestion += " "
+                } else {
+                    if (parsedArgs.isEmpty()
+                            || parsedArgs.size >= command.arguments.count { !it.isOptional }) {
+                        this.autoCompleters.completeCommand(command,
+                                parseFail.parsedCommands,
+                                completions,
+                                parseFail.manager,
+                                informationManager)
+                    }
+
+                    suggestArguments(command, parsedArgs, parsedCommands, iter, completions, informationManager)
+                }
+
+            }
             is ArgumentNotFoundFail -> {
                 val command = parseFail.command
                 val parsedArgs = parseFail.parsedArgs
                 val input: String = parseFail.input
 
-                this.autoCompleters.completeArgumentName(command, parsedArgs, completions)
+                this.autoCompleters.completeArgumentName(command, parsedArgs, completions, informationManager)
 
-                suggestion += completionList.filter { it.startsWith(input) }
+                completions.retainIfAnyMatch { it.startsWith(input) }
             }
-            /*is InvalidInputForArgumentFail -> {
-                val command = parseFail.command
-                val argument = parseFail.arg
-                val parsedArgs = parseFail.parsedArgs
-                val input = parseFail.input
-                val validation = parseFail.validation
-
-                validation.invalids.forEach {
-                    this.autoCompleters.completeArgumentInput(command, parsedArgs, argument, input, it.input,
-                            completions)
-                }
-
-                // TODO
-            }*/
             is ArgumentInputParseFail -> {
                 val command = parseFail.command
                 val argument = parseFail.arg
                 val parsedArgs = parseFail.parsedArgs
                 val fail = parseFail.inputParseFail
 
-                if (fail is ListElementTypeNotFound
-                        || fail is MapKeyTypeNotFound
-                        || fail is MapValueTypeNotFound) {
+                if (fail is TypeNotFoundFail) {
                     return
                 }
 
                 when (fail) {
-                    is ListTokenOrElementExpectedFail -> {
+                    is TokenExpectedFail -> {
+                        suggestion += fail.tokens.map { it.toString() }
+                    }
+                    is TokenOrElementExpectedFail -> {
                         suggestion += fail.tokens.map { it.toString() }
 
-                        this.autoCompleters.completeArgumentListElement(command,
+                        this.autoCompleters.completeArgumentInput(command,
                                 parsedArgs,
                                 argument,
                                 fail.argumentType,
-                                completions)
+                                fail.input,
+                                completions,
+                                informationManager)
                     }
-                    is ListTokenExpectedFail -> {
+                    is InvalidInputForArgumentTypeFail -> {
+                        this.autoCompleters.completeArgumentInput(command,
+                                parsedArgs,
+                                argument,
+                                fail.argumentType,
+                                null,
+                                completions,
+                                informationManager)
 
+                        completions.retainIfAnyMatch { it.startsWith(fail.input.getString()) }
+                    }
+                    is NextElementNotFoundFail -> {
+                        when (fail.argumentType.inputType) {
+                            is ListInputType -> completions.add("[")
+                            is MapInputType -> completions.add("{")
+                            else -> this.autoCompleters.completeArgumentInput(command, parsedArgs,
+                                    argument,
+                                    fail.argumentType,
+                                    fail.input,
+                                    completions,
+                                    informationManager)
+                        }
                     }
                     else -> {
                         this.autoCompleters.completeArgumentInput(command, parsedArgs,
                                 argument,
                                 fail.argumentType,
-                                completions)
+                                fail.input,
+                                completions,
+                                informationManager)
                     }
                 }
 
-                suggestion += completionList
             }
         }
+
+        suggestion += completionList
     }
 
     private class ListCompletionsImpl : Completions {
@@ -153,6 +297,20 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         override fun addAll(completions: Iterable<String>) {
             list.addAll(completions) // For cases where bulk add operation is optimized (ex: ArrayList)
         }
+    }
 
+    private fun ListCompletionsImpl.merge(other: ListCompletionsImpl) {
+        this.list.addAll(other.list)
+    }
+
+    private inline fun ListCompletionsImpl.map(transform: (String) -> String) {
+        val new = this.list.toMutableList().map(transform)
+        this.list.clear()
+        this.list.addAll(new)
+    }
+
+    private fun ListCompletionsImpl.retainIfAnyMatch(pred: (String) -> Boolean) {
+        if (this.list.any(pred))
+            this.list.retainAll(pred)
     }
 }

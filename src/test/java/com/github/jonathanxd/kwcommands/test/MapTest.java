@@ -27,15 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.map.MapUtils;
 import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.kwcommands.argument.SingleArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
-import com.github.jonathanxd.kwcommands.exception.CommandException;
 import com.github.jonathanxd.kwcommands.fail.ArgumentInputParseFail;
-import com.github.jonathanxd.kwcommands.fail.CommandInputParseFail;
-import com.github.jonathanxd.kwcommands.fail.InvalidInputForArgumentFail;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
@@ -44,7 +40,6 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
 import com.github.jonathanxd.kwcommands.parser.ListInputType;
-import com.github.jonathanxd.kwcommands.parser.ValidatedElement;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -53,10 +48,9 @@ import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.InvalidInputForArgumentTypeFail;
 import com.github.jonathanxd.kwcommands.util.KLocale;
-import com.github.jonathanxd.kwcommands.util.MapTokenExpectedFail;
 import com.github.jonathanxd.kwcommands.util.PrinterKt;
-import com.github.jonathanxd.kwcommands.util.UnexpectedInputForArgumentTypeFail;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -85,73 +79,68 @@ public class MapTest {
         HelpInfoHandler localizedHandler = new CommonHelpInfoHandler();
         Printer localizedSysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        try {
-            Either<ParseFail, List<CommandResult>> run;
-            run = processor.parseAndDispatch(
-                    "mapcmd 897 { project = KWCommands } --n2 -8",
-                    this,
-                    informationManager);
+        Either<ParseFail, List<CommandResult>> run;
+        run = processor.parseAndDispatch(
+                "mapcmd 897 { project = KWCommands } --n2 -8",
+                this,
+                informationManager);
 
-            PrinterKt.handleFail(localizedHandler, run, localizedSysOutWHF);
+        PrinterKt.handleFail(localizedHandler, run, localizedSysOutWHF);
 
-            Assert.assertEquals(897, this.n);
-            Assert.assertEquals(MapUtils.mapOf("project", "KWCommands"), this.values);
-            Assert.assertEquals(-8, this.n2);
+        Assert.assertEquals(897, this.n);
+        Assert.assertEquals(MapUtils.mapOf("project", "KWCommands"), this.values);
+        Assert.assertEquals(-8, this.n2);
 
-            processor.parseAndDispatch(
-                    "mapcmd " +
-                            "1 " +
-                            "--values {a=\"man, i l u = {\", uhu=s} " +
-                            "--n2 2",
-                    this,
-                    informationManager);
+        processor.parseAndDispatch(
+                "mapcmd " +
+                        "1 " +
+                        "--values {a=\"man, i l u = {\", uhu=s} " +
+                        "--n2 2",
+                this,
+                informationManager);
 
-            Assert.assertEquals(1, this.n);
-            Assert.assertEquals(MapUtils.mapOf("a", "man, i l u = {", "uhu", "s"), this.values);
-            Assert.assertEquals(2, this.n2);
+        Assert.assertEquals(1, this.n);
+        Assert.assertEquals(MapUtils.mapOf("a", "man, i l u = {", "uhu", "s"), this.values);
+        Assert.assertEquals(2, this.n2);
 
-            Either<ParseFail, List<CommandResult>> parse = processor.parseAndDispatch(
-                    "mapcmd " +
-                            "1 " +
-                            "--values {a=\"man, i l u = {\", uhu=[s,b]{a=b}b} " +
-                            //"--values {a=\"man, \"" +
-                            "--n2 2",
-                    this,
-                    informationManager);
+        Either<ParseFail, List<CommandResult>> parse = processor.parseAndDispatch(
+                "mapcmd " +
+                        "1 " +
+                        "--values {a=\"man, i l u = {\", uhu=[s,b]{a=b}b} " +
+                        //"--values {a=\"man, \"" +
+                        "--n2 2",
+                this,
+                informationManager);
 
-            localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
+        localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
 
-            Assert.assertTrue(parse.isLeft());
-            Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
-            ArgumentInputParseFail fail = (ArgumentInputParseFail) parse.getLeft();
-            Assert.assertTrue(fail.getInputParseFail() instanceof UnexpectedInputForArgumentTypeFail);
+        Assert.assertTrue(parse.isLeft());
+        Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
+        ArgumentInputParseFail fail = (ArgumentInputParseFail) parse.getLeft();
+        Assert.assertTrue(fail.getInputParseFail() instanceof InvalidInputForArgumentTypeFail);
 
-            parse = processor.parseAndDispatch(
-                    "mapcmd " +
-                            "1 " +
-                            "--values {a=\"man, i l u = {\", uhu=[s,b]} " +
-                            //"--values {a=\"man, \"" +
-                            "--n2 2",
-                    this,
-                    informationManager);
+        parse = processor.parseAndDispatch(
+                "mapcmd " +
+                        "1 " +
+                        "--values {a=\"man, i l u = {\", uhu=[s,b]} " +
+                        //"--values {a=\"man, \"" +
+                        "--n2 2",
+                this,
+                informationManager);
 
 
-            localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
+        localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
 
-            Assert.assertTrue(parse.isLeft());
-            Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
+        Assert.assertTrue(parse.isLeft());
+        Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
 
-            fail = (ArgumentInputParseFail) parse.getLeft();
-            Assert.assertTrue(fail.getInputParseFail() instanceof UnexpectedInputForArgumentTypeFail);
+        fail = (ArgumentInputParseFail) parse.getLeft();
+        Assert.assertTrue(fail.getInputParseFail() instanceof InvalidInputForArgumentTypeFail);
 
-            UnexpectedInputForArgumentTypeFail unex = (UnexpectedInputForArgumentTypeFail) fail.getInputParseFail();
-            Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
-            Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
-            Assert.assertTrue(unex.getInput().getType() instanceof ListInputType);
-                    } catch (CommandException e) {
-            localizedHandler.handleCommandException(e, localizedSysOutWHF);
-            e.printStackTrace();
-        }
+        InvalidInputForArgumentTypeFail unex = (InvalidInputForArgumentTypeFail) fail.getInputParseFail();
+        Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
+        Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
+        Assert.assertTrue(unex.getInput().getType() instanceof ListInputType);
     }
 
     @Cmd(description = "Vararg test")

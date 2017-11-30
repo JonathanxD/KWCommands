@@ -31,5 +31,5 @@ package com.github.jonathanxd.kwcommands
  * Command parsing and handling library.
  */
 object KWCommands {
-    fun createAio() = AIO()
+    fun createAio(owner: Any) = AIO(owner)
 }

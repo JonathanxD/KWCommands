@@ -27,10 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.jwiutils.kt.ifLeftSide
 import com.github.jonathanxd.kwcommands.dsl.booleanArg
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.dsl.stringArg
-import com.github.jonathanxd.kwcommands.exception.CommandException
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
@@ -47,14 +47,12 @@ class NamedArgTest {
         val handler = CommonHelpInfoHandler()
 
         val cmd = command {
-            stringName { "example" }
+            name { "example" }
             arguments {
                 +stringArg {
-                    id { "directory" }
                     name { "directory" }
                 }
                 +booleanArg {
-                    id { "recursive" }
                     name { "recursive" }
                 }
             }
@@ -71,10 +69,8 @@ class NamedArgTest {
 
         manager.registerCommand(cmd, this)
 
-        try {
-            processor.parseAndDispatch("example --directory mydir --recursive", this, infoManager)
-        } catch (ex: CommandException) {
-            handler.handleCommandException(ex, printer)
+        processor.parseAndDispatch("example --directory mydir --recursive", this, infoManager).ifLeftSide {
+            handler.handleFail(it, printer)
         }
 
     }

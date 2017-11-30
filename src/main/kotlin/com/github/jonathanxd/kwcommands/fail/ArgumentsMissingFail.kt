@@ -34,7 +34,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
 class ArgumentsMissingFail(val command: Command,
-                           val providedArgs: List<ArgumentContainer<*>>,
+                           val parsedArgs: List<ArgumentContainer<*>>,
                            parsedCommands: List<CommandContainer>,
                            manager: CommandManager,
                            iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)

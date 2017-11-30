@@ -30,30 +30,24 @@ package com.github.jonathanxd.kwcommands.argument
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
  * A command argument.
  *
- * @property id Id of the argument.
  * @property name Argument name to be used in definition, empty string means that argument cannot be defined by name.
+ * @property alias Aliases to argument.
  * @property description Argument description.
  * @property isOptional Is optional argument.
- * @property type Type of argument value.
- * @property isMultiple Whether the argument is a multiple argument or not. Varargs arguments takes values until
- * [validator] returns `false` to a value, the transformer should return mutable collection, there is a predefined
- * [Transformer] for lists: [com.github.jonathanxd.kwcommands.util.ListTransformer].
+ * @property argumentType Type of argument value.
  * @property requirements Requirements of this argument.
  * @property requiredInfo Identifications of required information for this argument work.
  */
-data class Argument<out T>(val id: Any,
-                           val name: String,
+data class Argument<out T>(val name: String,
+                           val alias: List<String>,
                            val description: TextComponent,
                            val isOptional: Boolean,
-                           val type: ArgumentType<*, out T>,
-                           val defaultValue: T?,
-                           val isMultiple: Boolean,
+                           val argumentType: ArgumentType<*, T>,
                            val requirements: List<Requirement<*, *>>,
                            val requiredInfo: Set<RequiredInformation>,
                            val handler: ArgumentHandler<out T>? = null) {

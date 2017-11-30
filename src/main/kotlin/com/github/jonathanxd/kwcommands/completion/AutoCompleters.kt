@@ -31,29 +31,40 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.fail.ParseFail
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.ListInput
-import com.github.jonathanxd.kwcommands.parser.MapInput
-import com.github.jonathanxd.kwcommands.parser.SingleInput
 
+/**
+ * An auto-completer that delegate invocations to all [completers].
+ */
 class AutoCompleters(private val completers: List<AutoCompleter>) : AutoCompleter {
 
-    override fun completeArgumentName(command: Command,
-                                      arguments: List<ArgumentContainer<*>>,
-                                      completions: Completions) {
+    override fun handleNonCompletable(fail: ParseFail,
+                                      informationManager: InformationManager) {
         completers.forEach {
-            it.completeArgumentName(command, arguments, completions)
+            it.handleNonCompletable(fail, informationManager)
         }
     }
 
-    override fun completeArgument(command: Command,
-                                  arguments: List<ArgumentContainer<*>>,
-                                  argument: Argument<*>,
-                                  base: Input,
-                                  toComplete: SingleInput,
-                                  completions: Completions) {
+    override fun completeCommand(command: Command?,
+                                 commandContainers: List<CommandContainer>,
+                                 completions: Completions,
+                                 commandManager: CommandManager,
+                                 informationManager: InformationManager) {
         completers.forEach {
-            it.completeArgument(command, arguments, argument, base, toComplete, completions)
+            it.completeCommand(command, commandContainers, completions, commandManager, informationManager)
+        }
+    }
+
+    override fun completeArgumentName(command: Command,
+                                      arguments: List<ArgumentContainer<*>>,
+                                      completions: Completions,
+                                      informationManager: InformationManager) {
+        completers.forEach {
+            it.completeArgumentName(command, arguments, completions, informationManager)
         }
     }
 
@@ -61,42 +72,13 @@ class AutoCompleters(private val completers: List<AutoCompleter>) : AutoComplete
                                        arguments: List<ArgumentContainer<*>>,
                                        argument: Argument<*>,
                                        argumentType: ArgumentType<*, *>,
-                                       completions: Completions) {
+                                       input: Input?,
+                                       completions: Completions,
+                                       informationManager: InformationManager) {
         completers.forEach {
-            it.completeArgumentInput(command, arguments, argument, argumentType, completions)
+            it.completeArgumentInput(command, arguments, argument, argumentType, input, completions, informationManager)
         }
 
-    }
-
-    override fun completeArgumentMapKey(command: Command,
-                                        arguments: List<ArgumentContainer<*>>,
-                                        argument: Argument<*>,
-                                        keyType: ArgumentType<*, *>,
-                                        completions: Completions) {
-        completers.forEach {
-            it.completeArgumentMapKey(command, arguments, argument, keyType, completions)
-        }
-    }
-
-    override fun completeArgumentMapValue(command: Command,
-                                          arguments: List<ArgumentContainer<*>>,
-                                          argument: Argument<*>,
-                                          valueType: ArgumentType<*, *>,
-                                          completions: Completions) {
-        completers.forEach {
-            it.completeArgumentMapValue(command, arguments, argument, valueType, completions)
-        }
-
-    }
-
-    override fun completeArgumentListElement(command: Command,
-                                             arguments: List<ArgumentContainer<*>>,
-                                             argument: Argument<*>,
-                                             argumentType: ArgumentType<*, *>,
-                                             completions: Completions) {
-        completers.forEach {
-            it.completeArgumentListElement(command, arguments, argument, argumentType, completions)
-        }
     }
 
 

@@ -100,8 +100,7 @@ class MapValidator(val keyArgumentType: ArgumentType<*, *>,
             return invalid(value,
                     argumentType,
                     this,
-                    ValidationTexts.expectedInputMap(),
-                    listOf(MapInputType))
+                    ValidationTexts.expectedInputMap())
         }
     }
 }
@@ -170,7 +169,7 @@ class ReflectListValidator(val storage: ArgumentTypeStorage, val subType: TypeIn
         if (value !is SingleInput && value !is EmptyInput)
             return invalid(value, argumentType,
                     this,
-                    ValidationTexts.expectedInputList(), listOf(SingleInputType))
+                    ValidationTexts.expectedInputList())
 
         if (value is EmptyInput)
             return valid()
@@ -231,7 +230,7 @@ class EnumValidator<T>(val type: Class<T>) : Validator<SingleInput> {
     override fun invoke(argumentType: ArgumentType<SingleInput, *>, value: SingleInput): Validation {
         val consts = type.enumConstants as Array<Enum<*>>
         return if (consts.any { it.name.equals(value.input, true) }) valid()
-        else invalid(value, argumentType, this, ValidationTexts.invalidEnum(), listOf(SingleInputType))
+        else invalid(value, argumentType, this, ValidationTexts.invalidEnum())
     }
 }
 
@@ -263,7 +262,7 @@ object ShortValidator : Validator<SingleInput> {
     override fun invoke(argumentType: ArgumentType<SingleInput, *>, value: SingleInput): Validation =
             when {
                 value.input.toShortOrNull() == null ->
-                    invalid(value, argumentType, this, ValidationTexts.invalidShort(), listOf(SingleInputType))
+                    invalid(value, argumentType, this, ValidationTexts.invalidShort())
                 else -> valid()
             }
 
@@ -287,7 +286,7 @@ object CharValidator : Validator<SingleInput> {
                 value.input.toCharArray().size != 1 ->
                     invalid(value, argumentType,
                             this,
-                            ValidationTexts.invalidChar(), listOf(SingleInputType))
+                            ValidationTexts.invalidChar())
                 else -> valid()
             }
 
@@ -310,7 +309,7 @@ object ByteValidator : Validator<SingleInput> {
                 value.input.toByteOrNull() == null ->
                     invalid(value, argumentType,
                             this,
-                            ValidationTexts.invalidByte(), listOf(SingleInputType))
+                            ValidationTexts.invalidByte())
                 else -> valid()
             }
 
@@ -333,7 +332,7 @@ object IntValidator : Validator<SingleInput> {
                 value.input.toIntOrNull() == null ->
                     invalid(value, argumentType,
                             this,
-                            ValidationTexts.invalidInt(), listOf(SingleInputType))
+                            ValidationTexts.invalidInt())
                 else -> valid()
             }
 
@@ -356,7 +355,7 @@ object FloatValidator : Validator<SingleInput> {
                 value.input.toFloatOrNull() == null ->
                     invalid(value, argumentType,
                             this,
-                            ValidationTexts.invalidFloat(), listOf(SingleInputType))
+                            ValidationTexts.invalidFloat())
                 else -> valid()
             }
 
@@ -379,7 +378,7 @@ object DoubleValidator : Validator<SingleInput> {
                 value.input.toDoubleOrNull() == null ->
                     invalid(value, argumentType,
                             this,
-                            ValidationTexts.invalidDouble(), listOf(SingleInputType))
+                            ValidationTexts.invalidDouble())
                 else -> valid()
             }
 
@@ -402,7 +401,7 @@ object LongValidator : Validator<SingleInput> {
                 value.input.toLongOrNull() == null ->
                     invalid(value, argumentType,
                             this,
-                            ValidationTexts.invalidLong(), listOf(SingleInputType))
+                            ValidationTexts.invalidLong())
                 else -> valid()
             }
 
@@ -424,8 +423,7 @@ object BooleanValidator : Validator<SingleInput> {
             when {
                 value.input != "true" && value.input != "false" ->
                     invalid(value, argumentType,
-                            this, ValidationTexts.invalidBoolean(),
-                            listOf(SingleInputType))
+                            this, ValidationTexts.invalidBoolean())
                 else -> valid()
             }
 
@@ -456,7 +454,7 @@ class ExactStringValidator(val string: String) : Validator<SingleInput> {
             if (value.input == string)
                 valid()
             else
-                invalid(value, argumentType, this, null, SingleInputType)
+                invalid(value, argumentType, this, null)
 
 }
 

@@ -27,8 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
+import com.github.jonathanxd.iutils.collection.view.ViewCollections
+import com.github.jonathanxd.iutils.iterator.IteratorUtil
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.exception.CommandNotFoundException
 import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
 
@@ -38,13 +39,23 @@ import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
 class CommandManagerImpl : CommandManager {
 
     private val commands = mutableSetOf<RegisteredCommand>()
+    private val commands_ = ViewCollections.setMapped(commands,
+            { e, i -> IteratorUtil.mapped(e, i, { it.command }) },
+            { throw UnsupportedOperationException() },
+            { throw UnsupportedOperationException() })
+
+    override val registeredCommands: Set<Command> = this.commands_
 
     override fun registerCommand(command: Command, owner: Any): Boolean {
 
-        if (command.parent != null)
-            throw IllegalArgumentException("Command $command must be a top level command.")
+        if (command.parent != null) {
+            if (!command.parent.subCommands.contains(command))
+                return command.parent.addSubCommand(command)
+        } else {
+            return this.commands.add(RegisteredCommand(command, owner))
+        }
 
-        return this.commands.add(RegisteredCommand(command, owner))
+        return false
     }
 
     override fun unregisterCommand(command: Command, owner: Any?): Boolean {
@@ -102,9 +113,8 @@ class CommandManagerImpl : CommandManager {
 
     }
 
-    override fun getOwners(command: Command): Set<Any> {
-        return this.commands.filter { it.command == command }.toSet()
-    }
+    override fun getOwners(command: Command): Set<Any> =
+            this.commands.filter { it.command == command }.toSet()
 
     override fun getSubCommand(command: Command, name: String): Command? =
             command.getSubCommand(name)

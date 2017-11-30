@@ -29,7 +29,6 @@ package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.`object`.specialized.EitherObjBoolean
-import com.github.jonathanxd.iutils.annotation.Beta
 import com.github.jonathanxd.iutils.box.IMutableBox
 import com.github.jonathanxd.iutils.box.MutableBox
 import com.github.jonathanxd.iutils.option.Options
@@ -40,28 +39,35 @@ import com.github.jonathanxd.kwcommands.ValidationTexts
 import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.exception.*
 import com.github.jonathanxd.kwcommands.fail.*
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.util.*
 
-@Beta
 class CommandParserImpl(override val commandManager: CommandManager) : CommandParser {
 
-    private val commandArgType = stringArgumentType
     override val options: Options = Options()
 
     override fun parseWithOwnerFunction(commandString: String,
-                                        ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>> {
-        val containers = mutableListOf<CommandContainer>()
+                                        ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>> =
+        parseWithOwnerFunction(commandString.sourcedCharIterator(), ownerProvider)
 
-        return parse(commandString.sourcedCharIterator(), containers, CommandHolder(), ownerProvider)
-    }
+    override fun parseWithOwnerFunction(commandIter: SourcedCharIterator,
+                                        ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>> =
+            this.parse(commandIter, mutableListOf<CommandContainer>(), CommandHolder(), ownerProvider)
 
     private fun parse(commandsIterator: SourcedCharIterator,
                       containers: MutableList<CommandContainer>,
                       lastCommand: CommandHolder,
                       ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>> {
+        if (!commandsIterator.hasNext())
+            return left(createFailCNF(
+                    EmptyInput(commandsIterator.sourceString),
+                    containers,
+                    commandsIterator
+            ))
+
+        commandsIterator.jumpBlankSpace()
+
         while (commandsIterator.hasNext()) {
             val isCommand =
                     parseCommand(commandsIterator, containers, lastCommand, ownerProvider, !lastCommand.isPresent)
@@ -124,16 +130,15 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
     }
 
-    private fun SourcedCharIterator.peekSingle(type: ArgumentType<*, *>): Pair<SingleInput, SourcedCharIterator> =
+    private fun SourcedCharIterator.peekSingle(type: ArgumentType<*, *>,
+                                               restoreFromFail: Boolean = true):
+            Pair<Either<InputParseFail, SingleInput>, SourcedCharIterator> =
             this.runInNew {
-                this.parseSingleInput(argumentType = type, parseData = false).right as SingleInput
-            }
-
-    private fun SourcedCharIterator.tryPeekSingle(type: ArgumentType<*, *>): Pair<SingleInput?, SourcedCharIterator> =
-            this.runInNew {
-                val l = this.parseSingleInput(argumentType = type, parseData = false)
-
-                if (l.isLeft) null else l.right as? SingleInput
+                this.parseSingleInput(argumentType = type, parseData = false)
+                        .mapRight { it as SingleInput }
+            }.also {
+                if (restoreFromFail && it.first.isLeft)
+                    this.from(it.second)
             }
 
     private fun parseCommand(commandsIterator: SourcedCharIterator,
@@ -143,8 +148,10 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                              required: Boolean): EitherObjBoolean<ParseFail> {
         val last = lastCommand.getOrElse(null)
 
-        val peek = commandsIterator.peekSingle(stringArgumentType)
-        val (input, iter) = peek
+        val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
+        val (inputPeek, iter) = peek
+
+        val input = inputPeek.rightOrNull() ?: return right(false)
 
         if (input.content == "&") {
             commandsIterator.from(iter)
@@ -167,10 +174,11 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             return right(true)
         }
 
-        if (required)
-            return leftBooleanObj(createFailCNF(input, containers, lastCommand, commandsIterator))
-        else
-            return right(false)
+        return if (required) {
+            commandsIterator.from(iter)
+            leftBooleanObj(createFailCNF(input, containers, commandsIterator))
+        } else
+            right(false)
     }
 
     private fun parseArguments(commandsIterator: SourcedCharIterator,
@@ -192,37 +200,61 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
 
         while (commandsIterator.hasNext() && currentArgs.isNotEmpty()) {
-            val peek = commandsIterator.peekSingle(stringArgumentType)
-            val (input, iter) = peek
+            val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
+            val (inputPeek, iter) = peek
+
+            val input = inputPeek.rightOrNull() ?: break
 
             val named = input.input.getArgumentNameOrNull()?.let { name ->
                 commandsIterator.from(iter)
-                (currentArgs.firstOrNull { it.nameOrId == name }
+                (currentArgs.firstOrNull { it.name == name }
                         ?: return left(createFailANFE(command, args, name, parsedCommands, commandsIterator))).also {
                     currentArgs.remove(it)
                 }
             }
 
             val argument = named ?: nextArgument()
+            val state = iter.copy()
 
             val parse =
-                    if (argument.isMultiple)
+                    if (argument.argumentType.inputType !is SingleInputType)
                         parseVarargsArgument(commandsIterator, command, argument,
                                 args, named != null, parsedCommands)
                     else
                         parseSingleArgument(commandsIterator, command, argument,
                                 args, named != null, parsedCommands)
 
-            if (parse.isRight && !argument.isOptional)
-                ++currentRequired
+            if (parse.isRight) {
+                currentArgs.remove(argument)
+                if (!argument.isOptional)
+                    ++currentRequired
+            }
 
-            if (parse.isLeft)
-                return left(parse.left)
+            if (parse.isLeft) {
+                if (argument.isOptional) {
+                    iter.from(state)
+                } else {
+                    return left(parse.left)
+                }
+            }
         }
 
         if (currentRequired != required) {
             return left(createFailAME(command, args, parsedCommands, commandsIterator))
         }
+
+        command.arguments.filter { a -> args.none { it.argument == a }
+                && a.isOptional
+                && a.argumentType.defaultValue != null
+        }.forEach {
+            @Suppress("UNCHECKED_CAST")
+            args += ArgumentContainer(it,
+                    null,
+                    it.argumentType.defaultValue,
+                    it.handler as ArgumentHandler<Any?>?
+            )
+        }
+
 
         return right(args)
     }
@@ -233,16 +265,22 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                     args: MutableList<ArgumentContainer<*>>,
                                     isNamed: Boolean,
                                     parsedCommands: List<CommandContainer>): EitherObjBoolean<ParseFail> {
+        commandsIterator.jumpBlankSpace()
+
         val hasNext = commandsIterator.hasNext()
         val isBoolean = argument.isBoolean()
         val peek by lazy(LazyThreadSafetyMode.NONE) {
-            commandsIterator.peekSingle(argument.type)
+            commandsIterator.peekSingle(argument.argumentType, restoreFromFail = false)
         }
-        val filled = (!hasNext || peek.first.input.isArgumentName()) && isBoolean
+
+        val filled = peek.first.isRight && (!hasNext || peek.first.right.input.isArgumentName()) && isBoolean
 
         val next = when {
             filled -> SingleInput("true", commandsIterator.sourceString, 0, 0)
-            hasNext -> peek.first
+            hasNext ->
+                if (peek.first.isRight) peek.first.right
+                else return leftBooleanObj(createFailAIPF(command, argument, args,
+                        parsedCommands, peek.first.left, commandsIterator))
             else -> return leftBooleanObj(createFailNIFAE(command, argument, args, parsedCommands, commandsIterator))
         }
 
@@ -253,7 +291,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             @Suppress("UNCHECKED_CAST")
             args += ArgumentContainer(argument,
                     next,
-                    argument.type.transform(next),
+                    argument.argumentType.transform(next),
                     argument.handler as ArgumentHandler<Any?>?
             )
             return right(true)
@@ -265,7 +303,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
     }
 
     private fun Argument<*>.validate(input: Input): Validation =
-            this.type.validate(input)
+            this.argumentType.validate(input)
 
     private fun parseVarargsArgument(commandsIterator: SourcedCharIterator,
                                      command: Command,
@@ -273,30 +311,33 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                      args: MutableList<ArgumentContainer<*>>,
                                      isNamed: Boolean,
                                      parsedCommands: List<CommandContainer>): EitherObjBoolean<ParseFail> {
+        val (nextPeek, _) = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
 
-        if (!commandsIterator.hasNext()) {
+        if (nextPeek.isLeft) {
             if (argument.isOptional) {
                 val input = EmptyInput(commandsIterator.sourceString)
                 @Suppress("UNCHECKED_CAST")
                 args += ArgumentContainer(argument,
                         input,
-                        argument.type.transform(input),
+                        argument.argumentType.transform(input),
                         argument.handler as ArgumentHandler<Any?>?
                 )
             } else {
                 return leftBooleanObj(createFailNIFAE(command, argument, args, parsedCommands, commandsIterator))
-
             }
         }
 
-        val (next, _) = commandsIterator.peekSingle(stringArgumentType)
+        val next = nextPeek.right
 
         return when {
             next.input.startsWith(MAP_OPEN) ->
                 parseMapArgument(commandsIterator, command, argument, args, isNamed, parsedCommands)
             next.input.startsWith(LIST_OPEN) ->
                 parseListArgument(commandsIterator, command, argument, args, isNamed, parsedCommands)
-            else -> parseListArgument(commandsIterator, command, argument, args, isNamed, parsedCommands)
+            argument.argumentType.inputType is AnyInputType ->
+                parseSingleArgument(commandsIterator, command, argument, args, isNamed, parsedCommands)
+            else ->
+                parseListArgument(commandsIterator, command, argument, args, isNamed, parsedCommands)
         }
     }
 
@@ -306,12 +347,13 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                   args: MutableList<ArgumentContainer<*>>,
                                   isNamed: Boolean,
                                   parsedCommands: List<CommandContainer>): EitherObjBoolean<ParseFail> {
-        if (commandsIterator.hasNext()
-                && commandsIterator.peekSingle(stringArgumentType).first.input.startsWith(LIST_OPEN)) {
+        val (peekNext, _) = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = false)
+
+        if (peekNext.isRight && peekNext.right.content.startsWith(LIST_OPEN)) {
 
             val copy = commandsIterator.copy()
 
-            val input = commandsIterator.parseListInput(argumentType = argument.type)
+            val input = commandsIterator.parseListInput(argumentType = argument.argumentType)
 
             if (input.isLeft)
                 return leftBooleanObj(createFailAIPF(command,
@@ -351,7 +393,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             @Suppress("UNCHECKED_CAST")
             args += ArgumentContainer(argument,
                     input.right,
-                    argument.type.transform(input.right),
+                    argument.argumentType.transform(input.right),
                     argument.handler as ArgumentHandler<Any?>?
             )
 
@@ -361,37 +403,59 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val inputs = mutableListOf<Input>()
         val start = commandsIterator.sourceIndex
 
-        // TODO: Check if argument.type is ListArgumentType<*> before casting
-        val type = argument.type as ListArgumentType<*>
+        var index = 0
+        val type = argument.argumentType
 
-        while (commandsIterator.hasNext()) {
-            val (peekInput, iter) = commandsIterator.peekSingle(type.elementType)
-
-            if (peekInput.input.isArgumentName())
+        while (true) {
+            if (!type.hasType(index))
                 break
 
-            val validation = type.elementType.validate(peekInput)
+            val elementType = type.getListType(index)
+
+            val (peekInput, iter) = commandsIterator.peekSingle(elementType, restoreFromFail = true)
+
+            if (peekInput.isLeft) {
+                if (inputs.isEmpty() && !argument.isOptional) {
+                    return leftBooleanObj(createFailAIPF(command,
+                            argument,
+                            args,
+                            parsedCommands,
+                            peekInput.left,
+                            commandsIterator))
+                } else {
+                    break
+                }
+            }
+
+            if (peekInput.right.input.isArgumentName())
+                break
+
+            val validation = elementType.validate(peekInput.right)
 
             if (validation.isValid) {
                 commandsIterator.from(iter)
-                inputs += peekInput
+                inputs += peekInput.right
             } else {
                 break
             }
+
+            ++index
         }
 
         if (inputs.isEmpty()) {
             return if (!argument.isOptional || isNamed) {
                 // String?
-                val (peekInput, _) = commandsIterator.peekSingle(stringArgumentType)
+                val (peekInput, _) = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
+                val peek_ = peekInput.rightOrNull() ?: EmptyInput(commandsIterator.sourceString)
+
                 leftBooleanObj(createFailIIFAE(command,
-                        peekInput,
+                        peek_,
                         argument,
                         args,
-                        validation(validatedElement(peekInput,
-                                argument.type,
+                        validation(validatedElement(peek_,
+                                argument.argumentType,
                                 ListFormatCheckValidator,
-                                ValidationTexts.expectedInputList(), listOf(ListInputType))),
+                                ValidationTexts.expectedInputList(), ListInputType)),
                         parsedCommands,
                         commandsIterator))
             } else {
@@ -423,7 +487,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         @Suppress("UNCHECKED_CAST")
         args += ArgumentContainer(argument,
                 input,
-                argument.type.transform(input),
+                argument.argumentType.transform(input),
                 argument.handler as ArgumentHandler<Any?>?
         )
 
@@ -436,24 +500,26 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                  args: MutableList<ArgumentContainer<*>>,
                                  isNamed: Boolean,
                                  parsedCommands: List<CommandContainer>): EitherObjBoolean<ParseFail> {
-        val peek = commandsIterator.peekSingle(stringArgumentType)
+        val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
         val (peekInput, _) = peek
         val copy = commandsIterator.copy()
 
-        if (!peekInput.input.startsWith(MAP_OPEN)) {
+        if (peekInput.isLeft || !peekInput.right.input.startsWith(MAP_OPEN)) {
+            val peek_ = peekInput.rightOrNull() ?: EmptyInput(commandsIterator.sourceString)
+
             return leftBooleanObj(createFailIIFAE(command,
-                    peekInput,
+                    peek_,
                     argument,
                     args,
-                    validation(validatedElement(peekInput,
-                            argument.type,
+                    validation(validatedElement(peek_,
+                            argument.argumentType,
                             MapFormatCheckValidator,
-                            ValidationTexts.expectedInputMap(), listOf(MapInputType))),
+                            ValidationTexts.expectedInputMap(), MapInputType)),
                     parsedCommands,
                     commandsIterator))
         }
 
-        val input = commandsIterator.parseMapInput(argumentType = argument.type)
+        val input = commandsIterator.parseMapInput(argumentType = argument.argumentType)
 
         if (input.isLeft)
             return leftBooleanObj(
@@ -493,7 +559,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         @Suppress("UNCHECKED_CAST")
         args += ArgumentContainer(argument,
                 input.right,
-                argument.type.transform(input.right),
+                argument.argumentType.transform(input.right),
                 argument.handler as ArgumentHandler<Any?>?
         )
 
@@ -502,22 +568,15 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
     private fun createFailCNF(input: Input,
                               parsedCommands: List<CommandContainer>,
-                              lastCommand: CommandHolder,
                               iter: SourcedCharIterator): ParseFail =
-            if (this.options[KWParserOptions.DEBUG_ENABLE_EXCEPTIONS]) {
-                failCNF_(input, parsedCommands, lastCommand)
-            } else CommandNotFoundFail(input, parsedCommands, this.commandManager, iter)
+            CommandNotFoundFail(input, parsedCommands, this.commandManager, iter)
 
 
     private fun createFailAME(command: Command,
                               args: List<ArgumentContainer<*>>,
                               parsedCommands: List<CommandContainer>,
                               iter: SourcedCharIterator): ParseFail =
-            if (this.options[KWParserOptions.DEBUG_ENABLE_EXCEPTIONS]) {
-                val missing = command.arguments.filterNot { a -> args.any { it.argument == a } }
-                val current = command.arguments.filter { a -> args.any { it.argument == a } }
-                failAME_(command, args, missing, current, parsedCommands)
-            } else ArgumentsMissingFail(command, args, parsedCommands,
+            ArgumentsMissingFail(command, args, parsedCommands,
                     this.commandManager,
                     iter)
 
@@ -528,9 +587,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                 validation: Validation,
                                 parsedCommands: List<CommandContainer>,
                                 iter: SourcedCharIterator): ParseFail =
-            if (this.options[KWParserOptions.DEBUG_ENABLE_EXCEPTIONS]) {
-                failIIFAE_(command, input, argument, args, validation, parsedCommands)
-            } else InvalidInputForArgumentFail(command, args, input, argument, validation, parsedCommands,
+            InvalidInputForArgumentFail(command, args, input, argument, validation, parsedCommands,
                     this.commandManager, iter)
 
     private fun createFailAIPF(command: Command,
@@ -547,74 +604,15 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                 args: List<ArgumentContainer<*>>,
                                 parsedCommands: List<CommandContainer>,
                                 iter: SourcedCharIterator): ParseFail =
-            if (this.options[KWParserOptions.DEBUG_ENABLE_EXCEPTIONS]) {
-                failNIFAE_(command, argument, args, parsedCommands)
-            } else NoInputForArgumentFail(command, args, argument, parsedCommands, this.commandManager, iter)
+            NoInputForArgumentFail(command, args, argument, parsedCommands, this.commandManager, iter)
 
     private fun createFailANFE(command: Command,
                                args: List<ArgumentContainer<*>>,
                                name: String,
                                parsedCommands: List<CommandContainer>,
                                iter: SourcedCharIterator): ParseFail =
-            if (this.options[KWParserOptions.DEBUG_ENABLE_EXCEPTIONS]) {
-                val currentArgs = command.arguments.filterNot { a -> args.any { it.argument == a } }
-                failANFE_(command, currentArgs, args, name, parsedCommands)
-            } else ArgumentNotFoundFail(command, args, name, parsedCommands, this.commandManager, iter)
+            ArgumentNotFoundFail(command, args, name, parsedCommands, this.commandManager, iter)
 
-
-    private fun failCNF_(input: Input,
-                         parsedCommands: List<CommandContainer>,
-                         lastCommand: CommandHolder): Nothing =
-            throw CommandNotFoundException(input, parsedCommands,
-                    this.commandManager,
-                    "Command '$input' not found${if (lastCommand.isPresent) " neither in parent command " +
-                            lastCommand.value.toStr() +
-                            " nor in command manager" else " in command manager"}.")
-
-    private fun failAME_(command: Command,
-                         args: List<ArgumentContainer<*>>,
-                         missing: List<Argument<*>>,
-                         provided: List<Argument<*>>,
-                         parsedCommands: List<CommandContainer>): Nothing =
-            throw ArgumentsMissingException(command,
-                    args,
-                    parsedCommands,
-                    this.commandManager,
-                    "Missing arguments ${missing.toStr()} of command ${command.toStr()}. Provided: ${provided.toStr()}.")
-
-    private fun failIIFAE_(command: Command,
-                           input: Input,
-                           argument: Argument<*>,
-                           args: List<ArgumentContainer<*>>,
-                           validation: Validation,
-                           parsedCommands: List<CommandContainer>): Nothing =
-            throw InvalidInputForArgumentException(command, args, input, argument, validation, parsedCommands,
-                    this.commandManager,
-                    "Invalid input '$input' for argument '${argument.toStr()}' of command '${command.toStr()}'.")
-
-    private fun failNIFAE_(command: Command,
-                           argument: Argument<*>,
-                           args: List<ArgumentContainer<*>>,
-                           parsedCommands: List<CommandContainer>): Nothing =
-            throw NoInputForArgumentException(command, args, argument, parsedCommands, this.commandManager,
-                    "No input provided for argument '${argument.toStr()}' of command '${command.toStr()}'.")
-
-    private fun failANFE_(command: Command,
-                          currentArgs: List<Argument<*>>,
-                          args: List<ArgumentContainer<*>>,
-                          name: String,
-                          parsedCommands: List<CommandContainer>): Nothing =
-            throw ArgumentNotFoundException(command, args, name, parsedCommands, this.commandManager,
-                    "Cannot find argument with name '$name' in arguments '${currentArgs.toStr()}'" +
-                            " of command '${command.toStr()}'")
-
-    private fun failEI_(command: Command,
-                        inputType: InputType<*>,
-                        args: List<ArgumentContainer<*>>,
-                        argument: Argument<*>,
-                        parsedCommands: List<CommandContainer>): Nothing =
-            throw ExpectedInputException(command, args, argument, inputType, parsedCommands, this.commandManager,
-                    "Invalid input for input type '$inputType' for argument ${argument.nameOrId} of command '${command.toStr()}'.")
 
     class CommandHolder : IMutableBox<Command> by MutableBox()
 

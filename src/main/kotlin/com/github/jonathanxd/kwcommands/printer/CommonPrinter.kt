@@ -38,7 +38,6 @@ import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.append
 import com.github.jonathanxd.kwcommands.util.level
-import com.github.jonathanxd.kwcommands.util.nameOrId
 
 /**
  * Common implementation of command printer backing to a print function
@@ -95,7 +94,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
     companion object {
         private val DummyCommand = command {
-            name { string { "dummy" } }
+            name { "dummy" }
             order = -1
         }
 
@@ -203,12 +202,12 @@ class CommonPrinter(override val localizer: TextLocalizer,
                 components.apply {
                     this.add(Text.single(if (it.isOptional) "<" else "["))
 
-                    this.add(Text.single(it.nameOrId))
+                    this.add(Text.single(it.name))
 
                     this.add(Text.single(": ")
                             .append(Text.single(
-                                    if (it.type.type.canResolve()) it.type.type.toString()
-                                    else it.type.type.classLiteral)))
+                                    if (it.argumentType.type.canResolve()) it.argumentType.type.toString()
+                                    else it.argumentType.type.classLiteral)))
 
                     this.add(Text.single(if (it.isOptional) ">" else "]"))
                 }
@@ -266,7 +265,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
                         command.arguments.forEach {
                             if (it.description.isNotEmpty) {
                                 builder.append(' ', to + 1)
-                                builder.append(" - ${it.nameOrId}: ${localize.localize(it.description)}")
+                                builder.append(" - ${it.name}: ${localize.localize(it.description)}")
                                 out.flushAndClean(builder)
                             }
                         }
@@ -320,7 +319,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
                                 builder.append(localize.localize(Text.of(
                                         Texts.getArgumentText(),
                                         "(",
-                                        arg.id.toString(),
+                                        arg.name.toString(),
                                         "):"
                                 )))
                                 out.flushAndClean(builder)

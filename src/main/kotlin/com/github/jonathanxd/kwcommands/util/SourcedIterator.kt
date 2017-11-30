@@ -52,9 +52,7 @@ interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
     /**
      * Runs [func] and return modified iterator instance
      */
-    fun <R> runInNew(func: SourcedCharIterator.() -> R): Pair<R, SourcedCharIterator> {
-        TODO()
-    }
+    fun <R> runInNew(func: SourcedCharIterator.() -> R): Pair<R, SourcedCharIterator>
 
 }
 

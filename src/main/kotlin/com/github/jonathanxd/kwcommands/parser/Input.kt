@@ -59,7 +59,7 @@ sealed class Input {
 }
 
 /**
- * Denotes a single input for argument
+ * Holds a single string input in [source].
  */
 data class SingleInput(val input: String,
                        override val source: String,
@@ -85,7 +85,7 @@ data class SingleInput(val input: String,
 }
 
 /**
- * Denotes a collection of elements input for argument marked as [multiple][Argument.isMultiple].
+ * Holds list of inputs in [source].
  */
 data class ListInput(val input: List<Input>,
                      override val source: String,
@@ -112,7 +112,7 @@ data class ListInput(val input: List<Input>,
 }
 
 /**
- * Denotes a map of elements input for argument marked as [multiple][Argument.isMultiple].
+ * Holds a map of inputs in [source].
  */
 data class MapInput(val input: List<Pair<Input, Input>>,
                     override val source: String,
@@ -144,7 +144,7 @@ data class MapInput(val input: List<Pair<Input, Input>>,
 }
 
 /**
- * Denotes no value input for argument marked as [multiple][Argument.isMultiple].
+ * Empty input. Not existent in [source].
  */
 class EmptyInput(override val source: String) : Input() {
     override val start: Int = 0
@@ -166,13 +166,18 @@ class EmptyInput(override val source: String) : Input() {
 interface InputType<I: Input> {
     fun getTypeString(): TextComponent
 
+    /**
+     * Returns true if [other] is compatible with this input type, meaning that
+     * an input of `this` type can be input of [other] type.
+     */
     fun isCompatible(other: InputType<*>): Boolean
 }
 
 object AnyInputType : InputType<Input> {
     override fun getTypeString(): TextComponent = Texts.getSingleTypeText()
 
-    override fun isCompatible(other: InputType<*>): Boolean = false
+    override fun isCompatible(other: InputType<*>): Boolean =
+            other is AnyInputType
 }
 
 object SingleInputType : InputType<SingleInput> {
@@ -193,7 +198,7 @@ object MapInputType : InputType<MapInput> {
     override fun getTypeString(): TextComponent = Texts.getMapTypeText()
 
     override fun isCompatible(other: InputType<*>): Boolean =
-            other is ListInputType || other is AnyInputType
+            other is MapInputType || other is AnyInputType
 }
 
 object EmptyInputType : InputType<EmptyInput> {

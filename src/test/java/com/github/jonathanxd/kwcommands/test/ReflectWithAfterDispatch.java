@@ -52,7 +52,7 @@ public class ReflectWithAfterDispatch {
         Say say = new Say();
         Calc calc = new Calc();
 
-        AIO aio = KWCommands.INSTANCE.createAio();
+        AIO aio = KWCommands.INSTANCE.createAio(this);
         ReflectionEnvironment reflectionEnvironment = aio.getReflectionEnvironment();
         reflectionEnvironment.registerCommands(
                 reflectionEnvironment.fromClass(Say.class, c -> say, this), this);
