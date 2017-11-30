@@ -25,19 +25,41 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.parser
+package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.iutils.text.Text
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.argument.ComplexMapArgumentType
+import com.github.jonathanxd.kwcommands.argument.ListArgumentType
+import com.github.jonathanxd.kwcommands.argument.PairArgumentType
+import com.github.jonathanxd.kwcommands.util.enumArgumentType
+import com.github.jonathanxd.kwcommands.util.intArgumentType
+import com.github.jonathanxd.kwcommands.util.stringArgumentType
 
-/**
- * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
- * are invalid.
- */
-interface Validator<in I : Input> {
-    val name: TextComponent
-        get() = Text.of(this::class.java.simpleName)
+val languagesListArgumentType = ListArgumentType(
+        enumArgumentType(Languages::class.java),
+        typeInfo<List<Languages>>()
+)
 
-    operator fun invoke(argumentType: ArgumentType<@UnsafeVariance I, *>, value: I): Validation
+val valuesMapArgumentType = ComplexMapArgumentType(
+        listOf(
+                PairArgumentType(stringArgumentType("age"), intArgumentType, false, typeInfo()),
+                PairArgumentType(stringArgumentType("languages"), languagesListArgumentType, typeInfo())
+        ),
+        typeInfo<Map<String, Any>>()
+)
+
+val myMapArgumentType = ComplexMapArgumentType(
+        listOf(
+                PairArgumentType(stringArgumentType("name"), stringArgumentType, typeInfo()),
+                PairArgumentType(stringArgumentType("values"), valuesMapArgumentType, typeInfo())
+        ),
+        typeInfo<Map<String, Any>>()
+)
+
+enum class Languages {
+    Java,
+    Kotlin,
+    JavaScript,
+    Go,
+    Rust
 }

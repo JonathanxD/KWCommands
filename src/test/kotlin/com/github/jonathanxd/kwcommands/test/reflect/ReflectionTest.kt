@@ -28,17 +28,18 @@
 package com.github.jonathanxd.kwcommands.test.reflect
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InstanceProvider
-import com.github.jonathanxd.kwcommands.manager.ReflectCommandManagerImpl
+import com.github.jonathanxd.kwcommands.manager.*
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.kwcommands.parser.valid
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
-import com.github.jonathanxd.kwcommands.reflect.env.ArgumentType
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.reflect.env.cast
@@ -52,6 +53,14 @@ import org.junit.Test
 
 class ReflectionTest {
 
+    val simplePlayerArgumentType = simpleArgumentType(
+            transformer { it: SingleInput -> SimplePlayer(it.input) },
+            validator { _, _: SingleInput -> valid() },
+            EmptyPossibilitesFunc,
+            null,
+            typeInfo()
+    )
+
     @Test
     fun test() {
         val information = InformationManagerImpl()
@@ -60,7 +69,7 @@ class ReflectionTest {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
-        env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(Download::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -69,9 +78,11 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.dispatch(processor.parse("download https://askdsal.0/x.file 10", this), information)// ?
+        val result =
+                processor.parseAndDispatch("download https://askdsal.0/x.file 10", this, information) // ?
 
-        Assert.assertTrue(result.any { it is UnsatisfiedRequirementsResult })
+        Assert.assertTrue(result.isRight)
+        Assert.assertTrue(result.right.any { it is UnsatisfiedRequirementsResult })
     }
 
     @Test
@@ -79,7 +90,8 @@ class ReflectionTest {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
-        env.registerCommands(env.fromClass(Download::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(Download::class, instanceProvider { it.newInstance() },
+                this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -88,9 +100,11 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.dispatch(processor.parse("download https://askdsal.0/x.file 10", this))// ?
+        val result =
+                processor.parseAndDispatch("download https://askdsal.0/x.file 10", this) // ?
 
-        Assert.assertTrue(result.any {
+        Assert.assertTrue(result.isRight)
+        Assert.assertTrue(result.right.any {
             it is UnsatisfiedRequirementsResult
                     && it.unsatisfiedRequirements.isNotEmpty()
                     && it.unsatisfiedRequirements.first().reason == Reason.MISSING_INFORMATION
@@ -106,7 +120,7 @@ class ReflectionTest {
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
 
-        env.registerCommands(env.fromClass(World::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(World::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -115,16 +129,13 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.dispatch(processor.parse("world setblock 10 10 0 stone", this), information)
+        processor.parseAndDispatch("world setblock 10 10 0 stone", this, information)
                 .assertAll(listOf("setted block STONE at 10, 10, 0"))
 
         ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
-            override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+            override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
                 if (type == TypeInfo.of(SimplePlayer::class.java)) {
-                    return ArgumentType(
-                            validator {_, _, _: String -> true },
-                            transformer {_, _, it: String -> SimplePlayer(it) },
-                            possibilitiesFunc { _, _ -> emptyList() }, null).cast(type)
+                    return simplePlayerArgumentType.cast(type)
                 }
 
                 return null
@@ -132,7 +143,7 @@ class ReflectionTest {
 
         })
 
-        processor.dispatch(processor.parse("world tpto Adm A,B,C", this), information)
+        processor.parseAndDispatch("world tpto Adm A,B,C", this, information)
                 .assertAll(listOf("teleported A, B, C to Adm!"))
     }
 
@@ -144,7 +155,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.dispatch(processor.parse("tp a c", this))
+        processor.parseAndDispatch("tp a c", this)
                 .assertAll(listOf("Teleported a to c!"))
     }
 
@@ -153,7 +164,7 @@ class ReflectionTest {
         val manager = ReflectCommandManagerImpl()
 
         manager.registerClassWithInner(InnerCommands::class.java, object : InstanceProvider {
-            override fun <T> get(type: Class<T>): T = type.newInstance()
+            override fun invoke(type: Class<*>): Any? = type.newInstance()
         }, this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
@@ -163,10 +174,10 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        processor.dispatch(processor.parse("a capitalize kwcommands", this))
+        processor.parseAndDispatch("a capitalize kwcommands", this)
                 .assertAll(listOf("Kwcommands"))
 
-        processor.dispatch(processor.parse("a b kwcommands", this))
+        processor.parseAndDispatch("a b kwcommands", this)
                 .assertAll(listOf("KWCOMMANDS"))
     }
 
@@ -180,7 +191,7 @@ class ReflectionTest {
 
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
-        env.registerCommands(env.fromClass(TestOptInfo::class, { it.newInstance() }, this), this)
+        env.registerCommands(env.fromClass(TestOptInfo::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
 
@@ -189,7 +200,7 @@ class ReflectionTest {
 
         val processor = Processors.createCommonProcessor(manager)
 
-        val result = processor.dispatch(processor.parse("getName", this), information)
+        val result = processor.parseAndDispatch("getName", this, information)
 
         result.assertAll(listOf(simplePlayer.name))
     }

@@ -29,14 +29,17 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.exception.RethrowException;
+import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.iutils.text.Text;
 import com.github.jonathanxd.iutils.text.TextComponent;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.Argument;
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
+import com.github.jonathanxd.kwcommands.argument.ArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.command.CommandContainer;
 import com.github.jonathanxd.kwcommands.command.Handler;
+import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.information.Information;
 import com.github.jonathanxd.kwcommands.json.DefaultJsonParser;
@@ -82,11 +85,11 @@ public class JsonTest {
             "  \"handler\": \"MyHandler\",\n" +
             "  \"arguments\": [\n" +
             "    {\n" +
-            "      \"id\": \"name\",\n" +
+            "      \"name\": \"name\",\n" +
             "      \"type\": \"String\"\n" +
             "    },\n" +
             "    {\n" +
-            "      \"id\": \"email\",\n" +
+            "      \"name\": \"email\",\n" +
             "      \"type\": \"String\",\n" +
             "      \"validator\": \"EmailValidator\"\n" +
             "    }\n" +
@@ -146,13 +149,13 @@ public class JsonTest {
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
-        List<CommandResult> commandResults = processor.processAndDispatch(
+        Either<ParseFail, List<CommandResult>> commandResults = processor.parseAndDispatch(
                 "register " + pname + " " + pemail,
                 this, informationManager);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
 
-        commonHelpInfoHandler.handleResults(commandResults, new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
+        commonHelpInfoHandler.handleResults(commandResults.getRight(), new CommonPrinter(KLocale.INSTANCE.getLocalizer(),
                 s -> {
             System.out.println(s);
             return Unit.INSTANCE;
@@ -225,18 +228,14 @@ public class JsonTest {
             return Text.of("Email Validator");
         }
 
+        @NotNull
         @Override
-        public Validation invoke(@NotNull List<? extends ArgumentContainer<?>> parsed,
-                                 @NotNull Argument<?> current,
+        public Validation invoke(@NotNull ArgumentType argumentType,
                                  @NotNull Input value) {
-
             return value instanceof SingleInput && pred.test(((SingleInput) value).getInput())
                     ? ValidationKt.valid()
                     :
-                    ValidationKt.invalid(value, this, Text.of("Invalid email format"),
-                            Collections3.listOf(SingleInputType.INSTANCE)
-                    );
-
+                    ValidationKt.invalid(value, argumentType, this, Text.of("Invalid email format"));
         }
 
     }

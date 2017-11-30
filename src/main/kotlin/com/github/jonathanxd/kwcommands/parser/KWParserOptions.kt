@@ -27,17 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.iutils.text.Text
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.option.Option
 
 /**
- * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
- * are invalid.
+ * Options for the parser of processor
  */
-interface Validator<in I : Input> {
-    val name: TextComponent
-        get() = Text.of(this::class.java.simpleName)
-
-    operator fun invoke(argumentType: ArgumentType<@UnsafeVariance I, *>, value: I): Validation
-}
+object KWParserOptions

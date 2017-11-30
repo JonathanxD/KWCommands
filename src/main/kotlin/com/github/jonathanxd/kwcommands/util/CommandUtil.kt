@@ -27,9 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.opt.Opt.some
 import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.argument.SingleArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.parser.SingleInput
 
@@ -52,18 +51,18 @@ val Command.level: Int
 fun Command.toStr() = this.fullname
 
 fun Iterable<Argument<*>>.toStr() = this.joinToString { it.toStr() }
-fun Argument<*>.toStr() = this.nameOrId
+fun Argument<*>.toStr() = this.name
 
-val Argument<*>.nameOrId get() = if (this.name.isEmpty()) this.id.toString() else this.name
-val Argument<*>.nameOrIdWithType
+val Argument<*>.nameWithType
     get() =
-        "${this.nameOrId}: ${this.typeStr}"
+        "${this.name}: ${this.typeStr}"
 
 val Argument<*>.typeStr: String
-    get() = if (this.type.canResolve()) this.type.toString() else this.type.classLiteral
+    get() = if (this.argumentType.type.canResolve()) this.argumentType.type.toString() else this.argumentType.type.classLiteral
 
-fun Argument<*>.isBoolean(parsedArgs: List<ArgumentContainer<*>>): Boolean =
-        this.type.canResolve()
-                && (this.type.typeClass == Boolean::class.javaObjectType
-                || this.type.typeClass == Boolean::class.javaPrimitiveType)
-                && this.validator(parsedArgs, this, SingleInput("true", "true", 0, 4)).isValid
+fun Argument<*>.isBoolean(): Boolean =
+        this.argumentType is SingleArgumentType<*>
+                && this.argumentType.type.canResolve()
+                && (this.argumentType.type.typeClass == Boolean::class.javaObjectType
+                || this.argumentType.type.typeClass == Boolean::class.javaPrimitiveType)
+                && this.argumentType.validate(SingleInput("true", "true", 0, 4)).isValid

@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
 data class Validation(val invalids: List<ValidatedElement>) {
 
@@ -45,9 +46,10 @@ data class Validation(val invalids: List<ValidatedElement>) {
 }
 
 data class ValidatedElement(val input: Input,
-                            val validator: Validator,
+                            val argumentType: ArgumentType<*, *>,
+                            val validator: Validator<*>,
                             val message: TextComponent?,
-                            val supported: List<InputType>)
+                            val inputType: InputType<*>)
 
 fun valid(): Validation = VALID
 fun validation(invalid: ValidatedElement): Validation =
@@ -58,15 +60,18 @@ fun validation(validations: List<Validation>): Validation =
                 .map { it.invalids }
                 .fold(mutableListOf<ValidatedElement>()) { acc, r -> acc.addAll(r); acc })
 
-fun invalid(input: Input, validator: Validator, message: TextComponent?, supported: List<InputType>): Validation =
-        Validation(listOf(validatedElement(input, validator, message, supported)))
+fun invalid(input: Input,
+            argumentType: ArgumentType<*, *>,
+            validator: Validator<*>,
+            message: TextComponent?): Validation =
+        Validation(listOf(validatedElement(input, argumentType, validator, message, argumentType.inputType)))
 
 @JvmOverloads
 fun validatedElement(input: Input,
-                     validator: Validator,
+                     argumentType: ArgumentType<*, *>,
+                     validator: Validator<*>,
                      message: TextComponent? = null,
-                     supported: List<InputType> = emptyList()): ValidatedElement =
-        ValidatedElement(input, validator, message, supported)
+                     supported: InputType<*>): ValidatedElement =
+        ValidatedElement(input, argumentType, validator, message, supported)
 
 val VALID = Validation(emptyList())
-

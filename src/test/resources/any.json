@@ -4,7 +4,7 @@
   "handler": "method:any",
   "arguments": [
     {
-      "id": "name",
+      "name": "name",
       "description": "Description of name argument",
       "type": "String"
     }

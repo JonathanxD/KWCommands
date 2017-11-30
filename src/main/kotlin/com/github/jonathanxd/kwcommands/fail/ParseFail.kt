@@ -25,14 +25,14 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.fail
 
-import com.github.jonathanxd.kwcommands.util.SourcedIterator
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
-class MapParseException(message: String) : RuntimeException(message)
+open class ParseFail(val parsedCommands: List<CommandContainer>,
+                     val manager: CommandManager,
+                     val iter: SourcedCharIterator)
 
-fun Iterator<Char>.mapParseException(message: String): MapParseException =
-        if (this is SourcedIterator)
-            MapParseException("$message. At: ${this.sourceIndex} of '${this.sourceString}'.")
-        else
-            MapParseException(message)
+

@@ -27,10 +27,12 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.ListInput
-import com.github.jonathanxd.kwcommands.parser.MapInput
-import com.github.jonathanxd.kwcommands.parser.Validation
+import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.text.Text
+import com.github.jonathanxd.jwiutils.kt.left
+import com.github.jonathanxd.jwiutils.kt.right
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.parser.*
 
 fun ListInput.validate(validatorFunc: (Input) -> Validation): Validation =
         this.input.map { validatorFunc(it) }
@@ -38,6 +40,26 @@ fun ListInput.validate(validatorFunc: (Input) -> Validation): Validation =
 
 
 fun MapInput.validate(validatorFunc: (Input) -> Validation): Validation =
-        this.input.entries
+        this.input
                 .map { (k, v) -> validatorFunc(k) + validatorFunc(v) }
                 .reduce { acc, validation -> acc + validation }
+
+fun MapInput.getStringKey(keyName: String): Pair<Input, Input>? =
+        this.input.firstOrNull { (k, v) -> k is SingleInput && k.input == keyName }
+
+fun MapInput.get(keyName: String,
+                 valueType: InputType<*>,
+                 argumentType: ArgumentType<*, *>,
+                 validator: Validator<*>): Either<Validation, Pair<Input, Input>> =
+        // TODO: Translate
+        this.getStringKey(keyName).let {
+            return when {
+                it == null ->
+                    left(invalid(this, argumentType, validator,
+                            Text.of("String key '$keyName' not found in map.")))
+                it.second.type != valueType ->
+                    left(invalid(it.second, argumentType, validator,
+                            Text.of("Value of key '$keyName' must be of type $valueType.")))
+                else -> right(it)
+            }
+        }

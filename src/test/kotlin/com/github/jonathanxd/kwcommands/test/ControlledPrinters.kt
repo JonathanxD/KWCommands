@@ -25,8 +25,24 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.printer.CommonPrinter
+import com.github.jonathanxd.kwcommands.printer.ControllableCommonPrinter
+import com.github.jonathanxd.kwcommands.util.KLocale
 
-open class CommandException(val manager: CommandManager, message: String) : RuntimeException(message)
+object ControlledPrinters {
+    val sysOut = ControllableCommonPrinter(
+            CommonPrinter(KLocale.localizer, System.out::println, true))
+
+    val sysOutWHF = ControllableCommonPrinter(
+            CommonPrinter(KLocale.localizer, System.out::println, false))
+
+    init {
+        val enable = System.getProperty("kwcommands.test.print", "false").toBoolean()
+
+        sysOut.enabled = enable
+        sysOutWHF.enabled = enable
+    }
+
+}

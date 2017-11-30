@@ -31,13 +31,9 @@ import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
-import com.github.jonathanxd.kwcommands.util.*
 import java.util.function.Function
 
 interface TypeResolver {
@@ -75,32 +71,12 @@ interface TypeResolver {
     fun resolveArgumentHandler(input: String): ArgumentHandler<*>?
 
     /**
-     * Resolves the argument validator based on [type].
+     * Resolves the [ArgumentType] based on [type].
      *
      * Commonly resolves the singleton instance using [getSingletonInstance].
      */
-    fun resolveValidator(type: TypeInfo<*>): Validator
+    fun resolveArgumentType(type: TypeInfo<*>): ArgumentType<*, *>
 
-    /**
-     * Resolves the argument transformer based on [type].
-     *
-     * Commonly resolves the singleton instance using [getSingletonInstance].
-     */
-    fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?>
-
-    /**
-     * Resolves the argument possibilities function based on [type].
-     *
-     * Commonly resolves the singleton instance using [getSingletonInstance].
-     */
-    fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc
-
-    /**
-     * Resolves the argument default value based on [type].
-     *
-     * Commonly resolves the singleton instance using [getSingletonInstance].
-     */
-    fun resolveDefaultValue(type: TypeInfo<*>): Any?
 }
 
 /**
@@ -113,17 +89,8 @@ abstract class DelegatedTypeResolver(delegate: TypeResolver) : TypeResolver by d
  * [String], [Integer], [Long], [Enum]s and others.
  */
 fun MapTypeResolver.registerDefaults() {
-    this.transformerResolvers.add {
-        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.transformer
-    }
-    this.possibilitiesResolvers.add {
-        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.possibilities
-    }
-    this.validatorResolvers.add {
-        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.validator
-    }
-    this.defaultValueResolvers.add {
-        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)?.defaultValue
+    this.argumentTypeResolvers.add {
+        ReflectionEnvironment.getGlobalArgumentTypeOrNull(it)
     }
 }
 
@@ -143,10 +110,11 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
     val singletonInstances = mutableMapOf<Class<*>, Any?>()
     val commandHandlerResolvers = mutableSetOf<(input: String) -> Handler?>()
     val argumentHandlerResolvers = mutableSetOf<(input: String) -> ArgumentHandler<*>?>()
-    val possibilitiesResolvers = mutableSetOf<(type: TypeInfo<*>) -> PossibilitiesFunc?>()
-    val transformerResolvers = mutableSetOf<(type: TypeInfo<*>) -> Transformer<Any?>?>()
-    val validatorResolvers = mutableSetOf<(type: TypeInfo<*>) -> Validator?>()
-    val defaultValueResolvers = mutableSetOf<(type: TypeInfo<*>) -> Any?>()
+    val argumentTypeResolvers = mutableSetOf<(type: TypeInfo<*>) -> ArgumentType<*, *>?>()
+    /*val possibilitiesResolvers = mutableSetOf<(type: TypeInfo<*>) -> Possibilities?>()
+    val transformerResolvers = mutableSetOf<(type: TypeInfo<*>) -> Transformer<*, Any?>?>()
+    val validatorResolvers = mutableSetOf<(type: TypeInfo<*>) -> Validator<*>?>()
+    val defaultValueResolvers = mutableSetOf<(type: TypeInfo<*>) -> Any?>()*/
 
     val loaders: MutableList<ClassLoader>
         get() = this.loaderResolver.classLoadersList
@@ -200,52 +168,14 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
         return this.apply(input)?.let { this.getSingletonInstance(it) as ArgumentHandler<*> }
     }
 
-    override fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc {
-
-        this.possibilitiesResolvers.forEach {
+    override fun resolveArgumentType(type: TypeInfo<*>): ArgumentType<*, *> {
+        this.argumentTypeResolvers.forEach {
             it(type)?.let {
                 return it
             }
         }
 
-        return possibilitiesFunc { _, _ -> emptyList() }
+        throw IllegalArgumentException("Can't resolve argument type '$type'!")
     }
 
-    override fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?> {
-        fun localTransformer(): Transformer<Any?> {
-            this.transformerResolvers.forEach {
-                it(type)?.let {
-                    return it
-                }
-            }
-
-            throw IllegalArgumentException("Can't resolve transformer of type '$type'!")
-        }
-
-        return transformer { parsed, current, value: Input -> localTransformer().invoke(parsed, current, value) }
-    }
-
-    override fun resolveValidator(type: TypeInfo<*>): Validator {
-        fun localValidator(): Validator {
-            this.validatorResolvers.forEach {
-                it(type)?.let {
-                    return it
-                }
-            }
-
-            throw IllegalArgumentException("Can't resolve validator of type '$type'!")
-        }
-
-        return validator { parsed, current, value: Input -> localValidator().invoke(parsed, current, value) }
-    }
-
-    override fun resolveDefaultValue(type: TypeInfo<*>): Any? {
-        this.defaultValueResolvers.forEach {
-            it(type)?.let {
-                return it
-            }
-        }
-
-        return null
-    }
 }

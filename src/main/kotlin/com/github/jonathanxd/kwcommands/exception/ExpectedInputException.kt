@@ -25,16 +25,19 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.parser
+package com.github.jonathanxd.kwcommands.exception
 
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.InputType
 
-@FunctionalInterface
-interface PossibilitiesFunc {
-    /**
-     * Possibilities of arguments.
-     */
-    operator fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>): List<Input>
-}
+open class ExpectedInputException(val command: Command,
+                                  val parsedArgs: List<ArgumentContainer<*>>,
+                                  val argument: Argument<*>,
+                                  val inputType: InputType<*>,
+                                  parsedCommands: List<CommandContainer>,
+                                  manager: CommandManager,
+                                  message: String) : CommandException(parsedCommands, manager, message)

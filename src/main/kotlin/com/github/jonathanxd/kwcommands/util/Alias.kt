@@ -27,56 +27,45 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.argument.*
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 
 
-typealias ValidatorAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> Validation
-typealias TransformerAlias<T> = (parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input) -> T
-typealias PossibilitiesFuncAlias = (parsed: List<ArgumentContainer<*>>, current: Argument<*>) -> List<Input>
+typealias ValidatorAlias<I> = (argumentType: ArgumentType<I, *>, value: I) -> Validation
+typealias TransformerAlias<I, T> = (value: I) -> T
+typealias PossibilitiesFuncAlias = () -> List<Input>
 
-inline fun validator(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                        current: Argument<*>,
-                                        value: Input) -> Validation) =
-        object : Validator {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
-                    func(parsed, current, value)
+inline fun <I : Input> validator(crossinline func: (argumentType: ArgumentType<I, *>, value: I) -> Validation) =
+        object : Validator<I> {
+            override fun invoke(argumentType: ArgumentType<I, *>, value: I): Validation = func(argumentType, value)
         }
 
-inline fun <T> transformer(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                              current: Argument<*>,
-                                              value: Input) -> T) =
-        object : Transformer<T> {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): T =
-                    func(parsed, current, value)
+inline fun <I : Input, T> transformer(crossinline func: (value: I) -> T) =
+        object : Transformer<I, T> {
+            override fun invoke(value: I): T = func(value)
+
         }
 
-inline fun possibilitiesFunc(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                                current: Argument<*>) -> List<Input>) =
-        object : PossibilitiesFunc {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>): List<Input> =
-                    func(parsed, current)
+inline fun possibilitiesFunc(crossinline func: () -> List<Input>) =
+        object : Possibilities {
+            override fun invoke(): List<Input> =
+                    func()
         }
 
 
 @JvmName("stringValidator")
-inline fun validator(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                        current: Argument<*>,
-                                        value: String) -> Boolean) =
-        object : Validator {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): Validation =
+inline fun validator(crossinline func: (argumentType: ArgumentType<*, *>, value: String) -> Boolean) =
+        object : Validator<Input> {
+            override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
                     (value as? SingleInput)?.let {
-                        if (func(parsed, current, it.input)) valid()
-                        else invalid(value, this, null, listOf(SingleInputType))
-                    } ?: invalid(value, this, null, listOf(SingleInputType))
+                        if (func(argumentType, it.input)) valid()
+                        else invalid(value, argumentType, this, null)
+                    } ?: invalid(value, argumentType, this, null)
 
         }
 
 @JvmName("stringTransformer")
-inline fun <T> transformer(crossinline func: (parsed: List<ArgumentContainer<*>>,
-                                              current: Argument<*>,
-                                              value: String) -> T) =
-        object : Transformer<T> {
-            override fun invoke(parsed: List<ArgumentContainer<*>>, current: Argument<*>, value: Input): T =
-                    func(parsed, current, (value as SingleInput).input)
+inline fun <T> transformer(crossinline func: (value: String) -> T) =
+        object : Transformer<SingleInput, T> {
+            override fun invoke(value: SingleInput): T = func(value.input)
         }

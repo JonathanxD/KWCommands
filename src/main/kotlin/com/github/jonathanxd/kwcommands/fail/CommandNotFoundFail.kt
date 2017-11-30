@@ -25,24 +25,14 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.env
+package com.github.jonathanxd.kwcommands.fail
 
-import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
-/**
- * Specification of a argument type.
- *
- * When the [ReflectionEnvironment] find an argument, it will lookup for a common argument specification that provides [validator],
- * [transformer], [possibilities] and [defaultValue]. This class is intended to provide these values.
- *
- * An instance of argument type can be registered globally using [ReflectionEnvironment.registerGlobal] or per instance using
- * [ReflectionEnvironment.registerProvider].
- */
-data class ArgumentType<out T>(val type: TypeInfo<out T>,
-                               val validator: Validator,
-                               val transformer: Transformer<T>,
-                               val possibilities: PossibilitiesFunc,
-                               val defaultValue: T?)
+class CommandNotFoundFail(val commandStr: Input,
+                          parsedCommands: List<CommandContainer>,
+                          manager: CommandManager,
+                          iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)

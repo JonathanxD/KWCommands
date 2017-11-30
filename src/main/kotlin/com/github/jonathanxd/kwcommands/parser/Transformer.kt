@@ -27,12 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-
 @FunctionalInterface
-interface Transformer<out T> {
-    operator fun invoke(parsed: List<ArgumentContainer<*>>,
-                        current: Argument<*>,
-                        value: Input): T
+interface Transformer<in I: Input, out T> {
+    operator fun invoke(value: I): T
 }

@@ -25,12 +25,23 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.fail
 
+import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.InputType
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
+import com.github.jonathanxd.kwcommands.util.InputParseFail
 
-class CommandNotFoundException(val commandStr: String,
-                               val commands: List<CommandContainer>,
-                               manager: CommandManager,
-                               message: String) : CommandException(manager, message)
+// This class needs a better name
+class CommandInputParseFail(val command: Command,
+                            val parsedArgs: List<ArgumentContainer<*>>,
+                            val argument: Argument<*>,
+                            val inputType: InputType<*>,
+                            val fail: InputParseFail,
+                            parsedCommands: List<CommandContainer>,
+                            manager: CommandManager,
+                            iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)

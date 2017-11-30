@@ -36,36 +36,24 @@ import com.github.jonathanxd.kwcommands.command.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
-import com.github.jonathanxd.kwcommands.parser.SingleInput
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
-import com.github.jonathanxd.kwcommands.util.EnumTransformer
-import com.github.jonathanxd.kwcommands.util.EnumValidator
-import com.github.jonathanxd.kwcommands.util.enumPossibilities
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.util.*
 
-class BuildingArgument<T> {
-    lateinit var id: Any
+class BuildingArgument<I : Input, T> {
     var name: String = ""
+    val alias = UList<String>()
     var description: TextComponent = "".asText()
     var isOptional: Boolean = false
     var isMultiple: Boolean = false
-    lateinit var type: TypeInfo<out T>
+    lateinit var typeInfo: TypeInfo<out T>
+    var type: ArgumentType<I, T>? = null
     var defaultValue: T? = null
-    lateinit var validator: Validator
-    lateinit var transformer: Transformer<T>
-    var possibilities: PossibilitiesFunc = possibilitiesFunc { _, _ -> emptyList() }
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     var handler: ArgumentHandler<out T>? = null
-
-    inline fun id(f: () -> Any) {
-        this.id = f()
-    }
 
     inline fun name(f: () -> String) {
         this.name = f()
@@ -80,6 +68,10 @@ class BuildingArgument<T> {
     }
 
     inline fun type(f: () -> TypeInfo<T>) {
+        this.typeInfo = f()
+    }
+
+    inline fun argumentType(f: () -> ArgumentType<I, T>) {
         this.type = f()
     }
 
@@ -87,23 +79,12 @@ class BuildingArgument<T> {
         this.isMultiple = f()
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun validate(crossinline validator: ValidatorAlias) {
-        this.validator = validator(validator)
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun transformer(crossinline transformer: TransformerAlias<T>) {
-        this.transformer = com.github.jonathanxd.kwcommands.util.transformer(transformer)
-    }
-
     inline fun defaultValue(f: () -> T?) {
         this.defaultValue = f()
     }
 
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun possibilities(crossinline possibilities: PossibilitiesFuncAlias) {
-        this.possibilities = possibilitiesFunc(possibilities)
+    inline fun alias(f: UList<String>.() -> Unit) {
+        f(this.alias)
     }
 
     inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) {
@@ -128,19 +109,13 @@ class BuildingArgument<T> {
         }
     }
 
-
     @Suppress("NOTHING_TO_INLINE")
     inline fun toArgument(): Argument<T> = Argument(
-            id = this.id,
             name = this.name,
+            alias = this.alias.coll.toList(),
             description = this.description,
             isOptional = this.isOptional,
-            type = this.type,
-            isMultiple = this.isMultiple,
-            defaultValue = this.defaultValue,
-            validator = this.validator,
-            transformer = this.transformer,
-            possibilities = this.possibilities,
+            argumentType = this.type as ArgumentType<*, T>,
             requirements = this.requirements.coll.toList(),
             requiredInfo = this.requiredInfo.coll.toSet(),
             handler = this.handler
@@ -173,6 +148,7 @@ class BuildingRequirement<T, R>(var required: R) {
         this.tester = object : RequirementTester<T, R> {
             override val name: TextComponent
                 get() = testerName
+
             override fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean =
                     f(requirement, information)
         }
@@ -241,10 +217,10 @@ inline fun <reified T> informationId(f: BuildingInfoId<T>.() -> Unit): Informati
     return building.toId()
 }
 
-inline fun <reified T> argument(f: BuildingArgument<T>.() -> Unit): Argument<T> {
-    val building = BuildingArgument<T>()
+inline fun <reified I : Input, reified T> argument(f: BuildingArgument<I, T>.() -> Unit): Argument<T> {
+    val building = BuildingArgument<I, T>()
 
-    building.type = typeInfo<T>()
+    building.typeInfo = typeInfo()
 
     f(building)
 
@@ -252,10 +228,10 @@ inline fun <reified T> argument(f: BuildingArgument<T>.() -> Unit): Argument<T> 
 }
 
 
-inline fun <T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<T>.() -> Unit): Argument<T> {
-    val building = BuildingArgument<T>()
+inline fun <I : Input, T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<I, T>.() -> Unit): Argument<T> {
+    val building = BuildingArgument<I, T>()
 
-    building.type = type
+    building.typeInfo = type
 
     f(building)
 
@@ -265,7 +241,7 @@ inline fun <T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<T>.() -> Uni
 inline fun <reified T, reified R> requirement(required: R, f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
-    building.type = typeInfo<R>()
+    building.type = typeInfo()
 
     f(building)
 
@@ -315,88 +291,75 @@ inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContai
 
 // Additionals
 
-val stringValidator: Validator = StringValidator
-val stringTransformer: Transformer<String> = StringTransformer
+val stringValidator: Validator<SingleInput> = StringValidator
+val stringTransformer: Transformer<SingleInput, String> = StringTransformer
 
-val intValidator: Validator = IntValidator
-val intTransformer: Transformer<Int> = IntTransformer
+val intValidator: Validator<SingleInput> = IntValidator
+val intTransformer: Transformer<SingleInput, Int> = IntTransformer
 
-val longValidator: Validator = LongValidator
-val longTransformer: Transformer<Long> = LongTransformer
+val longValidator: Validator<SingleInput> = LongValidator
+val longTransformer: Transformer<SingleInput, Long> = LongTransformer
 
-val doubleValidator: Validator = DoubleValidator
-val doubleTransformer: Transformer<Double> = DoubleTransformer
+val doubleValidator: Validator<SingleInput> = DoubleValidator
+val doubleTransformer: Transformer<SingleInput, Double> = DoubleTransformer
 
-val booleanValidator: Validator = BooleanValidator
-val booleanTransformer: Transformer<Boolean> = BooleanTransformer
+val booleanValidator: Validator<SingleInput> = BooleanValidator
+val booleanTransformer: Transformer<SingleInput, Boolean> = BooleanTransformer
 
 val booleanPossibilities = BooleanPossibilities
 
-inline fun stringArg(f: BuildingArgument<String>.() -> Unit): Argument<String> = argument {
-    validator = stringValidator
-    transformer = stringTransformer
-    f(this)
-}
+inline fun stringArg(f: BuildingArgument<SingleInput, String>.() -> Unit): Argument<String> =
+        argument<SingleInput, String> {
+            type = stringArgumentType
+            f(this)
+        }
 
-inline fun intArg(f: BuildingArgument<Int>.() -> Unit): Argument<Int> = argument {
-    validator = intValidator
-    transformer = intTransformer
-    f(this)
-}
+inline fun intArg(f: BuildingArgument<SingleInput, Int>.() -> Unit): Argument<Int> =
+        argument<SingleInput, Int> {
+            type = intArgumentType
+            f(this)
+        }
 
-inline fun longArg(f: BuildingArgument<Long>.() -> Unit): Argument<Long> = argument {
-    validator = longValidator
-    transformer = longTransformer
-    f(this)
-}
+inline fun longArg(f: BuildingArgument<SingleInput, Long>.() -> Unit): Argument<Long> =
+        argument<SingleInput, Long> {
+            type = longArgumentType
+            f(this)
+        }
 
-inline fun doubleArg(f: BuildingArgument<Double>.() -> Unit): Argument<Double> = argument {
-    validator = doubleValidator
-    transformer = doubleTransformer
-    f(this)
-}
+inline fun doubleArg(f: BuildingArgument<SingleInput, Double>.() -> Unit): Argument<Double> =
+        argument<SingleInput, Double> {
+            type = doubleArgumentType
+            f(this)
+        }
 
-inline fun booleanArg(f: BuildingArgument<Boolean>.() -> Unit): Argument<Boolean> = argument {
-    validator = booleanValidator
-    transformer = booleanTransformer
-    possibilities = booleanPossibilities
-    f(this)
-}
+inline fun booleanArg(f: BuildingArgument<SingleInput, Boolean>.() -> Unit): Argument<Boolean> =
+        argument<SingleInput, Boolean> {
+            type = booleanArgumentType
+            f(this)
+        }
 
-inline fun <reified T> enumArg(f: BuildingArgument<T>.() -> Unit): Argument<T> = argument {
-    validator = EnumValidator(T::class.java)
-    transformer = EnumTransformer(T::class.java)
-    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(T::class.java).toList() }
-    f(this)
-}
-
-@Suppress("UNCHECKED_CAST")
-inline fun <T> enumArg(type: Class<T>, f: BuildingArgument<T>.() -> Unit): Argument<T> = argument<Unit> {
-    this as BuildingArgument<T>
-    this.type { TypeInfo.of(type) }
-    validator = EnumValidator(type)
-    transformer = EnumTransformer(type)
-    possibilities = possibilitiesFunc { _, _ -> enumPossibilities(type).toList() }
-    f(this)
-} as Argument<T>
+inline fun <reified T> enumArg(f: BuildingArgument<SingleInput, T>.() -> Unit): Argument<T> =
+        argument<SingleInput, T> {
+            type = enumArgumentType(T::class.java)
+            f(this)
+        }
 
 inline fun <reified T> listArg(base: Argument<T>): Argument<List<T>> =
         listArg(base, {})
 
 inline fun <reified T> listArg(base: Argument<T>,
-                               f: BuildingArgument<List<T>>.() -> Unit): Argument<List<T>> = argument {
-    id = base.id
-    name = base.name
-    type = TypeInfo.builderOf(List::class.java).of(base.type).buildGeneric()
-    isOptional = base.isOptional
-    isMultiple = true
-    validator = ListValidator(base.validator)
-    transformer = ListTransformer(base.transformer)
-    possibilities = base.possibilities
-    requirements { +base.requirements }
-    requiredInfo { +base.requiredInfo }
-    f(this)
-}
+                               f: BuildingArgument<ListInput, List<T>>.() -> Unit): Argument<List<T>> =
+        argument<ListInput, List<T>> {
+            alias { +base.alias }
+            name = base.name
+            isOptional = base.isOptional
+            isMultiple = true
+            type = ListArgumentType(base.argumentType,
+                    TypeInfo.builderOf(List::class.java).of(base.argumentType.type).buildGeneric())
+            requirements { +base.requirements }
+            requiredInfo { +base.requiredInfo }
+            f(this)
+        }
 
 // Command
 
@@ -454,50 +417,16 @@ class USet<E> : UColl<E>() {
     override val coll = mutableSetOf<E>()
 }
 
-class BuildingCommandName {
-    lateinit var name: CommandName
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun string(string: String) {
-        this.name = CommandName.name(string)
-    }
-
-    inline fun string(f: () -> String) {
-        this.name = CommandName.name(f())
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun regexPattern(pattern: String) {
-        this.name = CommandName.regex(pattern)
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun regex(regex: Regex) {
-        this.name = CommandName.regex(regex)
-    }
-
-    inline fun regexPattern(f: () -> String) {
-        this.name = CommandName.regex(f())
-    }
-
-    inline fun regex(f: () -> Regex) {
-        this.name = CommandName.regex(f())
-    }
-
-    @Suppress("NOTHING_TO_INLINE")
-    inline fun toName(): CommandName = this.name
-}
-
 class BuildingCommand {
     var parent: Command? = null
     var order = 0
-    var name = BuildingCommandName()
+    lateinit var name: String
     var description: TextComponent = "".asText()
     var handler: Handler? = null
     val arguments = UList<Argument<*>>()
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
-    val alias = UList<CommandName>()
+    val alias = UList<String>()
 
     inline fun order(f: () -> Int) {
         this.order = f()
@@ -517,7 +446,7 @@ class BuildingCommand {
             f(this.requiredInfo)
 
 
-    inline fun alias(f: UList<CommandName>.() -> Unit) =
+    inline fun alias(f: UList<String>.() -> Unit) =
             f(this.alias)
 
     inline fun handler(crossinline f: (commandContainer: CommandContainer,
@@ -540,22 +469,15 @@ class BuildingCommand {
         }
     }
 
-    inline fun name(f: BuildingCommandName.() -> Unit) =
-            f(this.name)
-
-    inline fun stringName(f: () -> String) {
-        this.name.string(f)
-    }
-
-    inline fun regexName(f: () -> Regex) {
-        this.name.regex(f)
+    inline fun name(f: () -> String) {
+        this.name = f()
     }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun toCommand(): Command = Command(
             parent = this.parent,
             order = this.order,
-            name = this.name.toName(),
+            name = this.name,
             description = this.description,
             handler = this.handler,
             arguments = this.arguments.coll.toList(),
@@ -567,12 +489,6 @@ class BuildingCommand {
 
 inline fun command(f: BuildingCommand.() -> Unit): Command =
         BuildingCommand().also { f(it) }.toCommand()
-
-@Suppress("NOTHING_TO_INLINE")
-inline fun commandName(name: String) = CommandName.StringName(name)
-
-@Suppress("NOTHING_TO_INLINE")
-inline fun commandName(regex: Regex) = CommandName.RegexName(regex)
 
 inline fun handler(crossinline f: (commandContainer: CommandContainer,
                                    informationManager: InformationManager,

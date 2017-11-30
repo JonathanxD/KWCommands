@@ -25,14 +25,12 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.manager.CommandManager
-
-class ArgumentNotFoundException(val command: Command,
-                                val parsedArgs: List<ArgumentContainer<*>>,
-                                val input: String,
-                                manager: CommandManager,
-                                message: String) : CommandException(manager, message)
+@FunctionalInterface
+interface Possibilities {
+    /**
+     * Possibilities of arguments.
+     */
+    operator fun invoke(): List<Input>
+}

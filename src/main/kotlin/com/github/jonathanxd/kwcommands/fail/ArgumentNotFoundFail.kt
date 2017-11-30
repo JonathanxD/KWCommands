@@ -25,19 +25,20 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.parser
+package com.github.jonathanxd.kwcommands.fail
 
-import com.github.jonathanxd.iutils.text.Text
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
 /**
- * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
- * are invalid.
+ * Command not found by [name][input].
  */
-interface Validator<in I : Input> {
-    val name: TextComponent
-        get() = Text.of(this::class.java.simpleName)
-
-    operator fun invoke(argumentType: ArgumentType<@UnsafeVariance I, *>, value: I): Validation
-}
+class ArgumentNotFoundFail(val command: Command,
+                           val parsedArgs: List<ArgumentContainer<*>>,
+                           val input: String,
+                           parsedCommands: List<CommandContainer>,
+                           manager: CommandManager,
+                           iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)

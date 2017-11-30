@@ -41,6 +41,11 @@ import com.github.jonathanxd.kwcommands.information.Information
 interface CommandManager {
 
     /**
+     * Registered commands. The returned list cannot be modified
+     */
+    val registeredCommands: Set<Command>
+
+    /**
      * Register [command].
      *
      * @param command Command to register.

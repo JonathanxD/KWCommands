@@ -127,6 +127,7 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
 
                     // Process arguments first because arguments must be resolved before command handling
                     it.arguments.forEach { arg ->
+                        @Suppress("UNCHECKED_CAST")
                         (arg as ArgumentContainer<Any?>).handler?.let { handler ->
                             val resultHandler = ParticularResultHandler(
                                     root = it,

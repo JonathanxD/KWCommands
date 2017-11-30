@@ -42,9 +42,9 @@ import com.github.jonathanxd.kwcommands.util.stringArgumentType
 import org.junit.Assert
 import org.junit.Test
 
-class DslTest {
+class MapTest2 {
     @Test
-    fun dslTest() {
+    fun test() {
         val printer = CommonPrinter(KLocale.localizer, ::println)
         val handler = CommonHelpInfoHandler()
 
@@ -61,12 +61,12 @@ class DslTest {
         val runCommand = command {
             name { "promote" }
             requiredInfo {
-                requireInfo<Group> {
-                    id(informationId<Group> { tags { +"group" } })
+                requireInfo<DslTest.Group> {
+                    id(informationId<DslTest.Group> { tags { +"group" } })
                 }
             }
             requirements {
-                +requirement<Group, Group>(Group.ADMIN) {
+                +requirement<DslTest.Group, DslTest.Group>(DslTest.Group.ADMIN) {
                     subject(informationId { tags { +"group" } })
                     tester(textOf("GroupTester")) { (required1), (_, value) ->
                         value == required1
@@ -79,46 +79,46 @@ class DslTest {
                     description { textOf("Identification of user to promote") }
                     type = CustomArgumentType({it.toLowerCase()}, null, stringArgumentType, typeInfo())
                 }
-                +listArg(enumArg<Group> {
-                    name {"groupList"}
+                +listArg(enumArg<DslTest.Group> {
+                    name { "groupList" }
                     description { textOf("Groups to add user to") }
                 })
             }
 
             handlerWithContext {
-                println("Promoted ${it.getArg<String>("userId")} to ${it.getArg<List<Group>>("groupList")}")
+                println("Promoted ${it.getArg<String>("userId")} to ${it.getArg<List<DslTest.Group>>("groupList")}")
             }
         }
 
         val infoManager = InformationManagerImpl()
-        infoManager.registerInformation(informationId<Group> { tags { +"group" } }, Group.ADMIN, "")
+        infoManager.registerInformation(informationId<DslTest.Group> { tags { +"group" } }, DslTest.Group.ADMIN, "")
         val manager = CommandManagerImpl()
         val processor = Processors.createCommonProcessor(manager)
 
         manager.registerCommand(helloCommand, this)
         manager.registerCommand(runCommand, this)
 
-            processor.parseAndDispatch("hello KWCommands", this, infoManager).let {
-                if (it.isRight) {
-                    handler.handleResults(it.right, printer)
-                    Assert.assertTrue(it.right.isEmpty())
-                }
-                it
-            }.ifLeftSide {
-                handler.handleFail(it, printer)
-                throw AssertionError()
+        processor.parseAndDispatch("hello KWCommands", this, infoManager).let {
+            if (it.isRight) {
+                handler.handleResults(it.right, printer)
+                Assert.assertTrue(it.right.isEmpty())
             }
+            it
+        }.ifLeftSide {
+            handler.handleFail(it, printer)
+            throw AssertionError()
+        }
 
-            processor.parseAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
-                if (it.isRight) {
-                    handler.handleResults(it.right, printer)
-                    Assert.assertTrue(it.right.isEmpty())
-                }
-                it
-            }.ifLeftSide {
-                handler.handleFail(it, printer)
-                throw AssertionError()
+        processor.parseAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
+            if (it.isRight) {
+                handler.handleResults(it.right, printer)
+                Assert.assertTrue(it.right.isEmpty())
             }
+            it
+        }.ifLeftSide {
+            handler.handleFail(it, printer)
+            throw AssertionError()
+        }
 
         processor.parseAndDispatch("promote KWCommands x", this, infoManager).let {
             if (it.isRight) {
@@ -128,11 +128,7 @@ class DslTest {
             it
         }.ifLeftSide {
             handler.handleFail(it, printer)
+            throw AssertionError()
         }
-    }
-
-    enum class Group {
-        ADMIN,
-        USER
     }
 }

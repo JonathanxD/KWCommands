@@ -49,30 +49,30 @@ data class CommandContext(val commandContainer: CommandContainer,
                           val informationManager: InformationManager,
                           val resultHandler: ResultHandler) {
 
-    fun <T> getArgById(id: Any): T =
-            this.getOptArgById<T>(id)
-                    ?: throw ArgumentMissingException("Argument with id $id is missing!")
+    fun <T> getArgById(name: String): T =
+            this.getOptArgById<T>(name)
+                    ?: throw ArgumentMissingException("Argument with name '$name' is missing!")
 
-    fun <T> getOptArgById(id: Any): T? =
-            this.commandContainer.getArgument<T>(id)?.value
+    fun <T> getOptArgById(name: String): T? =
+            this.commandContainer.getArgument<T>(name)?.value
 
-    fun <T> getArg(id: Any, type: TypeInfo<T>): T =
-            this.getOptArg(id, type)
-                    ?: throw ArgumentMissingException("Argument with id $id is missing!")
+    fun <T> getArg(name: String, type: TypeInfo<T>): T =
+            this.getOptArg(name, type)
+                    ?: throw ArgumentMissingException("Argument with name '$name' is missing!")
 
-    fun <T> getOptArg(id: Any, type: TypeInfo<T>): T? =
-            this.commandContainer.getArgument(id, type)?.value
+    fun <T> getOptArg(name: String, type: TypeInfo<T>): T? =
+            this.commandContainer.getArgument(name, type)?.value
 
     fun <T> getInfo(infoId: Information.Id<T>): Information<T> =
             this.getOptInfo(infoId)
-                    ?: throw InfoMissingException("Information with id $infoId is missing!")
+                    ?: throw InfoMissingException("Information with id '$infoId' is missing!")
 
     fun <T> getOptInfo(infoId: Information.Id<T>): Information<T>? =
             this.informationManager.find(infoId)
 
     fun <T> getInfoErased(infoId: Information.Id<*>): Information<T> =
             this.informationManager.findErased(infoId)
-                    ?: throw InfoMissingException("Information with id $infoId is missing!")
+                    ?: throw InfoMissingException("Information with id '$infoId' is missing!")
 
 
     fun <T> getOptInfoErased(infoId: Information.Id<*>): Information<T>? =
@@ -96,23 +96,23 @@ data class CommandContext(val commandContainer: CommandContainer,
 
     // inline
 
-    inline fun <reified T> getArg(id: Any): T =
+    inline fun <reified T> getArg(name: String): T =
             typeInfo<T>().let { type ->
-                commandContainer.getArgument(id, type)?.value
-                        ?: throw ArgumentMissingException("Argument with id $id of type $type is missing!")
+                commandContainer.getArgument(name, type)?.value
+                        ?: throw ArgumentMissingException("Argument with name '$name' of type '$type' is missing!")
             }
 
-    inline fun <reified T> getOptArg(id: Any): T? =
-            commandContainer.getArgument(id, typeInfo<T>())?.value
+    inline fun <reified T> getOptArg(name: String): T? =
+            commandContainer.getArgument(name, typeInfo<T>())?.value
 
     inline fun <reified T> getInfo(tags: Array<String>): Information<T> =
             Information.Id(typeInfo<T>(), tags).let { infoId ->
                 this.informationManager.find(infoId)
-                        ?: throw InfoMissingException("Information with id $infoId is missing!")
+                        ?: throw InfoMissingException("Information with id '$infoId' is missing!")
             }
 
     inline fun <reified T> getOptInfo(tags: Array<String>): Information<T>? =
-            this.informationManager.find(Information.Id(typeInfo<T>(), tags))
+            this.informationManager.find(Information.Id(typeInfo(), tags))
 
     inline fun <reified T> getInfoValue(tags: Array<String>): T =
             this.getInfo<T>(tags).value

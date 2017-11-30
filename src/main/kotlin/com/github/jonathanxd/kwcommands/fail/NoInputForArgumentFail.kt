@@ -25,13 +25,18 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.exception
+package com.github.jonathanxd.kwcommands.fail
 
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 
-class ArgumentsMissingException(val command: Command,
-                                val providedArgs: List<ArgumentContainer<*>>,
-                                manager: CommandManager,
-                                message: String) : CommandException(manager, message)
+class NoInputForArgumentFail(val command: Command,
+                             val parsedArgs: List<ArgumentContainer<*>>,
+                             val arg: Argument<*>,
+                             parsedCommands: List<CommandContainer>,
+                             manager: CommandManager,
+                             iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)

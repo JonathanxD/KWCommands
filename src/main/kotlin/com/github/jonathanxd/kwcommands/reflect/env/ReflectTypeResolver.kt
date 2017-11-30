@@ -29,10 +29,12 @@ package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.json.DelegatedTypeResolver
 import com.github.jonathanxd.kwcommands.json.TypeResolver
-import com.github.jonathanxd.kwcommands.parser.PossibilitiesFunc
+import com.github.jonathanxd.kwcommands.manager.InstanceProvider
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.parser.Validator
 
@@ -49,14 +51,14 @@ import com.github.jonathanxd.kwcommands.parser.Validator
  * @see [DynamicHandler]
  */
 internal class ReflectTypeResolver(val type: Class<*>,
-                                  val instanceProvider: (Class<*>) -> Any?,
-                                  val reflectionEnvironment: ReflectionEnvironment,
-                                  delegate: TypeResolver): DelegatedTypeResolver(delegate) {
+                                   val instanceProvider: InstanceProvider,
+                                   val reflectionEnvironment: ReflectionEnvironment,
+                                   delegate: TypeResolver) : DelegatedTypeResolver(delegate) {
 
     override fun resolveResource(resource: String): String? =
-        type.getResourceAsStream(resource)?.let {
-            it.readBytes().toString(Charsets.UTF_8)
-        } ?: super.resolveResource(resource)
+            type.getResourceAsStream(resource)?.let {
+                it.readBytes().toString(Charsets.UTF_8)
+            } ?: super.resolveResource(resource)
 
     override fun resolveCommandHandler(input: String): Handler? {
         val (handlerType, sub) = this.getSub(input)
@@ -76,22 +78,9 @@ internal class ReflectTypeResolver(val type: Class<*>,
         return DynamicHandler(sub, handlerType, instanceProvider, type, reflectionEnvironment)
     }
 
-    override fun resolvePossibilitiesFunc(type: TypeInfo<*>): PossibilitiesFunc =
-            this.reflectionEnvironment.getOrNull(type)?.possibilities
-                    ?: super.resolvePossibilitiesFunc(type)
-
-    override fun resolveTransformer(type: TypeInfo<*>): Transformer<Any?> =
-            this.reflectionEnvironment.getOrNull(type)?.transformer
-                    ?: super.resolveTransformer(type)
-
-    override fun resolveValidator(type: TypeInfo<*>): Validator =
-            this.reflectionEnvironment.getOrNull(type)?.validator
-                    ?: super.resolveValidator(type)
-
-    override fun resolveDefaultValue(type: TypeInfo<*>): Any? =
-            this.reflectionEnvironment.getOrNull(type)?.defaultValue
-                    ?: super.resolveDefaultValue(type)
-
+    override fun resolveArgumentType(type: TypeInfo<*>): ArgumentType<*, *> =
+            this.reflectionEnvironment.getOrNull(type)
+                    ?: super.resolveArgumentType(type)
 
     private fun getSub(input: String): Pair<DynamicHandler.Type?, String> {
         val handlerType: DynamicHandler.Type? =

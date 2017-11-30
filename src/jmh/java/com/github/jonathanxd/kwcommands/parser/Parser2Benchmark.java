@@ -65,7 +65,7 @@ public class Parser2Benchmark {
     private CommandManager manager;
     private ReflectionEnvironment environment;
     private CommandParser parser;
-    private List<String> cmd;
+    private String cmd;
 
     @Setup
     public void setup() {
@@ -76,7 +76,7 @@ public class Parser2Benchmark {
                 this.environment.fromClass(Parser2Benchmark.class, c -> new Parser2Benchmark(), this),
                 this
         );
-        this.cmd = Collections3.listOf("bench", "9", "a", "b", "c", "--types", "simple", "unknown");
+        this.cmd = "bench 9 a b c --types simple unknown";
     }
 
     @Benchmark

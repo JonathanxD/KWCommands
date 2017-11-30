@@ -25,19 +25,6 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.parser
+package com.github.jonathanxd.kwcommands.exception
 
-import com.github.jonathanxd.iutils.text.Text
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
-
-/**
- * Validator of command inputs. The [Validation] instance specifies which values are invalid and why
- * are invalid.
- */
-interface Validator<in I : Input> {
-    val name: TextComponent
-        get() = Text.of(this::class.java.simpleName)
-
-    operator fun invoke(argumentType: ArgumentType<@UnsafeVariance I, *>, value: I): Validation
-}
+class ParseException(message: String) : RuntimeException(message)

@@ -4,11 +4,11 @@
   "handler": "method:register",
   "arguments": [
     {
-      "id": "name",
+      "name": "name",
       "type": "String"
     },
     {
-      "id": "email",
+      "name": "email",
       "type": "String",
       "validator": "EmailValidator"
     }

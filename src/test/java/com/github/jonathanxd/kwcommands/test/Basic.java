@@ -33,7 +33,6 @@ import com.github.jonathanxd.iutils.text.Text;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.Argument;
 import com.github.jonathanxd.kwcommands.command.Command;
-import com.github.jonathanxd.kwcommands.command.CommandName;
 import com.github.jonathanxd.kwcommands.information.Information;
 import com.github.jonathanxd.kwcommands.information.InformationProvider;
 import com.github.jonathanxd.kwcommands.information.RequiredInformation;
@@ -41,14 +40,15 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationManager;
 import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InstanceProvider;
+import com.github.jonathanxd.kwcommands.parser.SingleInput;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.annotation.CmdHandler;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Info;
-import com.github.jonathanxd.kwcommands.util.EnumTransformer;
-import com.github.jonathanxd.kwcommands.util.EnumValidator;
+import com.github.jonathanxd.kwcommands.util.CommonArgTypesKt;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 
 import org.junit.Test;
@@ -65,7 +65,7 @@ public class Basic {
     public void command() {
         CommandProcessor processor = Processors.createCommonProcessor();
         Command command = Command.builder()
-                .name(CommandName.name("play"))
+                .name("play")
                 .description(Text.of("Play a music on instrument"))
                 .handler((commandContainer, informationManager, resultHandler) -> {
                     Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
@@ -75,11 +75,9 @@ public class Basic {
                     return Unit.INSTANCE;
                 })
                 .addRequiredInfo(new RequiredInformation(SPEAKER_INFO_ID))
-                .addArgument(Argument.<Music>builder()
-                        .id("music")
-                        .type(TypeInfo.of(Music.class))
-                        .validator(new EnumValidator<>(Music.class))
-                        .transformer(new EnumTransformer<>(Music.class))
+                .addArgument(Argument.<SingleInput, Music>builder()
+                        .name("music")
+                        .argumentType(CommonArgTypesKt.enumArgumentType(Music.class))
                         .handler((argumentContainer, commandContainer, informationManager, resultHandler) -> {
                             Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
 
@@ -103,7 +101,7 @@ public class Basic {
                     return null;
                 }));
 
-        processor.dispatch(processor.parse("play A", null), manager);
+        processor.parseAndDispatch("play A", null, manager);
 
     }
 
@@ -114,7 +112,8 @@ public class Basic {
         ReflectionEnvironment reflection = new ReflectionEnvironment(commandManager);
 
         // Using Link and Invokable to avoid try-catch in lambda
-        Function1<Class<?>, Object> f = aClass -> Links.ofInvokable(Invokables.fromConstructor(aClass.getConstructors()[0])).invoke();
+        InstanceProvider f = aClass ->
+                Links.ofInvokable(Invokables.fromConstructor(aClass.getConstructors()[0])).invoke();
 
         reflection.registerCommands(reflection.fromClass(Play.class, f, this), this);
 
@@ -122,7 +121,7 @@ public class Basic {
 
         informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
 
-        processor.dispatch(processor.parse("play a c", this), informationManager);
+        processor.parseAndDispatch("play a c", this, informationManager);
     }
 
 

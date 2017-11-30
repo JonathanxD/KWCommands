@@ -27,14 +27,20 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
+import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.jwiutils.kt.asText
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.command.CommandName
 import com.github.jonathanxd.kwcommands.command.Handler
+import com.github.jonathanxd.kwcommands.dsl.argument
+import com.github.jonathanxd.kwcommands.fail.ParseFail
+import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.kwcommands.printer.Printers
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
@@ -126,31 +132,29 @@ class CommandTest {
 
         val command = Command(
                 parent = null,
-                name = CommandName.StringName("open"),
+                name = "open",
                 description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
-                        Argument(id = "name",
-                                name = "",
-                                description = "".asText(),
-                                isOptional = false,
-                                isMultiple = false,
-                                defaultValue = null,
-                                validator = validator { _, _, _: String -> true },
-                                transformer = transformer { _, _, it: String -> it },
-                                requirements = emptyList(),
-                                requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
-
+                        argument<SingleInput, String> {
+                            name = "name"
+                            description = "".asText()
+                            isOptional = false
+                            isMultiple = false
+                            defaultValue = null
+                            type = stringArgumentType
+                            requirements {}
+                            requiredInfo {}
+                        }
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList())
 
         command.addSubCommand(Command(
                 parent = command,
-                name = CommandName.StringName("door"),
+                name = "door",
                 description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
@@ -162,48 +166,36 @@ class CommandTest {
 
         command.addSubCommand(Command(
                 parent = command,
-                name = CommandName.StringName("window"),
+                name = "window",
                 description = Text.of(),
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
                 arguments = listOf(
-                        Argument(id = "name",
-                                name = "",
+                        Argument(name = "name",
+                                alias = emptyList(),
                                 description = "".asText(),
                                 isOptional = false,
-                                defaultValue = null,
-                                isMultiple = false,
-                                validator = validator { _, _, _: String ->  true },
-                                transformer = transformer { _, _, it: String -> it },
+                                argumentType = stringArgumentType,
                                 requirements = emptyList(),
-                                requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() }),
-                        Argument(id = "amount",
-                                name = "",
+                                requiredInfo = emptySet()),
+                        Argument(name = "amount",
+                                alias = emptyList(),
                                 description = "".asText(),
                                 isOptional = true,
-                                defaultValue = null,
-                                isMultiple = false,
-                                validator = validator { _, _, it: String ->  it.toIntOrNull() != null },
-                                transformer = transformer { _, _, it: String -> it.toInt() },
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() },
+                                argumentType = intArgumentType,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
                                     return@create arg.value!!
                                 }),
-                        Argument(id = "double",
-                                name = "",
+                        Argument(name = "double",
+                                alias = emptyList(),
                                 description = "".asText(),
                                 isOptional = false,
-                                defaultValue = null,
-                                isMultiple = false,
-                                validator = validator { _, _, it: String -> it.toDoubleOrNull() != null },
-                                transformer = transformer { _, _, it: String -> it.toDouble() },
+                                argumentType = doubleArgumentType,
                                 requirements = emptyList(),
-                                requiredInfo = emptySet(),
-                                possibilities = possibilitiesFunc { _, _ -> emptyList() })
+                                requiredInfo = emptySet())
                 ),
                 requiredInfo = emptySet(),
                 requirements = emptyList()
@@ -214,16 +206,16 @@ class CommandTest {
         processor.parser.commandManager.registerCommand(command, this)
 
 
-        processor.dispatch(processor.parse("open house", this))
+        processor.parseAndDispatch("open house", this)
                 .assertAll(listOf("open(house)"))
 
-        processor.dispatch(processor.parse("open door window \"of house\" 5.0", this))
+        processor.parseAndDispatch("open door window \"of house\" 5.0", this)
                 .assertAll(listOf("open door", "open window(of house, 5.0)"))
 
-        processor.dispatch(processor.parse("open door window \"of house\" 1 7.0", this))
+        processor.parseAndDispatch("open door window \"of house\" 1 7.0", this)
                 .assertAll(listOf("open door", 1, "open window(of house, 1, 7.0)"))
 
-        processor.dispatch(processor.parse("open door & open window \"of house\" 5 19.0", this))
+        processor.parseAndDispatch("open door & open window \"of house\" 5 19.0", this)
                 .assertAll(listOf("open door", 5, "open window(of house, 5, 19.0)"))
     }
 
@@ -231,6 +223,17 @@ class CommandTest {
 
 fun ValueResult.assert(expected: Any?) {
     Assert.assertEquals(expected, this.value)
+}
+
+fun Either<ParseFail, List<CommandResult>>.assertAll(expected: List<Any?>) {
+    if (this.isLeft) {
+        val h = CommonHelpInfoHandler()
+        val printer = Printers.sysOutWHF
+        h.handleFail(this.left, printer)
+    }
+
+    Assert.assertTrue(this.isRight)
+    this.right.assertAll(expected)
 }
 
 fun List<CommandResult>.assertAll(expected: List<Any?>) {

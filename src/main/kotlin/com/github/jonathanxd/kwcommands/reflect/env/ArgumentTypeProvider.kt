@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.reflect.env
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
 /**
  * Provides arguments.
@@ -35,31 +36,31 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 @FunctionalInterface
 interface ArgumentTypeProvider {
 
-    fun <T> provide(type: TypeInfo<T>): ArgumentType<T>?
+    fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>?
 
 }
 
 class ConcreteProviders : ArgumentTypeProvider {
 
-    private val list = mutableListOf<ArgumentType<*>>()
+    private val list = mutableListOf<ArgumentType<*, *>>()
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? {
+    override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
 
         return (this.list.find { it.type == type } ?: this.list.find {
             it.type.typeParameters.isEmpty() && it.type.classLiteral == type.classLiteral
-        }) as? ArgumentType<T>
+        }) as? ArgumentType<*, T>
 
     }
 
 }
 
-class ConcreteProvider(val argumentType: ArgumentType<*>) : ArgumentTypeProvider {
+class ConcreteProvider(val argumentType: ArgumentType<*, *>) : ArgumentTypeProvider {
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> provide(type: TypeInfo<T>): ArgumentType<T>? =
+    override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? =
             if (this.argumentType.type == type || this.argumentType.type.isCompatible(type))
-                this.argumentType as? ArgumentType<T>
+                this.argumentType as? ArgumentType<*, T>
             else null
 
 }
@@ -73,7 +74,7 @@ fun <T> TypeInfo<T>.isCompatible(type: TypeInfo<*>) =
  * Cast [ArgumentType] to [ArgumentType] of [type] [T].
  */
 @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
-inline fun <T> ArgumentType<*>.cast(type: TypeInfo<T>): ArgumentType<T> {
+inline fun <T> ArgumentType<*, *>.cast(type: TypeInfo<T>): ArgumentType<*, T> {
     require(type.isAssignableFrom(this.type), { "Expression 'type.isAssignableFrom(this.type)' (type = $type, this.type = ${this.type}) returns false!" })
-    return this as ArgumentType<T>
+    return this as ArgumentType<*, T>
 }

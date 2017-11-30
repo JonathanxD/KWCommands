@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test.reflect
 
+import com.github.jonathanxd.kwcommands.manager.instanceProvider
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd
@@ -42,10 +43,11 @@ class BasicReflectionTest {
 
         val reflect = ReflectionEnvironment(processor.parser.commandManager)
 
-        reflect.registerCommands(reflect.fromClass(Gun::class.java, { it.newInstance() }, this), this)
+        reflect.registerCommands(reflect.fromClass(Gun::class.java, instanceProvider { it.newInstance() },
+                this), this)
 
-        processor.dispatch(processor.parse("gun 40 20", this))
-        processor.dispatch(processor.parse("gun shoot", this))
+        processor.parseAndDispatch("gun 40 20", this)
+        processor.parseAndDispatch("gun shoot", this)
     }
 
 }

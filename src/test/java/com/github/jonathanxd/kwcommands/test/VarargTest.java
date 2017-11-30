@@ -28,8 +28,9 @@
 package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.collection.Collections3;
+import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.kwcommands.command.Command;
-import com.github.jonathanxd.kwcommands.exception.CommandException;
+import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
@@ -39,10 +40,12 @@ import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
+import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.PrinterKt;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -69,27 +72,27 @@ public class VarargTest {
         HelpInfoHandler handler = new CommonHelpInfoHandler();
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        try {
-            processor.processAndDispatch(
-                    "varargcmd 1 hey man --n2 5",
-                    this,
-                    informationManager);
+        Either<ParseFail, List<CommandResult>> f1 = processor.parseAndDispatch(
+                "varargcmd 1 hey man --n2 5",
+                this,
+                informationManager);
 
-            Assert.assertEquals(1, this.n);
-            Assert.assertEquals(Collections3.listOf("hey", "man"), this.names);
-            Assert.assertEquals(5, this.n2);
+        PrinterKt.handleFailAndThrow(handler, f1, sysOutWHF);
 
-            processor.processAndDispatch(
-                    "varargcmd 1 --names hey kw --n2 -4",
-                    this,
-                    informationManager);
+        Assert.assertEquals(1, this.n);
+        Assert.assertEquals(Collections3.listOf("hey", "man"), this.names);
+        Assert.assertEquals(5, this.n2);
 
-            Assert.assertEquals(1, this.n);
-            Assert.assertEquals(Collections3.listOf("hey", "kw"), this.names);
-            Assert.assertEquals(-4, this.n2);
-        } catch (CommandException e) {
-            handler.handleCommandException(e, sysOutWHF);
-        }
+        Either<ParseFail, List<CommandResult>> f2 = processor.parseAndDispatch(
+                "varargcmd 1 --names hey kw --n2 -4",
+                this,
+                informationManager);
+
+        PrinterKt.handleFailAndThrow(handler, f2, sysOutWHF);
+
+        Assert.assertEquals(1, this.n);
+        Assert.assertEquals(Collections3.listOf("hey", "kw"), this.names);
+        Assert.assertEquals(-4, this.n2);
     }
 
     @Cmd(description = "Vararg test")

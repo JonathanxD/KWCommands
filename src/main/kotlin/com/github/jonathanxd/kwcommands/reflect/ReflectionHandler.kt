@@ -53,7 +53,7 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
         element.parameters.forEach { parameter ->
             when (parameter) {
                 is Parameter.ArgumentParameter<*> -> {
-                    args += commandContainer.arguments.find { parameter.argument.id == it.argument.id }?.value
+                    args += commandContainer.arguments.find { parameter.argument.name == it.argument.name }?.value
                 }
                 is Parameter.InformationParameter<*> -> {
                     val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)

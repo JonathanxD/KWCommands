@@ -45,6 +45,9 @@ interface TextsStub {
     @Section("error", "command_not_found")
     fun getMissingCommandText(@Named(COMMAND_NAME) commandName: String): TextComponent
 
+    @Section("error", "malformed_input")
+    fun getMalformedInputText(@Named(INPUT_TYPE) inputType: TextComponent): TextComponent
+
     @Section("info", "processed_commands")
     fun getProcessedCommandsText(): TextComponent
 
@@ -148,6 +151,18 @@ interface TextsStub {
     @Section("info", "value")
     fun getValueText(): TextComponent
 
+    @Section("info", "expected_tokens")
+    fun getExpectedTokensText(): TextComponent
+
+    @Section("info", "found_token")
+    fun getFoundTokenText(): TextComponent
+
+    @Section("info", "parsed_map")
+    fun getParsedMapText(): TextComponent
+
+    @Section("info", "parsed_list")
+    fun getParsedListText(): TextComponent
+
     @Section("help", "header", "1")
     fun header1(): TextComponent
     @Section("help", "header", "2")
@@ -214,6 +229,7 @@ interface TextsStub {
 
 val Texts = DynamicGenerator.generate(TextsStub::class.java)
 
+private const val INPUT_TYPE = "input_type"
 private const val COMMAND_NAME = "command_name"
 private const val ARGUMENT_NAME = "argument_name"
 private const val INPUT = "input"
