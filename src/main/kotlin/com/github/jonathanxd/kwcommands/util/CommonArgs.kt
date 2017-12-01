@@ -220,15 +220,15 @@ class ReflectListTransform<E>(val storage: ArgumentTypeStorage, val subType: Typ
             val pos = value.start + list.subList(0, index).sumBy { it.length + 1 } // 1 = ','
             val input = SingleInput(it, value.source, pos, pos + it.length)
 
-            get.transform(input) as E
+            get.transform(input)
         }
     }
 }
 
 @Suppress("UNCHECKED_CAST")
 class EnumValidator<T>(val type: Class<T>) : Validator<SingleInput> {
+    private val consts = type.enumConstants as Array<Enum<*>>
     override fun invoke(argumentType: ArgumentType<SingleInput, *>, value: SingleInput): Validation {
-        val consts = type.enumConstants as Array<Enum<*>>
         return if (consts.any { it.name.equals(value.input, true) }) valid()
         else invalid(value, argumentType, this, ValidationTexts.invalidEnum())
     }
@@ -236,17 +236,19 @@ class EnumValidator<T>(val type: Class<T>) : Validator<SingleInput> {
 
 @Suppress("UNCHECKED_CAST")
 class EnumTransformer<T>(val type: Class<T>) : Transformer<SingleInput, T> {
+    private val consts = type.enumConstants as Array<Enum<*>>
     override fun invoke(value: SingleInput): T {
-        val consts = type.enumConstants as Array<Enum<*>>
         return (consts.firstOrNull { it.name == value.input }
                 ?: consts.first { it.name.equals(value.input, true) }) as T
     }
 }
 
+@Suppress("UNCHECKED_CAST")
 class EnumPossibilitiesFunc(val type: Class<*>) : Possibilities {
+    private val consts = type.enumConstants as Array<Enum<*>>
     @Suppress("UNCHECKED_CAST")
     override fun invoke(): List<Input> =
-            (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
+            consts.map { SingleInput(it.name) }
 
 }
 
@@ -469,3 +471,17 @@ class ExactStringPossibilities(val str: String) : Possibilities {
 }
 
 object StringPossibilities : Possibilities by EmptyPossibilitesFunc
+
+// Any
+
+object AnyTransformer : Transformer<Input, Any> {
+    override fun invoke(value: Input): Any = value.toPlain()
+}
+
+object AnyValidator : Validator<Input> {
+    override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation = valid()
+}
+
+object AnyPossibilities : Possibilities {
+    override fun invoke(): List<Input> = emptyList()
+}

@@ -91,7 +91,6 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         if (last != null) {
             suggestArguments(last.command,
                     last.arguments.filter { it.isDefined },
-                    commandContainers,
                     iter,
                     completions,
                     informationManager)
@@ -120,7 +119,6 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
 
     private fun suggestArguments(command: Command,
                                  parsedArgs: List<ArgumentContainer<*>>,
-                                 parsedCommands: List<CommandContainer>,
                                  iter: SourcedCharIterator,
                                  completions: ListCompletionsImpl,
                                  informationManager: InformationManager) {
@@ -171,7 +169,6 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                          suggestion: MutableList<String>,
                          informationManager: InformationManager) {
         val parsedCommands = parseFail.parsedCommands
-        val manager = parseFail.manager
         val iter = parseFail.iter
 
         val completions = ListCompletionsImpl()
@@ -210,7 +207,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 informationManager)
                     }
 
-                    suggestArguments(command, parsedArgs, parsedCommands, iter, completions, informationManager)
+                    suggestArguments(command, parsedArgs, iter, completions, informationManager)
                 }
 
             }

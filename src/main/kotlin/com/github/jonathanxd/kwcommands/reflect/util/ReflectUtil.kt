@@ -112,7 +112,7 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
  * @param owner Owner of owner commands.
  * @param other List to lookup for parent commands if it is not registered in [manager].
  */
-fun Cmd.resolveParents(manager: CommandManager, owner: Any?, annotatedElement: AnnotatedElement, other: List<Command>) =
+fun Cmd.resolveParents(manager: CommandManager, owner: Any?, other: List<Command>) =
         this.parents.let {
             if (it.isEmpty()) null else {
                 var cmd = manager.getCommand(it.first(), owner)

@@ -44,7 +44,7 @@ sealed class Input {
     /**
      * `True` is this value was extracted from [source], false otherwise.
      */
-    val isFromSource get() = (start != 0 && end != 0)
+    val isFromSource get() = (start != 0 || end != 0)
 
     val content
         get() =

@@ -628,7 +628,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         val (element, arguments, lreqs) = createElement(instance, method)
 
         queue.queueCommand(method, command.getName(method), { cmds ->
-            val superCmd = command.resolveParents(this.manager, owner, method, cmds) ?: superCommand
+            val superCmd = command.resolveParents(this.manager, owner, cmds) ?: superCommand
 
             command.toKCommand(manager, command.getHandler(element), superCmd, arguments, lreqs, owner, method)
         }, Checker(this.manager, owner, command, method), { command.getPath(method).joinToString(separator = " ") })
@@ -925,7 +925,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 class Checker(val manager: CommandManager, val owner: Any?, val command: Cmd, val annotatedElement: AnnotatedElement) : (List<Command>) -> Boolean {
     override fun invoke(p1: List<Command>): Boolean =
             if (command.parents.isEmpty()) true
-            else command.resolveParents(manager, owner, annotatedElement, p1) != null
+            else command.resolveParents(manager, owner, p1) != null
 }
 
 interface ArgumentTypeStorage {

@@ -132,13 +132,13 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
     private fun SourcedCharIterator.peekSingle(type: ArgumentType<*, *>,
                                                restoreFromFail: Boolean = true):
-            Pair<Either<InputParseFail, SingleInput>, SourcedCharIterator> =
-            this.runInNew {
+            Pair<Either<InputParseFail, SingleInput>, Int> =
+            this.runInNewInt {
                 this.parseSingleInput(argumentType = type, parseData = false)
                         .mapRight { it as SingleInput }
             }.also {
                 if (restoreFromFail && it.first.isLeft)
-                    this.from(it.second)
+                    this.restore(it.second)
             }
 
     private fun parseCommand(commandsIterator: SourcedCharIterator,
@@ -148,14 +148,12 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                              required: Boolean): EitherObjBoolean<ParseFail> {
         val last = lastCommand.getOrElse(null)
 
-        val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
-        val (inputPeek, iter) = peek
+        val state = commandsIterator.pos
+        val next = commandsIterator.parseSingleInput(anyArgumentType)
 
-        val input = inputPeek.rightOrNull() ?: return right(false)
+        val input = next.rightOrNull() as? SingleInput ?: return right(false)
 
         if (input.content == "&") {
-            commandsIterator.from(iter)
-
             if (last.arguments.isNotEmpty())
                 return leftBooleanObj(createFailAME(last, emptyList(), containers, commandsIterator))
 
@@ -169,16 +167,16 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val command = getCommand(input.input, containers, lastCommand, ownerProvider(input.input))
 
         if (command != null) {
-            commandsIterator.from(iter)
             lastCommand.set(command)
             return right(true)
         }
 
         return if (required) {
-            commandsIterator.from(iter)
             leftBooleanObj(createFailCNF(input, containers, commandsIterator))
-        } else
+        } else {
+            commandsIterator.restore(state)
             right(false)
+        }
     }
 
     private fun parseArguments(commandsIterator: SourcedCharIterator,
@@ -192,29 +190,30 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val args = mutableListOf<ArgumentContainer<*>>()
         val required = command.arguments.count { !it.isOptional }
         var currentRequired = 0
-        val nextArgument = {
-            val i = currentArgs.iterator()
-            val next = i.next()
-            i.remove()
-            next
-        }
 
         while (commandsIterator.hasNext() && currentArgs.isNotEmpty()) {
-            val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
-            val (inputPeek, iter) = peek
+            val state = commandsIterator.pos
+            val get = commandsIterator.parseSingleInput(stringArgumentType)
 
-            val input = inputPeek.rightOrNull() ?: break
+            val input = get.rightOrNull() as? SingleInput ?: break
 
             val named = input.input.getArgumentNameOrNull()?.let { name ->
-                commandsIterator.from(iter)
                 (currentArgs.firstOrNull { it.name == name }
                         ?: return left(createFailANFE(command, args, name, parsedCommands, commandsIterator))).also {
                     currentArgs.remove(it)
                 }
             }
 
-            val argument = named ?: nextArgument()
-            val state = iter.copy()
+            val argument = if (named != null) {
+                currentArgs.remove(named)
+                named
+            } else {
+                commandsIterator.restore(state)
+                val i = currentArgs.iterator()
+                val next = i.next()
+                i.remove()
+                next
+            }
 
             val parse =
                     if (argument.argumentType.inputType !is SingleInputType)
@@ -224,15 +223,13 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                         parseSingleArgument(commandsIterator, command, argument,
                                 args, named != null, parsedCommands)
 
-            if (parse.isRight) {
-                currentArgs.remove(argument)
-                if (!argument.isOptional)
-                    ++currentRequired
+            if (parse.isRight && !argument.isOptional) {
+                ++currentRequired
             }
 
             if (parse.isLeft) {
                 if (argument.isOptional) {
-                    iter.from(state)
+                    commandsIterator.restore(state)
                 } else {
                     return left(parse.left)
                 }
@@ -269,9 +266,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
         val hasNext = commandsIterator.hasNext()
         val isBoolean = argument.isBoolean()
-        val peek by lazy(LazyThreadSafetyMode.NONE) {
-            commandsIterator.peekSingle(argument.argumentType, restoreFromFail = false)
-        }
+        val peek = commandsIterator.peekSingle(argument.argumentType, restoreFromFail = false)
 
         val filled = peek.first.isRight && (!hasNext || peek.first.right.input.isArgumentName()) && isBoolean
 
@@ -287,7 +282,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val validation = argument.validate(next)
 
         if (validation.isValid) {
-            if (!filled) commandsIterator.from(peek.second)
+            if (!filled) commandsIterator.restore(peek.second)
             @Suppress("UNCHECKED_CAST")
             args += ArgumentContainer(argument,
                     next,
@@ -351,7 +346,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
         if (peekNext.isRight && peekNext.right.content.startsWith(LIST_OPEN)) {
 
-            val copy = commandsIterator.copy()
+            val copy = commandsIterator.pos
 
             val input = commandsIterator.parseListInput(argumentType = argument.argumentType)
 
@@ -385,7 +380,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                     // this also allows list to be parsed to other value for other arguments, example,
                     // for single input arguments, the first fragment (or the entire map) can be parsed
                     // as a single input string instead of a input list.
-                    commandsIterator.from(copy) // Restore old state
+                    commandsIterator.restore(copy) // Restore old state
                     return right(false)
                 }
             }
@@ -433,7 +428,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             val validation = elementType.validate(peekInput.right)
 
             if (validation.isValid) {
-                commandsIterator.from(iter)
+                commandsIterator.restore(iter)
                 inputs += peekInput.right
             } else {
                 break
@@ -502,7 +497,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                  parsedCommands: List<CommandContainer>): EitherObjBoolean<ParseFail> {
         val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
         val (peekInput, _) = peek
-        val copy = commandsIterator.copy()
+        val copy = commandsIterator.pos
 
         if (peekInput.isLeft || !peekInput.right.input.startsWith(MAP_OPEN)) {
             val peek_ = peekInput.rightOrNull() ?: EmptyInput(commandsIterator.sourceString)
@@ -551,7 +546,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 // this also allows map to be parsed to other value for other arguments, example,
                 // for single input arguments, the first fragment (or the entire map) can be parsed
                 // as a single input string instead of a input map.
-                commandsIterator.from(copy) // Restore old state
+                commandsIterator.restore(copy) // Restore old state
                 return right(false)
             }
         }

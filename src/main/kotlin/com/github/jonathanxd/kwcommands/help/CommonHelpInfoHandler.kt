@@ -131,23 +131,24 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 if (validation.invalids.isNotEmpty()) {
                     printer.printEmpty()
                     printer.printPlain(Texts.getInvalidInputsText().and(Text.of(":")))
-                    for ((input, argType, validator, msg, supported) in validation.invalids) {
+                    for ((validationInput, _, validator, msg, supported) in validation.invalids) {
                         printer.printEmpty()
 
                         val rangeText = Text.of(
-                                Texts.getInputRangeText(input.start.toString(), input.end.toString()), ": ")
+                                Texts.getInputRangeText(validationInput.start.toString(),
+                                        validationInput.end.toString()), ": ")
                         val text = printer.localizer.localize(rangeText)
-                        val range = (text.length + input.start)..(text.length + input.end)
+                        val range = (text.length + validationInput.start)..(text.length + validationInput.end)
                         printer.printPlain(Text.of(
                                 " | ",
                                 text,
-                                input.source,
+                                validationInput.source,
                                 " | ",
-                                Texts.getInputText(), ": ", input.toInputString()))
+                                Texts.getInputText(), ": ", validationInput.toInputString()))
                         printer.printPlain(Text.of(" | ", point(range)))
 
                         printer.printPlain(Text.of(" | ", Texts.getInputTypeText(),
-                                ": ", input.type.getTypeString()))
+                                ": ", validationInput.type.getTypeString()))
 
                         val supportedText = Text.of(supported.getTypeString())
 
@@ -194,7 +195,6 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val command = parseFail.command
                 val parsed = parseFail.parsedArgs
                 val argument = parseFail.arg
-                val start = parseFail.iter.sourceIndex
                 val fail = parseFail.inputParseFail
                 val input = fail.input
                 val inputType = parseFail.inputParseFail.argumentType.inputType

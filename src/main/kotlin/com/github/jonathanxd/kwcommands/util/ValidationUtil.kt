@@ -45,7 +45,7 @@ fun MapInput.validate(validatorFunc: (Input) -> Validation): Validation =
                 .reduce { acc, validation -> acc + validation }
 
 fun MapInput.getStringKey(keyName: String): Pair<Input, Input>? =
-        this.input.firstOrNull { (k, v) -> k is SingleInput && k.input == keyName }
+        this.input.firstOrNull { (k, _) -> k is SingleInput && k.input == keyName }
 
 fun MapInput.get(keyName: String,
                  valueType: InputType<*>,

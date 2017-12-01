@@ -28,13 +28,21 @@
 package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.collection.Collections3;
+import com.github.jonathanxd.iutils.object.Either;
+import com.github.jonathanxd.kwcommands.command.CommandContainer;
+import com.github.jonathanxd.kwcommands.fail.ParseFail;
+import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
+import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.parser.CommandParser;
 import com.github.jonathanxd.kwcommands.parser.CommandParserImpl;
+import com.github.jonathanxd.kwcommands.printer.Printer;
+import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.PrinterKt;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +70,14 @@ public class Parser2BenchTest {
 
     @Test
     public void parserBench() {
-        this.parser.parse(this.cmd, this);
+        HelpInfoHandler helpInfoHandler = new CommonHelpInfoHandler();
+        Printer p = Printers.INSTANCE.getSysOutWHF();
+
+        Either<ParseFail, List<CommandContainer>> f = this.parser.parse(this.cmd, this);
+
+        if (f.isLeft())
+            helpInfoHandler.handleFail(f.getLeft(), p);
+
     }
 
     @Cmd(description = "Bench test")

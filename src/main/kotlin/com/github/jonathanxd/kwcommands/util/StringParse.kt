@@ -202,6 +202,7 @@ private fun SourcedCharIterator.parseMapOrList(argumentType: ArgumentType<*, *>,
 
 fun SourcedCharIterator.callPrevious(): SourcedCharIterator = this.apply { previous() }
 
+@JvmOverloads
 fun SourcedCharIterator.parseSingleInput(argumentType: ArgumentType<*, *>,
                                          escape: Char = '\\',
                                          separators: List<Char> = listOf(' '),
@@ -305,6 +306,7 @@ fun SourcedCharIterator.parseSingleInput(argumentType: ArgumentType<*, *>,
  * - [String].
  *
  */
+@JvmOverloads
 fun SourcedCharIterator.parseListInput(argumentType: ArgumentType<*, *>,
                                        escape: Char = '\\',
                                        mapDefineChar: List<Char> = listOf(':', '='),
@@ -362,7 +364,7 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(argumentType: Argum
             val next = this.next()
 
             if (next == LIST_CLOSE)
-                break
+                return right(createListInput())
 
             this.previous()
         }
@@ -436,6 +438,7 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(argumentType: Argum
  * - [String].
  *
  */
+@JvmOverloads
 fun SourcedCharIterator.parseMapInput(argumentType: ArgumentType<*, *>,
                                       escape: Char = '\\',
                                       defineChar: List<Char> = listOf(':', '='),

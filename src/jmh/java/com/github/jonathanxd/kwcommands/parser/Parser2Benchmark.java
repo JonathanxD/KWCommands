@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.parser;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
@@ -59,6 +58,20 @@ Benchmark                      Mode  Cnt       Score      Error  Units
 Parser2Benchmark.parserBench  thrpt  100  215428.369 ± 4290.711  ops/s
 
 On my machine
+
+1.3:
+
+Result "com.github.jonathanxd.kwcommands.parser.Parser2Benchmark.parserBench":
+  49539.071 ±(99.9%) 1201.100 ops/s [Average]
+  (min, avg, max) = (28773.418, 49539.071, 52600.516), stdev = 3541.470
+  CI (99.9%): [48337.971, 50740.170] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:02:13
+
+Benchmark                      Mode  Cnt      Score      Error  Units
+Parser2Benchmark.parserBench  thrpt  100  49539.071 ± 1201.100  ops/s
+
  */
 public class Parser2Benchmark {
 

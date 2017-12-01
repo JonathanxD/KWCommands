@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.kwcommands.argument.AnyArgumentType
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.argument.CustomArgumentType
 import com.github.jonathanxd.kwcommands.argument.SingleArgumentType
@@ -108,6 +110,8 @@ val stringArgumentType = SingleArgumentType<String>(
         null,
         TypeInfo.of(String::class.java)
 )
+
+val anyArgumentType = AnyArgumentType
 
 fun <I: Input, T> optArgumentType(argumentType: ArgumentType<I, T>): ArgumentType<I, Optional<T>> =
         CustomArgumentType({ Optional.of(it) }, Optional.empty(), argumentType,

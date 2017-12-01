@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.kwcommands.parser.SingleInput
+
 interface SourcedIterator {
     val sourceString: String
 
@@ -38,9 +40,10 @@ interface SourcedIterator {
 }
 
 interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
-    fun from(sourcedCharIterator: SourcedCharIterator)
-    fun copy(): SourcedCharIterator
+    val pos: Int
+    fun restore(pos: Int)
 
+    fun nextSingle(): SingleInput
     fun hasPrevious(): Boolean
     fun previous(): Char
 
@@ -54,12 +57,19 @@ interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
      */
     fun <R> runInNew(func: SourcedCharIterator.() -> R): Pair<R, SourcedCharIterator>
 
+    fun <R> runInNewInt(func: SourcedCharIterator.() -> R): Pair<R, Int>
+
+    companion object {
+        val stateZero = 0
+    }
+
 }
 
 
 fun String.sourcedCharIterator(): SourcedCharIterator = IndexedSourcedCharIter(this)
 
 class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIterator {
+    private val inputCache = mutableMapOf<Int, SingleInput>()
 
     override val sourceString: String
         get() = this.input
@@ -67,7 +77,18 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
         get() = if (this.charIndex == 0) throw NoSuchElementException("Calling index before next() invocation")
         else this.charIndex - 1
 
+    override val pos: Int
+        get() = charIndex
+
     private var charIndex = 0
+
+    override fun restore(pos: Int) {
+        this.charIndex = pos
+    }
+
+    override fun nextSingle(): SingleInput {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     override fun hasNext(): Boolean = charIndex < input.length
 
@@ -77,14 +98,10 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
 
     override fun previous(): Char = input[--charIndex]
 
-    override fun copy(): SourcedCharIterator {
+    fun copy(): SourcedCharIterator {
         val new = IndexedSourcedCharIter(input)
         new.charIndex = this.charIndex
         return new
-    }
-
-    override fun from(sourcedCharIterator: SourcedCharIterator) {
-        this.charIndex = sourcedCharIterator.sourceIndex + 1
     }
 
     override fun <R> runAndRestore(func: () -> R): R {
@@ -100,4 +117,11 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
         return r to cp
     }
 
+    override fun <R> runInNewInt(func: SourcedCharIterator.() -> R): Pair<R, Int> {
+        val origin = this.pos
+        val r = func(this)
+        val pos = this.pos
+        this.restore(origin)
+        return r to pos
+    }
 }

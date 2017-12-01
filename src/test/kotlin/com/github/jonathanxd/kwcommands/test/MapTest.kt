@@ -123,12 +123,11 @@ class MapTest2 {
         processor.parseAndDispatch("promote KWCommands x", this, infoManager).let {
             if (it.isRight) {
                 handler.handleResults(it.right, printer)
-                Assert.assertTrue(it.right.isEmpty())
+                throw AssertionError()
             }
             it
         }.ifLeftSide {
             handler.handleFail(it, printer)
-            throw AssertionError()
         }
     }
 }

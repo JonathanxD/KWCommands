@@ -288,7 +288,7 @@ class InnerCommands {
 @Cmd(name = "getName", description = "Gets player name.")
 class TestOptInfo {
     @CmdHandler
-    fun handle(@Info(Id(tags = "player")) player: SimplePlayer,
+    fun handle(@Info(Id(tags = ["player"])) player: SimplePlayer,
                @Info playerInfo: Information<SimplePlayer>): String {
         Assert.assertEquals(player.name, playerInfo.value.name) // Ensure correctness?
         return playerInfo.value.name
