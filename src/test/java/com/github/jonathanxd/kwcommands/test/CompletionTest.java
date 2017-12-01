@@ -220,6 +220,69 @@ public class CompletionTest {
         Assert.assertEquals(
                 Collections3.listOf("--name"),
                 complete);
+
+        x = "testE";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "testE ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("--value", "AAC", "AXD", "BBA", "BBD"),
+                complete);
+
+        x = "testE  ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(),
+                complete);
+
+        x = "testE --value";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "testE --value ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("AAC", "AXD", "BBA", "BBD"),
+                complete);
+
+        x = "testE --value A";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("AAC", "AXD"),
+                complete);
+
+        x = "testE --value AA";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("AAC"),
+                complete);
+
+        x = "testE --value AX";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("AXD"),
+                complete);
+
+        x = "testE --value AXD";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
     }
 
     @Cmd(description = "Complete Test 1")
@@ -268,6 +331,11 @@ public class CompletionTest {
 
     }
 
+    @Cmd
+    public void testE(@Arg("value") EX ex) {
+
+    }
+
     public static enum E {
         A,
         B
@@ -276,6 +344,13 @@ public class CompletionTest {
     public static enum X {
         C,
         D
+    }
+
+    public static enum EX {
+        AAC,
+        AXD,
+        BBA,
+        BBD
     }
 
     public static class MyMapArgTypeProvider implements Function0<ArgumentType<?, ?>> {

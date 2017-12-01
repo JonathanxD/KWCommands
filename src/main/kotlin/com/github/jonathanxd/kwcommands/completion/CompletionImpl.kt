@@ -107,15 +107,22 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
 
     private fun SourcedCharIterator.suggestBlankSpace(): Boolean {
         val prev =
-                if (!this.hasPrevious()) null
+                if (!this.hasPrevious()) true
                 else this.runAndRestore {
                     val prev = this.previous()
-                    if (this.hasPrevious() && this.previous() == ' ') null
-                    else prev
+                    prev != ' '
                 }
 
-        return prev == null || prev != ' '
+        return prev
     }
+
+    private fun SourcedCharIterator.isValid(): Boolean =
+            this.runAndRestore {
+                if (this.hasPrevious() && this.previous() == ' ')
+                    this.hasPrevious() && this.previous() != ' '
+                else
+                    true
+            }
 
     private fun suggestArguments(command: Command,
                                  parsedArgs: List<ArgumentContainer<*>>,
@@ -170,6 +177,9 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                          informationManager: InformationManager) {
         val parsedCommands = parseFail.parsedCommands
         val iter = parseFail.iter
+
+        if (!iter.isValid())
+            return
 
         val completions = ListCompletionsImpl()
         val completionList = completions.list
@@ -268,6 +278,17 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                     completions,
                                     informationManager)
                         }
+                    }
+                    is NoMoreElementsInputParseFail -> {
+                        if (iter.suggestBlankSpace())
+                            suggestion += " "
+                        else
+                            this.autoCompleters.completeArgumentInput(command, parsedArgs,
+                                    argument,
+                                    fail.argumentType,
+                                    fail.input,
+                                    completions,
+                                    informationManager)
                     }
                     else -> {
                         this.autoCompleters.completeArgumentInput(command, parsedArgs,
