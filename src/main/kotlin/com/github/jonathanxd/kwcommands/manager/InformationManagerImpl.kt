@@ -80,7 +80,7 @@ class InformationManagerImpl : InformationManager {
                     && tagsMatch)
                 return it as Information<T>
 
-            if (tagsMatch && id.type.isAssignableFrom(id.type))
+            if (tagsMatch && id.type.isAssignableFrom(itId.type))
                 assignFound += it
         }
 

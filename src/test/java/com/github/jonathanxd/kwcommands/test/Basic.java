@@ -48,13 +48,12 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
 import com.github.jonathanxd.kwcommands.reflect.annotation.CmdHandler;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Info;
-import com.github.jonathanxd.kwcommands.util.CommonArgTypesKt;
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
+import com.github.jonathanxd.kwcommands.util.CommonArgTypesKt;
 
 import org.junit.Test;
 
 import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 
 public class Basic {
 

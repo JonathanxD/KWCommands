@@ -219,6 +219,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 this.autoCompleters.completeArgumentName(command, parsedArgs, completions, informationManager)
 
                 completions.retainIfAnyMatch { it.startsWith(input) }
+                completions.map { "--$it" }
             }
             is ArgumentInputParseFail -> {
                 val command = parseFail.command
