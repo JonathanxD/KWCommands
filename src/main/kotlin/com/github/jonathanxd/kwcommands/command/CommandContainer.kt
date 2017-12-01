@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
@@ -51,7 +52,8 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getCommandArgument(name: String, type: TypeInfo<T>): Argument<T>? =
-            this.command.arguments.firstOrNull { it.name == name && it.argumentType.type == type } as? Argument<T>
+            this.command.arguments.firstOrNull { it.name == name
+                    && TypeInfoUtil.isNormalizedEquals(it.argumentType.type, type) } as? Argument<T>
 
     /**
      * Gets [command] argument by [name] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or

@@ -27,8 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.parser.SingleInput
-
 interface SourcedIterator {
     val sourceString: String
 
@@ -43,7 +41,6 @@ interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
     val pos: Int
     fun restore(pos: Int)
 
-    fun nextSingle(): SingleInput
     fun hasPrevious(): Boolean
     fun previous(): Char
 
@@ -69,7 +66,6 @@ interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
 fun String.sourcedCharIterator(): SourcedCharIterator = IndexedSourcedCharIter(this)
 
 class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIterator {
-    private val inputCache = mutableMapOf<Int, SingleInput>()
 
     override val sourceString: String
         get() = this.input
@@ -84,10 +80,6 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
 
     override fun restore(pos: Int) {
         this.charIndex = pos
-    }
-
-    override fun nextSingle(): SingleInput {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun hasNext(): Boolean = charIndex < input.length

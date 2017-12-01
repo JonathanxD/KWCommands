@@ -62,7 +62,5 @@ val Argument<*>.typeStr: String
 
 fun Argument<*>.isBoolean(): Boolean =
         this.argumentType is SingleArgumentType<*>
-                && this.argumentType.type.canResolve()
-                && (this.argumentType.type.typeClass == Boolean::class.javaObjectType
-                || this.argumentType.type.typeClass == Boolean::class.javaPrimitiveType)
+                && this.argumentType.type.toFullString().let { it == "boolean" || it == "java.lang.Boolean" }
                 && this.argumentType.validate(SingleInput("true", "true", 0, 4)).isValid

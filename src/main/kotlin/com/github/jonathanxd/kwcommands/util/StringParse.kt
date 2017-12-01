@@ -142,7 +142,8 @@ fun String.toCommandStringList(escape: Char = '\\',
                 strBuilder.append(it)
             }
             it == escape -> lastIsEscape = true
-            openCount.indices.any { it != indexOfOpenClose && openCount[it] } && mode == Mode.TOGGLE -> strBuilder.append(it)
+            openCount.indices.any { it != indexOfOpenClose && openCount[it] } && mode == Mode.TOGGLE ->
+                strBuilder.append(it)
             indexOfOpenClose != -1 -> {
                 val value = openCount[indexOfOpenClose]
                 openCount[indexOfOpenClose] = !value

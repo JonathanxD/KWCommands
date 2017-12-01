@@ -35,6 +35,9 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Group;
+import org.openjdk.jmh.annotations.GroupThreads;
+import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
@@ -44,7 +47,8 @@ import java.util.List;
 
 @State(Scope.Benchmark)
 @Warmup(iterations = 5)
-@Fork(5)
+@Measurement(iterations = 5)
+@Fork(value = 1, jvmArgsAppend = "-Djmh.stack.lines=1")
 /*
 Result "com.github.jonathanxd.kwcommands.parser.Parser2Benchmark.parserBench":
   215428.369 ±(99.9%) 4290.711 ops/s [Average]
@@ -92,6 +96,8 @@ public class Parser2Benchmark {
         this.cmd = "bench 9 a b c --types simple unknown";
     }
 
+    @Group("jmh")
+    @GroupThreads
     @Benchmark
     public void parserBench() {
         this.parser.parse(this.cmd, this);
