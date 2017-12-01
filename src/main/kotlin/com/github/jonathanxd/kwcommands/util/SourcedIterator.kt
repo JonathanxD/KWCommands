@@ -49,13 +49,6 @@ interface SourcedCharIterator : SourcedIterator, Iterator<Char> {
      */
     fun <R> runAndRestore(func: () -> R): R
 
-    /**
-     * Runs [func] and return modified iterator instance
-     */
-    fun <R> runInNew(func: SourcedCharIterator.() -> R): Pair<R, SourcedCharIterator>
-
-    fun <R> runInNewInt(func: SourcedCharIterator.() -> R): Pair<R, Int>
-
     companion object {
         val stateZero = 0
     }
@@ -90,12 +83,6 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
 
     override fun previous(): Char = input[--charIndex]
 
-    fun copy(): SourcedCharIterator {
-        val new = IndexedSourcedCharIter(input)
-        new.charIndex = this.charIndex
-        return new
-    }
-
     override fun <R> runAndRestore(func: () -> R): R {
         val oldIndex = this.charIndex
         val f = func()
@@ -103,17 +90,4 @@ class IndexedSourcedCharIter(val input: String) : CharIterator(), SourcedCharIte
         return f
     }
 
-    override fun <R> runInNew(func: SourcedCharIterator.() -> R): Pair<R, SourcedCharIterator> {
-        val cp = this.copy()
-        val r = func(cp)
-        return r to cp
-    }
-
-    override fun <R> runInNewInt(func: SourcedCharIterator.() -> R): Pair<R, Int> {
-        val origin = this.pos
-        val r = func(this)
-        val pos = this.pos
-        this.restore(origin)
-        return r to pos
-    }
 }

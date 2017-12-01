@@ -130,17 +130,6 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
     }
 
-    private fun SourcedCharIterator.peekSingle(type: ArgumentType<*, *>,
-                                               restoreFromFail: Boolean = true):
-            Pair<Either<InputParseFail, SingleInput>, Int> =
-            this.runInNewInt {
-                this.parseSingleInput(argumentType = type, parseData = false)
-                        .mapRight { it as SingleInput }
-            }.also {
-                if (restoreFromFail && it.first.isLeft)
-                    this.restore(it.second)
-            }
-
     private fun parseCommand(commandsIterator: SourcedCharIterator,
                              containers: MutableList<CommandContainer>,
                              lastCommand: CommandHolder,
@@ -505,12 +494,12 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                  args: MutableList<ArgumentContainer<*>>,
                                  isNamed: Boolean,
                                  parsedCommands: List<CommandContainer>): EitherObjBoolean<ParseFail> {
-        val peek = commandsIterator.peekSingle(stringArgumentType, restoreFromFail = true)
-        val (peekInput, _) = peek
-        val copy = commandsIterator.pos
+        val state = commandsIterator.pos
+        val next = commandsIterator.parseSingleInput(stringArgumentType)
+        commandsIterator.restore(state)
 
-        if (peekInput.isLeft || !peekInput.right.input.startsWith(MAP_OPEN)) {
-            val peek_ = peekInput.rightOrNull() ?: EmptyInput(commandsIterator.sourceString)
+        if (next.isLeft || !next.right.content.startsWith(MAP_OPEN)) {
+            val peek_ = next.rightOrNull() ?: EmptyInput(commandsIterator.sourceString)
 
             return leftBooleanObj(createFailIIFAE(command,
                     peek_,
@@ -553,10 +542,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 // This is required because as this is a parsing algorithm, and values can be peeked
                 // before it is parsed, failing to parse at some point, requires the
                 // pointer to go back to last valid state, otherwise the input will be ignored
-                // this also allows map to be parsed to other value for other arguments, example,
-                // for single input arguments, the first fragment (or the entire map) can be parsed
-                // as a single input string instead of a input map.
-                commandsIterator.restore(copy) // Restore old state
+                // this also allows map to be parsed to other value for other arguments
+                commandsIterator.restore(state) // Restore old state
                 return right(false)
             }
         }

@@ -47,36 +47,7 @@ import java.util.List;
 
 @State(Scope.Benchmark)
 @Warmup(iterations = 5)
-@Measurement(iterations = 5)
-@Fork(value = 1, jvmArgsAppend = "-Djmh.stack.lines=1")
-/*
-Result "com.github.jonathanxd.kwcommands.parser.Parser2Benchmark.parserBench":
-  215428.369 ±(99.9%) 4290.711 ops/s [Average]
-  (min, avg, max) = (125469.768, 215428.369, 228256.324), stdev = 12651.260
-  CI (99.9%): [211137.658, 219719.081] (assumes normal distribution)
-
-
-# Run complete. Total time: 00:02:13
-
-Benchmark                      Mode  Cnt       Score      Error  Units
-Parser2Benchmark.parserBench  thrpt  100  215428.369 ± 4290.711  ops/s
-
-On my machine
-
-1.3:
-
-Result "com.github.jonathanxd.kwcommands.parser.Parser2Benchmark.parserBench":
-  49539.071 ±(99.9%) 1201.100 ops/s [Average]
-  (min, avg, max) = (28773.418, 49539.071, 52600.516), stdev = 3541.470
-  CI (99.9%): [48337.971, 50740.170] (assumes normal distribution)
-
-
-# Run complete. Total time: 00:02:13
-
-Benchmark                      Mode  Cnt      Score      Error  Units
-Parser2Benchmark.parserBench  thrpt  100  49539.071 ± 1201.100  ops/s
-
- */
+@Fork(value = 5)
 public class Parser2Benchmark {
 
     private CommandManager manager;
@@ -96,8 +67,6 @@ public class Parser2Benchmark {
         this.cmd = "bench 9 a b c --types simple unknown";
     }
 
-    @Group("jmh")
-    @GroupThreads
     @Benchmark
     public void parserBench() {
         this.parser.parse(this.cmd, this);
