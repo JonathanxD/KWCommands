@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.reflect.util
 
 import com.github.jonathanxd.iutils.reflection.Reflection
-import com.github.jonathanxd.iutils.string.TextParser
+import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -149,7 +149,7 @@ fun Cmd.toKCommand(manager: CommandManager,
     val cmd = Command(parent = parent ?: superCommand,
             order = order,
             name = name,
-            description = TextParser.parse(description),
+            description = TextUtil.parse(description),
             handler = handler,
             arguments = arguments,
             requirements = this.getRequirements(),

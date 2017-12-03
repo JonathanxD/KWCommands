@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.reflect.env
 import com.github.jonathanxd.iutils.reflection.Invokables
 import com.github.jonathanxd.iutils.reflection.Link
 import com.github.jonathanxd.iutils.reflection.Links
-import com.github.jonathanxd.iutils.string.TextParser
+import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.*
@@ -562,7 +562,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             karg = Argument(
                     name = name,
                     alias = argumentAnnotation?.alias?.toList().orEmpty(),
-                    description = TextParser.parse(description),
+                    description = TextUtil.parse(description),
                     isOptional = isOptional,
                     argumentType = argumentType,
                     requiredInfo = emptySet(),
@@ -726,7 +726,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     val argument = Argument(
                             name = name,
                             alias = argumentAnnotation.alias.toList(),
-                            description = TextParser.parse(description),
+                            description = TextUtil.parse(description),
                             isOptional = isOptional,
                             requirements = requirements,
                             requiredInfo = emptySet(),

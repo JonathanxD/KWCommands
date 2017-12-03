@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.json
 
-import com.github.jonathanxd.iutils.string.TextParser
+import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentBuilder
@@ -175,7 +175,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
             CommandBuilder()
                     .parent(superCommand)
                     .name(jsonObject.getRequired(NAME_KEY))
-                    .description(TextParser.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
+                    .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
                     .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
                     .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
                     .addArguments(jsonObject.getAsArrayOfObj(ARGUMENTS_KEY) { this.parseArgument(it) })
@@ -210,7 +210,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
         return ArgumentBuilder<Input, Any?>()
                 .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String}.orEmpty())
                 .name(jsonObject.getRequired(NAME_KEY))
-                .description(TextParser.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
+                .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
                 .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
                 .argumentType(jsonObject.getAsSingleton<ArgumentType<*, Any?>>(ARGUMENT_TYPE_KEY, this.typeResolver)
                         ?: this.typeResolver.resolveArgumentType(type as TypeInfo<Any?>) as ArgumentType<*, Any?>)
