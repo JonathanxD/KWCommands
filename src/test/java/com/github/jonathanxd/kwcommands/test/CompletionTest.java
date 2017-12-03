@@ -283,6 +283,21 @@ public class CompletionTest {
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
+
+        x = "testEOpt --value";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf(" "),
+                complete);
+
+        x = "testEOpt --value ";
+        complete = completion.complete(x, null, informationManager);
+
+        Assert.assertEquals(
+                Collections3.listOf("AAC", "AXD", "BBA", "BBD"),
+                complete);
+
     }
 
     @Cmd(description = "Complete Test 1")
@@ -333,6 +348,11 @@ public class CompletionTest {
 
     @Cmd
     public void testE(@Arg("value") EX ex) {
+
+    }
+
+    @Cmd
+    public void testEOpt(@Arg(value = "value", optional = true) EX ex) {
 
     }
 

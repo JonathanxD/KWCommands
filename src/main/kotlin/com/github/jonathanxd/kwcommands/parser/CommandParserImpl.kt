@@ -217,7 +217,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             }
 
             if (parse.isLeft) {
-                if (argument.isOptional) {
+                if (argument.isOptional && named == null) {
                     commandsIterator.restore(state)
                 } else {
                     return left(parse.left)
