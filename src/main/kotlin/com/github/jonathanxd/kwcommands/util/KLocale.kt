@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.util
 import com.github.jonathanxd.iutils.localization.Locale
 import com.github.jonathanxd.iutils.localization.Locales
 import com.github.jonathanxd.iutils.localization.MapLocaleManager
-import com.github.jonathanxd.iutils.text.converter.NoColorTextLocalizer
+import com.github.jonathanxd.iutils.text.converter.DefaultTextLocalizer
 import com.github.jonathanxd.kwcommands.printer.Printers
 import java.nio.file.Paths
 
@@ -50,5 +50,5 @@ object KLocale {
         this.load(Paths.get("kwcommands", "lang"), "validation", Printers::class.java.classLoader)
     }
 
-    val localizer = NoColorTextLocalizer(localeManager, defaultLocale)
+    val localizer = DefaultTextLocalizer(localeManager, defaultLocale)
 }
