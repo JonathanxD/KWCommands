@@ -276,8 +276,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             methods.forEach {
                 val afterDispatch = it.getDeclaredAnnotation(AfterDispatch::class.java)
 
-                val link: Link<Any?> = Links.ofInvokable<Any?>(Invokables.fromMethodHandle(LOOKUP.unreflect(it)))
-                        .bind(instance)
+                val link: Link<Any?> = linkMethod(instance, it)
 
                 handlers += if (afterDispatch.filter.isEmpty()) {
                     ReflectDispatchHandler(link)
@@ -512,6 +511,11 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 if (instance != null) it.bind(instance) else it
             }
 
+    fun linkMethod(instance: Any?, method: Method): Link<Any?> =
+            Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(method))).let {
+                if (instance != null) it.bind(instance) else it
+            }
+
     /**
      * Creates a list of arguments from a [field].
      *
@@ -656,9 +660,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     private fun createElement(instance: Any?, method: Method): MethodElement {
 
-        val link = Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(method))).let {
-            if (instance != null) it.bind(instance) else it
-        }
+        val link = linkMethod(instance, method)
 
         val arguments = mutableListOf<Argument<*>>()
         val requiredInfo = mutableSetOf<RequiredInformation>()

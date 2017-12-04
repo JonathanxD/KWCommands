@@ -34,6 +34,9 @@ import com.github.jonathanxd.iutils.text.converter.DefaultTextLocalizer
 import com.github.jonathanxd.kwcommands.printer.Printers
 import java.nio.file.Paths
 
+/**
+ * Global localizers and locales. You don't need to use them if you don't want to.
+ */
 object KLocale {
     val localeManager = MapLocaleManager()
     val defaultLocale = Locales.create("en_us").also {

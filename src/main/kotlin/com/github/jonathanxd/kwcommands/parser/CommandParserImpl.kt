@@ -112,8 +112,10 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 }
                 return cmd
             } else {
-                if (last.arguments.isEmpty()) {
+                if (last.arguments.all { it.isOptional }) {
                     list += last
+                } else {
+                    return null
                 }
                 last = last.parent
             }
