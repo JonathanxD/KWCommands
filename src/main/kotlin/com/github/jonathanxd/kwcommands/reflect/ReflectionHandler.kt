@@ -27,6 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.reflect
 
+import com.github.jonathanxd.iutils.reflection.Invokables
+import com.github.jonathanxd.iutils.reflection.Link
+import com.github.jonathanxd.iutils.reflection.Links
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
@@ -34,20 +37,30 @@ import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
-import com.github.jonathanxd.kwcommands.reflect.element.Element
-import com.github.jonathanxd.kwcommands.reflect.element.Parameter
+import com.github.jonathanxd.kwcommands.reflect.element.*
+import java.lang.invoke.MethodHandles
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 
 /**
  * Adapt command invocation to a element invocation.
  */
-class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
+class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHandler<Any> {
+
+
+    @Suppress("UNCHECKED_CAST")
+    private val link: Link<Any?> = when (element) {
+        is FieldElement -> linkField(element.field)
+        is MethodElement -> Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflect(element.method)))
+        is ConstructorElement -> Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectConstructor(element.ctr)))
+        is InvokableElement -> Links.ofInvokable(element.invokable)
+    }.let { if (element.instance != null) it.bind(element.instance) else it }
 
     @Suppress("UNCHECKED_CAST")
     override fun handle(commandContainer: CommandContainer,
                         informationManager: InformationManager,
                         resultHandler: ResultHandler): Any {
 
-        val link = element.elementLink
         val args = mutableListOf<Any?>()
 
         element.parameters.forEach { parameter ->
@@ -71,7 +84,7 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
             }
         }
 
-        if(resultHandler.shouldCancel())
+        if (resultHandler.shouldCancel())
             return Unit
 
         return link(*args.toTypedArray()) ?: Unit
@@ -81,7 +94,6 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                         commandContainer: CommandContainer,
                         informationManager: InformationManager,
                         resultHandler: ResultHandler): Any {
-        val link = element.elementLink
 
         val parameter = element.parameters.first()
 
@@ -102,6 +114,23 @@ class ReflectionHandler(val element: Element) : Handler, ArgumentHandler<Any> {
                 }
             }
         }
+    }
+
+    companion object {
+        private val LOOKUP = MethodHandles.lookup()
+
+        fun linkField(field: Field): Link<Any?> =
+                if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
+                    Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectSetter(field)))
+                } else {
+                    field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type).let {
+                        if (it == null || (!Modifier.isPublic(it.modifiers) && !it.isAccessible))
+                            throw IllegalArgumentException("Accessible setter of field $field was not found!")
+                        else {
+                            Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(it)))
+                        }
+                    }
+                }
     }
 
 }

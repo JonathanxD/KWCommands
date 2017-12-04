@@ -25,31 +25,13 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.element
+package com.github.jonathanxd.kwcommands.reflect
 
-import com.github.jonathanxd.iutils.reflection.Invokable
-import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import java.lang.reflect.Constructor
-import java.lang.reflect.Field
+import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler
+import com.github.jonathanxd.kwcommands.reflect.element.Element
 import java.lang.reflect.Method
 
-/**
- * Element information to [ReflectionHandler].
- *
- * @property instance Instance.
- * @property parameters Parameter specification.
- */
-sealed class Element(val instance: Any?, val parameters: List<Parameter<*>>,
-                     val owner: Class<*>)
-
-class FieldElement(val field: Field, instance: Any?, parameters: List<Parameter<*>>,
-                   owner: Class<*>) : Element(instance, parameters, owner)
-
-class MethodElement(val method: Method, instance: Any?, parameters: List<Parameter<*>>,
-                    owner: Class<*>) : Element(instance, parameters, owner)
-
-class ConstructorElement(val ctr: Constructor<*>, instance: Any?, parameters: List<Parameter<*>>,
-                    owner: Class<*>) : Element(instance, parameters, owner)
-
-class InvokableElement(val invokable: Invokable<Any?>, instance: Any?, parameters: List<Parameter<*>>,
-                       owner: Class<*>) : Element(instance, parameters, owner)
+interface HandlerResolver {
+    fun resolve(element: Element): Any?
+    fun resolveDispatchHandler(instance: Any?, method: Method, filter: List<Class<*>>): DispatchHandler?
+}

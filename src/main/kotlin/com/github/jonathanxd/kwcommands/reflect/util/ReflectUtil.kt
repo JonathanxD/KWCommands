@@ -34,7 +34,6 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.CommandManager
@@ -42,6 +41,7 @@ import com.github.jonathanxd.kwcommands.reflect.None
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
+import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import java.lang.reflect.AnnotatedElement
@@ -186,16 +186,18 @@ fun Cmd.getHandlerOrNull(): Handler? =
 /**
  * Gets handler of [Cmd] (or null if default)
  */
-fun Cmd.getClassHandlerOrNull(klass: Class<*>, elementFactory: (method: Method) -> Element): Handler? =
+fun Cmd.getClassHandlerOrNull(klass: Class<*>,
+                              reflectionEnvironment: ReflectionEnvironment,
+                              elementFactory: (method: Method) -> Element): Handler? =
         this.getHandlerOrNull() ?: klass.methods.firstOrNull { it.isAnnotationPresent(CmdHandler::class.java) }?.let {
-            ReflectionHandler(elementFactory(it))
+            reflectionEnvironment.resolveHandler(elementFactory(it)) as Handler
         }
 
 /**
  * Gets handler of [Cmd] or create a [ReflectionHandler] if not present.
  */
-fun Cmd.getHandler(element: Element): Handler =
-        this.handler.get() ?: ReflectionHandler(element)
+fun Cmd.getHandler(element: Element, reflectionEnvironment: ReflectionEnvironment): Handler =
+        this.handler.get() ?: reflectionEnvironment.resolveHandler(element) as Handler
 
 /**
  * Gets handler of [Arg] (or null if default)
@@ -206,8 +208,8 @@ fun Arg.getHandlerOrNull(): ArgumentHandler<*>? =
 /**
  * Gets handler of [Arg] or create a [ReflectionHandler] if not present.
  */
-fun Arg.getHandler(element: Element): ArgumentHandler<*> =
-        this.handler.get() ?: ReflectionHandler(element)
+fun Arg.getHandler(element: Element, reflectionEnvironment: ReflectionEnvironment): ArgumentHandler<*> =
+        this.handler.get() ?: reflectionEnvironment.resolveHandler(element) as ArgumentHandler<*>
 
 /**
  * Prepare commands to registration.

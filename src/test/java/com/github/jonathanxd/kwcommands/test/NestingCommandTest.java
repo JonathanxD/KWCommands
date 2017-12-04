@@ -47,7 +47,7 @@ import java.util.List;
 public class NestingCommandTest {
 
     @Test
-    public void nestingText() {
+    public void nestingTest() {
         AIO aio = KWCommands.INSTANCE.createAio(this)
                 .loadObj(this)
                 .registerLoaded();

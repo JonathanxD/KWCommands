@@ -40,6 +40,8 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
+import com.github.jonathanxd.kwcommands.reflect.element.Element
+import com.github.jonathanxd.kwcommands.reflect.element.FieldElement
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 import java.lang.reflect.Method
 
@@ -104,7 +106,7 @@ class DynamicHandler(val name: String,
             val instance = this.checkedInstanceProvider(requestType)
 
             this.reflectionEnvironment
-                    .createSetterHandler(instance, field)
+                    .resolveHandler(FieldElement(field, instance, emptyList(), field.declaringClass))
         } else {
             val sameName = type.declaredMethods.filter { it.name == name }
 

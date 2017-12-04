@@ -46,9 +46,12 @@ import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
+import com.github.jonathanxd.kwcommands.reflect.HandlerResolver
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
+import com.github.jonathanxd.kwcommands.reflect.element.FieldElement
+import com.github.jonathanxd.kwcommands.reflect.element.MethodElement
 import com.github.jonathanxd.kwcommands.reflect.element.Parameter
 import com.github.jonathanxd.kwcommands.reflect.util.*
 import com.github.jonathanxd.kwcommands.util.*
@@ -81,6 +84,7 @@ typealias JsonParserResolver = (Class<*>) -> JsonCommandParser
 class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
     private val argumentTypeProviders = mutableSetOf<ArgumentTypeProvider>()
+    private val handlerResolvers = mutableSetOf<HandlerResolver>()
 
     /**
      * Registers [argumentTypeProvider].
@@ -94,6 +98,12 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     fun unregisterProvider(provider: ArgumentTypeProvider): Boolean =
             this.argumentTypeProviders.remove(provider)
+
+    fun registerHandlerResolver(resolver: HandlerResolver): Boolean =
+            this.handlerResolvers.add(resolver)
+
+    fun unregisterHandlerResolver(resolver: HandlerResolver): Boolean =
+            this.handlerResolvers.remove(resolver)
 
     /**
      * Gets required argument specification.
@@ -276,13 +286,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             methods.forEach {
                 val afterDispatch = it.getDeclaredAnnotation(AfterDispatch::class.java)
 
-                val link: Link<Any?> = linkMethod(instance, it)
-
-                handlers += if (afterDispatch.filter.isEmpty()) {
-                    ReflectDispatchHandler(link)
-                } else {
-                    ReflectFilterDispatchHandler(link, afterDispatch.filter.map { it.java }.toList())
-                }
+                handlers += createDispatchHandler(instance, it, afterDispatch.filter.map { it.java })
             }
 
         }
@@ -411,7 +415,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         var args: List<Argument<*>> = emptyList()
         val requiredInfo = mutableSetOf<RequiredInformation>()
 
-        val handler = command?.getClassHandlerOrNull(klass) {
+        val handler = command?.getClassHandlerOrNull(klass, this) {
             val (lElement, lArgs, lreqs) = createElement(instance, it)
             args = lArgs
             requiredInfo += lreqs
@@ -492,24 +496,16 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 .map { fromMethod(instance, it, superCommand, owner, queue) }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun createSetterHandler(instance: Any?, field: Field): Handler =
-            ReflectionHandler(Element(linkField(instance, field), emptyList(), field.declaringClass))
-
-    fun linkField(instance: Any?, field: Field): Link<Any?> =
-            if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
-                Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectSetter(field)))
-            } else {
-                field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type).let {
-                    if (it == null || (!Modifier.isPublic(it.modifiers) && !it.isAccessible))
-                        throw IllegalArgumentException("Accessible setter of field $field was not found!")
-                    else {
-                        Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(it)))
-                    }
-                }
-            }.let {
-                if (instance != null) it.bind(instance) else it
+    fun resolveHandler(element: Element): Any {
+        for (handlerResolver in this.handlerResolvers) {
+            handlerResolver.resolve(element)?.let {
+                return it
             }
+        }
+
+        return ReflectionHandler(element)
+    }
+
 
     fun linkMethod(instance: Any?, method: Method): Link<Any?> =
             Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(method))).let {
@@ -525,8 +521,6 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     fun fromField(instance: Any?, field: Field): Argument<*> {
         val type = TypeUtil.toTypeInfo(field.genericType)
-
-        val link = linkField(instance, field)
 
         var karg: Argument<Any?>? = null
 
@@ -594,7 +588,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
         return karg!!.let {
             if (it.handler == null)
-                it.copy(handler = ReflectionHandler(Element(link, listOf(parameters), field.declaringClass)))
+                it.copy(handler = resolveHandler(FieldElement(field, instance, listOf(parameters), field.declaringClass))
+                        as ArgumentHandler<out Any?>)
             else it
         }
     }
@@ -634,7 +629,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         queue.queueCommand(method, command.getName(method), { cmds ->
             val superCmd = command.resolveParents(this.manager, owner, cmds) ?: superCommand
 
-            command.toKCommand(manager, command.getHandler(element), superCmd, arguments, lreqs, owner, method)
+            command.toKCommand(manager, command.getHandler(element, this), superCmd, arguments, lreqs, owner, method)
         }, Checker(this.manager, owner, command, method), { command.getPath(method).joinToString(separator = " ") })
 
     }
@@ -642,14 +637,34 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
     /**
      * Creates a handler for [method].
      */
+    fun createDispatchHandler(instance: Any?, method: Method, filter: List<Class<*>>): DispatchHandler {
+        for (handlerResolver in this.handlerResolvers) {
+            handlerResolver.resolveDispatchHandler(instance, method, filter)?.let {
+                return it
+            }
+        }
+
+        val link: Link<Any?> = Links.ofInvokable<Any?>(Invokables.fromMethodHandle(LOOKUP.unreflect(method))).let {
+            if (instance != null) it.bind(instance) else it
+        }
+
+        return if (filter.isEmpty())
+            ReflectDispatchHandler(link)
+        else
+            ReflectFilterDispatchHandler(link, filter)
+    }
+
+    /**
+     * Creates a handler for [method].
+     */
     fun createHandler(instance: Any?, method: Method): Handler =
-            ReflectionHandler(this.createElement(instance, method).element)
+            this.resolveHandler(this.createElement(instance, method).element) as Handler
 
     /**
      * Creates a handler for [method].
      */
     fun createArgumentHandler(instance: Any?, method: Method): ArgumentHandler<*> =
-            ReflectionHandler(this.createElement(instance, method).element)
+            this.resolveHandler(this.createElement(instance, method).element) as ArgumentHandler<*>
 
     /**
      * Create a [Element] instance from a [method].
@@ -658,9 +673,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      * @param method Method to create [Command].
      * @see ReflectionEnvironment
      */
-    private fun createElement(instance: Any?, method: Method): MethodElement {
-
-        val link = linkMethod(instance, method)
+    private fun createElement(instance: Any?, method: Method): RMethodElement {
 
         val arguments = mutableListOf<Argument<*>>()
         val requiredInfo = mutableSetOf<RequiredInformation>()
@@ -744,7 +757,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             }
         }
 
-        return MethodElement(Element(link, parameters, method.declaringClass), arguments, requiredInfo)
+        return RMethodElement(MethodElement(method, instance, parameters, method.declaringClass), arguments, requiredInfo)
     }
 
     /**
@@ -921,7 +934,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         }
     }
 
-    private data class MethodElement(val element: Element, val arguments: List<Argument<*>>, val requiredInfo: Set<RequiredInformation>)
+    private data class RMethodElement(val element: Element, val arguments: List<Argument<*>>, val requiredInfo: Set<RequiredInformation>)
 }
 
 class Checker(val manager: CommandManager, val owner: Any?, val command: Cmd, val annotatedElement: AnnotatedElement) : (List<Command>) -> Boolean {

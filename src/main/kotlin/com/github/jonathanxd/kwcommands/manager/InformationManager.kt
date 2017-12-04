@@ -33,9 +33,13 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 
+@JvmField
 val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
+@JvmField
 val INFORMATION_MANAGER_ID = Information.Id(typeInfo<InformationManager>(), arrayOf("information_manager"))
+@JvmField
 val COMMAND_PARSER_ID = Information.Id(typeInfo<CommandParser>(), arrayOf("command_parser"))
+@JvmField
 val COMMAND_DISPATCHER_ID = Information.Id(typeInfo<CommandDispatcher>(), arrayOf("command_dispatcher"))
 
 /**
