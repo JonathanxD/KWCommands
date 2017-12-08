@@ -28,10 +28,12 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.localization.Locale
+import com.github.jonathanxd.iutils.localization.LocaleManager
 import com.github.jonathanxd.iutils.localization.Locales
 import com.github.jonathanxd.iutils.localization.MapLocaleManager
 import com.github.jonathanxd.iutils.text.converter.DefaultTextLocalizer
 import com.github.jonathanxd.iutils.text.converter.FastTextLocalizer
+import com.github.jonathanxd.iutils.text.converter.TextLocalizer
 import com.github.jonathanxd.kwcommands.printer.Printers
 import java.nio.file.Paths
 
@@ -39,12 +41,12 @@ import java.nio.file.Paths
  * Global localizers and locales. You don't need to use them if you don't want to.
  */
 object KLocale {
-    val localeManager = MapLocaleManager()
-    val defaultLocale = Locales.create("en_us").also {
+    val localeManager: LocaleManager = MapLocaleManager()
+    val defaultLocale: Locale = Locales.create("en_us").also {
         it.load()
         localeManager.registerLocale(it)
     }
-    val ptBr = Locales.create("pt_br").also {
+    val ptBr: Locale = Locales.create("pt_br").also {
         it.load()
         localeManager.registerLocale(it)
     }
@@ -54,5 +56,5 @@ object KLocale {
         this.load(Paths.get("kwcommands", "lang"), "validation", Printers::class.java.classLoader)
     }
 
-    var localizer = FastTextLocalizer(localeManager, defaultLocale)
+    var localizer: TextLocalizer = FastTextLocalizer(localeManager, defaultLocale)
 }
