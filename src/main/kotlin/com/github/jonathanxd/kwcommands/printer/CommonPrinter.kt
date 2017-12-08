@@ -110,7 +110,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
                 Texts.header9(),
                 Texts.header10(),
                 Texts.header11(),
-                Texts.headerh12())
+                Texts.header12())
 
         private val footer = listOf(
                 Texts.footer1(),
