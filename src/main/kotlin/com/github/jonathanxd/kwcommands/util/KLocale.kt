@@ -31,6 +31,7 @@ import com.github.jonathanxd.iutils.localization.Locale
 import com.github.jonathanxd.iutils.localization.Locales
 import com.github.jonathanxd.iutils.localization.MapLocaleManager
 import com.github.jonathanxd.iutils.text.converter.DefaultTextLocalizer
+import com.github.jonathanxd.iutils.text.converter.FastTextLocalizer
 import com.github.jonathanxd.kwcommands.printer.Printers
 import java.nio.file.Paths
 
@@ -53,5 +54,5 @@ object KLocale {
         this.load(Paths.get("kwcommands", "lang"), "validation", Printers::class.java.classLoader)
     }
 
-    val localizer = DefaultTextLocalizer(localeManager, defaultLocale)
+    var localizer = FastTextLocalizer(localeManager, defaultLocale)
 }

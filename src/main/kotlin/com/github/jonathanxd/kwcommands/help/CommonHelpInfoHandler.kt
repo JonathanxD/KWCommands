@@ -125,7 +125,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                     printer.printPlain(Text.of("  ",
                             Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.name.toString() }))
+                            parsed.joinToString { it.argument.name }))
                 }
 
                 if (validation.invalids.isNotEmpty()) {

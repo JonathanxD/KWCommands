@@ -187,8 +187,6 @@ interface TextsStub {
     fun header11(): TextComponent
     @Section("help", "header", "12")
     fun header12(): TextComponent
-    @Section("help", "header", "13")
-    fun header13(): TextComponent
 
     @Section("help", "footer", "1")
     fun footer1(): TextComponent

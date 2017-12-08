@@ -49,14 +49,13 @@ help.header.2=
 help.header.3=--------   Label  --------
 help.header.4= [ ]  = Required
 help.header.5= < >  = Optional
-help.header.6=  ?   = Optional
-help.header.7=  ->  = Main command
-help.header.8= -'>  = Sub command
-help.header.9=  -   = Description
-help.header.10= - x: = Description of argument x
-help.header.11=  *   = Information Requirement
-help.header.12=  **  = Requirement
-help.header.13=--------   Label  --------
+help.header.6=  ->  = Main command
+help.header.7= -'>  = Sub command
+help.header.8=  -   = Description
+help.header.9= - x: = Description of argument x
+help.header.10=  *   = Information Requirement
+help.header.11=  **  = Requirement
+help.header.12=--------   Label  --------
 
 help.footer.1=
 help.footer.2=-------- Commands --------

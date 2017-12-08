@@ -110,8 +110,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
                 Texts.header9(),
                 Texts.header10(),
                 Texts.header11(),
-                Texts.header12(),
-                Texts.header13())
+                Texts.headerh12())
 
         private val footer = listOf(
                 Texts.footer1(),
@@ -194,7 +193,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
                 }
 
             components += Text.single(" ")
-            components += Text.single(command.name.toString())
+            components += Text.single(command.name)
 
             command.arguments.forEach {
                 components += Text.single(" ")

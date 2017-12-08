@@ -49,14 +49,13 @@ help.header.2=
 help.header.3=--------  Rótulos --------
 help.header.4= [ ]  = Obrigatório
 help.header.5= < >  = Opcional
-help.header.6=  ?   = Opcional
-help.header.7=  ->  = Comando principal
-help.header.8= -'>  = Sub comando
-help.header.9=  -   = Descrição
-help.header.10= - x: = Descrição do argumento x
-help.header.11=  *   = Requisito de informação
-help.header.12=  **  = Requisito de valor
-help.header.13=--------  Rótulos --------
+help.header.6=  ->  = Comando principal
+help.header.7= -'>  = Sub comando
+help.header.8=  -   = Descrição
+help.header.9= - x: = Descrição do argumento x
+help.header.10=  *   = Requisito de informação
+help.header.11=  **  = Requisito de valor
+help.header.12=--------  Rótulos --------
 
 help.footer.1=
 help.footer.2=-------- Comandos --------
