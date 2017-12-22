@@ -32,6 +32,8 @@ import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.Arguments
+import com.github.jonathanxd.kwcommands.argument.StaticListArguments
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
@@ -145,13 +147,16 @@ fun Cmd.toKCommand(manager: CommandManager,
     val alias = this.alias
     val description = this.description
     val parent = this.resolveParents(manager, owner)
+    val argumentsInstance =
+            annotatedElement.getDeclaredAnnotation(DynamicArgs::class.java)?.value?.get() as? Arguments
+                    ?: StaticListArguments(arguments)
 
     val cmd = Command(parent = parent ?: superCommand,
             order = order,
             name = name,
             description = TextUtil.parse(description),
             handler = handler,
-            arguments = arguments,
+            arguments = argumentsInstance,
             requirements = this.getRequirements(),
             requiredInfo = reqInfo,
             alias = alias.toList())

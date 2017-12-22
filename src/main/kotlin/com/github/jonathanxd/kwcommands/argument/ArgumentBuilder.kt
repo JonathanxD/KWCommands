@@ -37,7 +37,7 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
 /**
  * Builder of [Argument].
  */
-class ArgumentBuilder<I: Input, T> {
+class ArgumentBuilder<T> {
 
     private var name: String = ""
     private var alias = mutableListOf<String>()
@@ -53,7 +53,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.name]
      */
-    fun name(name: String): ArgumentBuilder<I, T> {
+    fun name(name: String): ArgumentBuilder<T> {
         this.name = name
         return this
     }
@@ -61,7 +61,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.alias]
      */
-    fun alias(alias: List<String>): ArgumentBuilder<I, T> {
+    fun alias(alias: List<String>): ArgumentBuilder<T> {
         this.alias = alias.toMutableList()
         return this
     }
@@ -69,7 +69,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Adds [Argument.alias].
      */
-    fun addAlias(aliases: List<String>): ArgumentBuilder<I, T> {
+    fun addAlias(aliases: List<String>): ArgumentBuilder<T> {
         this.alias.addAll(aliases)
         return this
     }
@@ -77,7 +77,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Adds an [Alias][Argument.alias]
      */
-    fun addAlias(alias: String): ArgumentBuilder<I, T> {
+    fun addAlias(alias: String): ArgumentBuilder<T> {
         this.alias.add(alias)
         return this
     }
@@ -85,7 +85,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Removes an [Alias][Argument.alias]
      */
-    fun removeAlias(alias: String): ArgumentBuilder<I, T> {
+    fun removeAlias(alias: String): ArgumentBuilder<T> {
         this.alias.remove(alias)
         return this
     }
@@ -93,7 +93,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Clear [Argument.alias]
      */
-    fun clearAlias(): ArgumentBuilder<I, T> {
+    fun clearAlias(): ArgumentBuilder<T> {
         this.alias.clear()
         return this
     }
@@ -101,7 +101,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.description]
      */
-    fun description(description: TextComponent): ArgumentBuilder<I, T> {
+    fun description(description: TextComponent): ArgumentBuilder<T> {
         this.description = description
         return this
     }
@@ -109,7 +109,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.isOptional]
      */
-    fun optional(isOptional: Boolean): ArgumentBuilder<I, T> {
+    fun optional(isOptional: Boolean): ArgumentBuilder<T> {
         this.isOptional = isOptional
         return this
     }
@@ -117,7 +117,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.argumentType]
      */
-    fun argumentType(type: ArgumentType<*, T>): ArgumentBuilder<I, T> {
+    fun argumentType(type: ArgumentType<*, T>): ArgumentBuilder<T> {
         this.argumentType = type
         return this
     }
@@ -125,7 +125,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.argumentType]
      */
-    fun multiple(isMultiple: Boolean): ArgumentBuilder<I, T> {
+    fun multiple(isMultiple: Boolean): ArgumentBuilder<T> {
         this.isMultiple = isMultiple
         return this
     }
@@ -133,7 +133,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Adds [Argument.requirements]
      */
-    fun addRequirements(requirements: List<Requirement<*, *>>): ArgumentBuilder<I, T> {
+    fun addRequirements(requirements: List<Requirement<*, *>>): ArgumentBuilder<T> {
         this.requirements.addAll(requirements)
         return this
     }
@@ -141,7 +141,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Adds a [Requirement][Argument.requirements]
      */
-    fun addRequirement(requirement: Requirement<*, *>): ArgumentBuilder<I, T> {
+    fun addRequirement(requirement: Requirement<*, *>): ArgumentBuilder<T> {
         this.requirements.add(requirement)
         return this
     }
@@ -149,7 +149,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Removes a [Requirement][Argument.requirements]
      */
-    fun removeRequirement(requirement: Requirement<*, *>): ArgumentBuilder<I, T> {
+    fun removeRequirement(requirement: Requirement<*, *>): ArgumentBuilder<T> {
         this.requirements.remove(requirement)
         return this
     }
@@ -157,7 +157,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Clear [Argument.requirements]
      */
-    fun clearRequirements(): ArgumentBuilder<I, T> {
+    fun clearRequirements(): ArgumentBuilder<T> {
         this.requirements.clear()
         return this
     }
@@ -165,7 +165,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Adds [Command.requiredInfo].
      */
-    fun addRequiredInfo(requiredInfoList: List<RequiredInformation>): ArgumentBuilder<I, T> {
+    fun addRequiredInfo(requiredInfoList: List<RequiredInformation>): ArgumentBuilder<T> {
         this.requiredInfo.addAll(requiredInfoList)
         return this
     }
@@ -173,7 +173,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Add a [Requirement][Command.requiredInfo].
      */
-    fun addRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<I, T> {
+    fun addRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<T> {
         this.requiredInfo.add(requiredInfo)
         return this
     }
@@ -181,7 +181,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Removes a [Requirement][Command.requiredInfo].
      */
-    fun removeRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<I, T> {
+    fun removeRequiredInfo(requiredInfo: RequiredInformation): ArgumentBuilder<T> {
         this.requiredInfo.remove(requiredInfo)
         return this
     }
@@ -189,7 +189,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Clear [Command.requiredInfo]
      */
-    fun clearRequiredInfo(): ArgumentBuilder<I, T> {
+    fun clearRequiredInfo(): ArgumentBuilder<T> {
         this.requiredInfo.clear()
         return this
     }
@@ -197,7 +197,7 @@ class ArgumentBuilder<I: Input, T> {
     /**
      * Sets [Argument.handler]
      */
-    fun handler(handler: ArgumentHandler<out T>?): ArgumentBuilder<I, T> {
+    fun handler(handler: ArgumentHandler<out T>?): ArgumentBuilder<T> {
         this.handler = handler
         return this
     }

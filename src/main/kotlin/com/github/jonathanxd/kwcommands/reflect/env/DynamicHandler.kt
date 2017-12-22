@@ -40,9 +40,8 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.element.FieldElement
-import com.github.jonathanxd.kwcommands.reflect.element.Parameter
+import com.github.jonathanxd.kwcommands.reflect.element.ElementParameter
 import java.lang.reflect.Method
 
 /**
@@ -90,7 +89,7 @@ class DynamicHandler(val name: String,
 
         val hnd = resolveHandler(command, ::fail) as ReflectionHandler
 
-        val arg = (hnd.element.parameters.filterIsInstance<Parameter.ArgumentParameter<*>>().singleOrNull() ?: fail()).argument
+        val arg = (hnd.element.parameters.filterIsInstance<ElementParameter.ArgumentParameter<*>>().singleOrNull() ?: fail()).argument
 
         if (arg.name != argument.name)
             throw IllegalArgumentException("Handler for argument specified in json for argument '$argument' must have one argument parameter with the same name as argument. (Command: $command).")
@@ -115,7 +114,7 @@ class DynamicHandler(val name: String,
             val method: Method = if (sameName.size == 1) {
                 sameName.single()
             } else {
-                sameName.firstOrNull { it.parameterCount >= command.arguments.size } ?: fail()
+                sameName.firstOrNull { it.parameterCount >= command.arguments.all.size } ?: fail()
             }
 
             validate(command,
@@ -126,19 +125,19 @@ class DynamicHandler(val name: String,
     private fun validate(command: Command, handler: Handler): Handler {
         if (handler is ReflectionHandler) {
             val names = handler.element.parameters
-                    .filterIsInstance<Parameter.ArgumentParameter<*>>()
+                    .filterIsInstance<ElementParameter.ArgumentParameter<*>>()
                     .joinToString { it.argument.name }
 
             handler.element.parameters.forEach {
                 when (it) {
-                    is Parameter.ArgumentParameter<*> -> {
+                    is ElementParameter.ArgumentParameter<*> -> {
                         if (!it.argument.isOptional
-                                && command.arguments.none { arg -> arg.name == it.argument.name }) {
+                                && command.arguments.all.none { arg -> arg.name == it.argument.name }) {
                             throw IllegalArgumentException("Argument '${it.argument.name}' of method" +
                                     " '${type.simpleName}.$name'" +
                                     " wasn't specified in json of command '${command.fullname}'." +
                                     " Json arguments:" +
-                                    " ${command.arguments.joinToString { it.name }}." +
+                                    " ${command.arguments.all.joinToString { it.name }}." +
                                     " Method arguments:" +
                                     " $names.")
                         }

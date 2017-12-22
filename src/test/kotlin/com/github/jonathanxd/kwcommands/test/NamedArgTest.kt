@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.test
 import com.github.jonathanxd.jwiutils.kt.ifLeftSide
 import com.github.jonathanxd.kwcommands.dsl.booleanArg
 import com.github.jonathanxd.kwcommands.dsl.command
+import com.github.jonathanxd.kwcommands.dsl.staticListArguments
 import com.github.jonathanxd.kwcommands.dsl.stringArg
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
@@ -49,11 +50,13 @@ class NamedArgTest {
         val cmd = command {
             name { "example" }
             arguments {
-                +stringArg {
-                    name { "directory" }
-                }
-                +booleanArg {
-                    name { "recursive" }
+                staticListArguments {
+                    +stringArg {
+                        name { "directory" }
+                    }
+                    +booleanArg {
+                        name { "recursive" }
+                    }
                 }
             }
             handlerWithContext {

@@ -33,6 +33,7 @@ import com.github.jonathanxd.iutils.reflection.Links
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.CommandContext
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationManager
@@ -54,6 +55,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
         is MethodElement -> Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflect(element.method)))
         is ConstructorElement -> Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectConstructor(element.ctr)))
         is InvokableElement -> Links.ofInvokable(element.invokable)
+        is EmptyElement -> Links.ofInvokable<Any?> { Unit }
     }.let { if (element.instance != null) it.bind(element.instance) else it }
 
     @Suppress("UNCHECKED_CAST")
@@ -65,10 +67,10 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
 
         element.parameters.forEach { parameter ->
             when (parameter) {
-                is Parameter.ArgumentParameter<*> -> {
+                is ElementParameter.ArgumentParameter<*> -> {
                     args += commandContainer.arguments.find { parameter.argument.name == it.argument.name }?.value
                 }
-                is Parameter.InformationParameter<*> -> {
+                is ElementParameter.InformationParameter<*> -> {
                     val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)
 
                     if (!parameter.isOptional && information == null) {
@@ -80,6 +82,9 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                             information ?: Information.EMPTY
                         }
                     }
+                }
+                is ElementParameter.CtxParameter -> {
+                    args += CommandContext(commandContainer, informationManager, resultHandler)
                 }
             }
         }
@@ -98,9 +103,12 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
         val parameter = element.parameters.first()
 
         return when (parameter) {
-            is Parameter.ArgumentParameter<*> ->
-                link.invoke(argumentContainer.value) ?: Unit
-            is Parameter.InformationParameter<*> -> {
+            is ElementParameter.ArgumentParameter<*> -> {
+                argumentContainer.value?.let {
+                    link.invoke(argumentContainer.value) ?: Unit
+                } ?: Unit
+            }
+            is ElementParameter.InformationParameter<*> -> {
                 val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)
 
                 if (!parameter.isOptional && information == null) {
@@ -112,6 +120,9 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                         link.invoke(information ?: Information.EMPTY) ?: Unit
                     }
                 }
+            }
+            is ElementParameter.CtxParameter -> {
+                link.invoke(CommandContext(commandContainer, informationManager, resultHandler)) ?: Unit
             }
         }
     }

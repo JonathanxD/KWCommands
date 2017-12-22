@@ -50,19 +50,20 @@ class CommonHelpInfoHandler : HelpInfoHandler {
             is ArgumentsMissingFail -> {
                 val command = parseFail.command
                 val providedArgs = parseFail.parsedArgs
-                val missing = command.arguments.filter { arg ->
+                val args = providedArgs.map { it.argument }
+                val missing = args.filter { arg ->
                     !arg.isOptional && providedArgs.none { it.argument == arg }
                 }
 
                 printer.printPlain(Texts.getArgumentCommandsMissingText(command.fullname))
 
                 if (providedArgs.isNotEmpty()) {
-                    val args = providedArgs.joinToString { it.argument.name.toString() }
+                    val args = providedArgs.joinToString { it.argument.name }
                     printer.printPlain(Text.of("  ", Texts.getProvidedArgumentsText(), ": ", args))
                 }
 
                 printer.printPlain(Text.of("  ", Texts.getMissingArgumentText(), ": ",
-                        missing.joinToString { it.name.toString() }))
+                        missing.joinToString { it.name }))
                 printer.printEmpty()
                 printer.printPlain(Texts.getCommandSpecificationText())
                 printer.printFromRoot(command, 0)
@@ -78,7 +79,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 if (parsed.isNotEmpty()) {
                     printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.name.toString() }))
+                            parsed.joinToString { it.argument.name }))
                 }
 
                 printer.printEmpty()
@@ -182,7 +183,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 if (parsed.isNotEmpty()) {
                     printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
                             ": ",
-                            parsed.joinToString { it.argument.name.toString() }))
+                            parsed.joinToString { it.argument.name }))
                 }
 
                 printer.printEmpty()

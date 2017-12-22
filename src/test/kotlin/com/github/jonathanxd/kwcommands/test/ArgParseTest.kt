@@ -31,6 +31,7 @@ import com.github.jonathanxd.jwiutils.kt.ifLeftSide
 import com.github.jonathanxd.jwiutils.kt.textOf
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.dsl.intArg
+import com.github.jonathanxd.kwcommands.dsl.staticListArguments
 import com.github.jonathanxd.kwcommands.dsl.stringArg
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
@@ -51,12 +52,14 @@ class ArgParseTest {
             name { "example" }
             description { textOf("Test command") }
             arguments {
-                +intArg {
-                    name { "value" }
-                }
-                +stringArg {
-                    name { "name" }
-                    description { textOf("String argument") }
+                staticListArguments {
+                    +intArg {
+                        name { "value" }
+                    }
+                    +stringArg {
+                        name { "name" }
+                        description { textOf("String argument") }
+                    }
                 }
             }
             handlerWithContext {

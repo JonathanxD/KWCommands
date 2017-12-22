@@ -29,10 +29,7 @@ package com.github.jonathanxd.kwcommands.json
 
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentBuilder
-import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandBuilder
 import com.github.jonathanxd.kwcommands.command.Handler
@@ -178,7 +175,8 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
                     .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
                     .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
                     .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
-                    .addArguments(jsonObject.getAsArrayOfObj(ARGUMENTS_KEY) { this.parseArgument(it) })
+                    // TODO: Support dynamic arguments
+                    .arguments(StaticListArguments(jsonObject.getAsArrayOfObj(ARGUMENTS_KEY) { this.parseArgument(it) }))
                     .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
                     .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
                     .build()
@@ -207,7 +205,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
         val type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY))
 
         @Suppress("UNCHECKED_CAST")
-        return ArgumentBuilder<Input, Any?>()
+        return ArgumentBuilder<Any?>()
                 .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String}.orEmpty())
                 .name(jsonObject.getRequired(NAME_KEY))
                 .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))

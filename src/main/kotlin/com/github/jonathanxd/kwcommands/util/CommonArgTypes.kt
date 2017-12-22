@@ -129,6 +129,14 @@ fun <I: Input> optLongArgumentType(argumentType: ArgumentType<I, Long>): Argumen
         CustomArgumentType({ OptionalLong.of(it) }, OptionalLong.empty(), argumentType,
                 TypeInfo.builderOf(OptionalLong::class.java).build())
 
+fun stringArgumentType() = SingleArgumentType<String>(
+        stringTransformer,
+        StringValidator,
+        StringPossibilities,
+        null,
+        TypeInfo.of(String::class.java)
+)
+
 fun stringArgumentType(str: String) = SingleArgumentType<String>(
         stringTransformer,
         ExactStringValidator(str),
@@ -158,8 +166,3 @@ fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
         SingleArgumentType(transformer, validator, possibilitiesFunc, defaultValue, typeInfo)
 
-object InputTypeValidator : Validator<Input> {
-    override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
-            TODO("dummy")
-
-}

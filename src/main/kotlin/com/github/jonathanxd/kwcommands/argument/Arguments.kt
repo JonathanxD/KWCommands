@@ -27,33 +27,35 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.requirement.Requirement
+interface Arguments {
 
-/**
- * A command argument.
- *
- * @property name Argument name to be used in definition, empty string means that argument cannot be defined by name.
- * @property alias Aliases to argument.
- * @property description Argument description.
- * @property isOptional Is optional argument.
- * @property argumentType Type of argument value.
- * @property requirements Requirements of this argument.
- * @property requiredInfo Identifications of required information for this argument work.
- */
-data class Argument<out T>(val name: String,
-                           val alias: List<String>,
-                           val description: TextComponent,
-                           val isOptional: Boolean,
-                           val argumentType: ArgumentType<*, T>,
-                           val requirements: List<Requirement<*, *>>,
-                           val requiredInfo: Set<RequiredInformation>,
-                           val handler: ArgumentHandler<out T>? = null) {
-    companion object {
-        @JvmStatic
-        fun <T> builder() = ArgumentBuilder<T>()
-    }
+    /**
+     * All arguments.
+     */
+    val all: List<Argument<*>>
 
+    /**
+     * Gets all remaining arguments. Commonly returns the same as [all].
+     */
+    fun getArguments(): List<Argument<*>>
+
+    /**
+     * Gets remaining arguments based on [current].
+     */
+    fun getArguments(current: List<ArgumentContainer<*>>): List<Argument<*>>
+
+}
+
+class StaticListArguments(val argumentList: List<Argument<*>>) : Arguments {
+
+    constructor(): this(emptyList())
+    constructor(argument: Argument<*>): this(listOf(argument))
+
+    override val all: List<Argument<*>>
+        get() = this.argumentList
+
+    override fun getArguments(): List<Argument<*>> = this.argumentList
+    override fun getArguments(current: List<ArgumentContainer<*>>): List<Argument<*>> =
+            if (current.isEmpty()) this.getArguments()
+            else this.argumentList.filter { curr -> current.none { it.argument == curr } }
 }

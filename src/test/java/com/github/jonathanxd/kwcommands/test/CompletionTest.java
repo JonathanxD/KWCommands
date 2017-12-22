@@ -186,7 +186,10 @@ public class CompletionTest {
         x = "completeTest1 ";
         complete = completion.complete(x, null, informationManager);
 
-        Assert.assertTrue(Collections3.listOf("completeTest2", "completeTest2_5").containsAll(complete));
+        Assert.assertTrue(Collections3.listOf(
+                "completeTest2", "completeTest2_5", "setmap", "testE",
+                "testEOpt", "mapcmd"
+        ).containsAll(complete));
 
         x = "completeTest1 completeTest2";
         complete = completion.complete(x, null, informationManager);
@@ -198,13 +201,14 @@ public class CompletionTest {
         x = "completeTest1 completeTest2 ";
         complete = completion.complete(x, null, informationManager);
 
-        Assert.assertTrue(Collections3.listOf("completeTest3", "completeTest4").containsAll(complete));
+        Assert.assertTrue(Collections3.listOf("completeTest3", "completeTest4", "setmap",
+                "testE", "testEOpt", "mapcmd").containsAll(complete));
 
         x = "completeTest1 completeTest2 completeTest3";
         complete = completion.complete(x, null, informationManager);
 
         Assert.assertEquals(
-                Collections3.listOf(),
+                Collections3.listOf(" "),
                 complete);
 
         x = "completeTest1 completeTest2 completeTest4";
@@ -217,9 +221,9 @@ public class CompletionTest {
         x = "completeTest1 completeTest2 completeTest4 ";
         complete = completion.complete(x, null, informationManager);
 
-        Assert.assertEquals(
-                Collections3.listOf("--name"),
-                complete);
+        Assert.assertTrue(
+                Collections3.listOf("completeTest1", "mapcmd", "setmap", "testE", "testEOpt", "--name")
+                .containsAll(complete));
 
         x = "testE";
         complete = completion.complete(x, null, informationManager);

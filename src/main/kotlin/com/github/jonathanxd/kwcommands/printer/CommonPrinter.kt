@@ -195,7 +195,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
             components += Text.single(" ")
             components += Text.single(command.name)
 
-            command.arguments.forEach {
+            command.arguments.all.forEach {
                 components += Text.single(" ")
 
                 components.apply {
@@ -256,12 +256,12 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                     val to = buff.indexOf(">")
 
-                    if (command.arguments.any { it.description.isNotEmpty }) {
+                    if (command.arguments.all.any { it.description.isNotEmpty }) {
                         builder.append(' ', to + 1)
                         builder.append(localize.localize(Texts.getArgumentDescriptionText().append(Text.single(":"))))
                         out.flushAndClean(builder)
 
-                        command.arguments.forEach {
+                        command.arguments.all.forEach {
                             if (it.description.isNotEmpty) {
                                 builder.append(' ', to + 1)
                                 builder.append(" - ${it.name}: ${localize.localize(it.description)}")
@@ -270,8 +270,10 @@ class CommonPrinter(override val localizer: TextLocalizer,
                         }
                     }
 
-                    val anyReq = command.requirements.isNotEmpty() || command.arguments.any { it.requirements.isNotEmpty() }
-                    val anyInfoReq = command.requiredInfo.isNotEmpty() || command.arguments.any { it.requiredInfo.isNotEmpty() }
+                    val anyReq = command.requirements.isNotEmpty()
+                            || command.arguments.all.any { it.requirements.isNotEmpty() }
+                    val anyInfoReq = command.requiredInfo.isNotEmpty()
+                            || command.arguments.all.any { it.requiredInfo.isNotEmpty() }
 
                     if (anyReq || anyInfoReq) {
                         builder.append(' ', to + 1)
@@ -310,7 +312,7 @@ class CommonPrinter(override val localizer: TextLocalizer,
                             out.flushAndClean(builder)
                         }
 
-                        command.arguments.forEach { arg ->
+                        command.arguments.all.forEach { arg ->
 
                             if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
                                 builder.append(' ', to + 2)

@@ -25,34 +25,13 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.reflect.element
+package com.github.jonathanxd.kwcommands.reflect.annotation
 
-import com.github.jonathanxd.iutils.reflection.Invokable
-import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import java.lang.reflect.Constructor
-import java.lang.reflect.Field
-import java.lang.reflect.Method
+import com.github.jonathanxd.kwcommands.command.CommandContext
 
 /**
- * Element information to [ReflectionHandler].
- *
- * @property instance Instance.
- * @property parameters Parameter specification.
+ * Marks method argument to receive [CommandContext]. The annotated argument must be of [CommandContext] type.
  */
-sealed class Element(val instance: Any?, val parameters: List<ElementParameter<*>>,
-                     val owner: Class<*>)
-
-class FieldElement(val field: Field, instance: Any?, parameters: List<ElementParameter<*>>,
-                   owner: Class<*>) : Element(instance, parameters, owner)
-
-class MethodElement(val method: Method, instance: Any?, parameters: List<ElementParameter<*>>,
-                    owner: Class<*>) : Element(instance, parameters, owner)
-
-class ConstructorElement(val ctr: Constructor<*>, instance: Any?, parameters: List<ElementParameter<*>>,
-                         owner: Class<*>) : Element(instance, parameters, owner)
-
-class InvokableElement(val invokable: Invokable<Any?>, instance: Any?, parameters: List<ElementParameter<*>>,
-                       owner: Class<*>) : Element(instance, parameters, owner)
-
-class EmptyElement(parameters: List<ElementParameter<*>>):
-        Element(null, parameters, EmptyElement::class.java)
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.VALUE_PARAMETER)
+annotation class Ctx

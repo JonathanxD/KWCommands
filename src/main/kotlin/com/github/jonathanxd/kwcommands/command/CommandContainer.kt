@@ -52,8 +52,8 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getCommandArgument(name: String, type: TypeInfo<T>): Argument<T>? =
-            this.command.arguments.firstOrNull { it.name == name
-                    && TypeInfoUtil.isNormalizedEquals(it.argumentType.type, type) } as? Argument<T>
+            this.arguments.firstOrNull { it.argument.name == name
+                    && TypeInfoUtil.isNormalizedEquals(it.argument.argumentType.type, type) }?.argument as? Argument<T>
 
     /**
      * Gets [command] argument by [name] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or
@@ -71,7 +71,7 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getCommandArgument(name: String): Argument<T>? =
-            this.command.arguments.firstOrNull { it.name == name } as? Argument<T>
+            this.arguments.firstOrNull { it.argument.name == name }?.argument as? Argument<T>
 
     /**
      * Gets argument by [name]. Returns found argument casted to [ArgumentContainer] of [T] or

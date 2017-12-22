@@ -573,7 +573,7 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(argumentType: Argume
 
         if (!defineV.isPresent
                 || (!isSeparator && defineV.value != MAP_CLOSE))
-            return left(TokenOrElementExpectedFail(
+            return left(TokenExpectedFail(
                     separators + MAP_CLOSE,
                     defineV.toOptString().orElse(EMPTY_STR),
                     createMapInput(),

@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.jwiutils.kt.asText
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.StaticListArguments
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
@@ -122,7 +123,7 @@ class CommandTest {
                 sb.append(commandContainer.command.fullname)
 
                 if (commandContainer.arguments.isNotEmpty()) {
-                    sb.append(commandContainer.arguments.filter { it.isDefined }.map { it.value!!.toString() }.joinToString(prefix = "(", postfix = ")"))
+                    sb.append(commandContainer.arguments.filter { it.isDefined }.joinToString(prefix = "(", postfix = ")") { it.value.toString() })
                 }
 
                 println(sb.toString())
@@ -137,7 +138,7 @@ class CommandTest {
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
-                arguments = listOf(
+                arguments = StaticListArguments(listOf(
                         argument<SingleInput, String> {
                             name = "name"
                             description = "".asText()
@@ -148,7 +149,7 @@ class CommandTest {
                             requirements {}
                             requiredInfo {}
                         }
-                ),
+                )),
                 requiredInfo = emptySet(),
                 requirements = emptyList())
 
@@ -159,7 +160,7 @@ class CommandTest {
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
-                arguments = emptyList(),
+                arguments = StaticListArguments(),
                 requiredInfo = emptySet(),
                 requirements = emptyList()
         ))
@@ -171,7 +172,7 @@ class CommandTest {
                 handler = fnmHandler,
                 order = 0,
                 alias = emptyList(),
-                arguments = listOf(
+                arguments = StaticListArguments(listOf(
                         Argument(name = "name",
                                 alias = emptyList(),
                                 description = "".asText(),
@@ -187,7 +188,7 @@ class CommandTest {
                                 requirements = emptyList(),
                                 requiredInfo = emptySet(),
                                 handler = ArgumentHandler.create { arg, _, _, _ ->
-                                    return@create arg.value!!
+                                    return@create arg.value ?: Unit
                                 }),
                         Argument(name = "double",
                                 alias = emptyList(),
@@ -196,7 +197,7 @@ class CommandTest {
                                 argumentType = doubleArgumentType,
                                 requirements = emptyList(),
                                 requiredInfo = emptySet())
-                ),
+                )),
                 requiredInfo = emptySet(),
                 requirements = emptyList()
         ))

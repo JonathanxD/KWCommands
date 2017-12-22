@@ -67,18 +67,18 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         val parse = parser.parseWithOwnerFunction(iter, ownerProvider)
 
         if (parse.isRight) {
-            complete(parse.right, iter, suggestions, informationManager)
+            completeSuccess(parse.right, iter, suggestions, informationManager)
         } else {
             complete(parse.left, suggestions, informationManager)
         }
 
-        return suggestions //.distinct()
+        return suggestions
     }
 
-    private fun complete(commandContainers: List<CommandContainer>,
-                         iter: SourcedCharIterator,
-                         suggestion: MutableList<String>,
-                         informationManager: InformationManager) {
+    private fun completeSuccess(commandContainers: List<CommandContainer>,
+                                iter: SourcedCharIterator,
+                                suggestion: MutableList<String>,
+                                informationManager: InformationManager) {
         val completions = ListCompletionsImpl()
         val last = commandContainers.lastOrNull()
 
@@ -136,18 +136,10 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         completions2.map { "--$it" }
 
         completions.merge(completions2)
-
-        var index = 0
-        var next: Argument<*>? = null
-        for (argument in command.arguments) {
-            if (index < parsedArgs.size) {
-                if (parsedArgs[index].argument == argument) {
-                    ++index
-                }
-            } else {
-                next = argument
-                break
-            }
+        val next: Argument<*>? = command.arguments.getArguments(parsedArgs).let {
+            if (it.isNotEmpty())
+                it.first()
+            else null
         }
 
         if (next != null) {
@@ -209,7 +201,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     suggestion += " "
                 } else {
                     if (parsedArgs.isEmpty()
-                            || parsedArgs.size >= command.arguments.count { !it.isOptional }) {
+                            || parsedArgs.size >= command.arguments.getArguments(parsedArgs).count { !it.isOptional }) {
                         this.autoCompleters.completeCommand(command,
                                 parseFail.parsedCommands,
                                 completions,

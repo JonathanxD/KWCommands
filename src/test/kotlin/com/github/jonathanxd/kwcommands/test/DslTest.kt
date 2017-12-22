@@ -51,7 +51,9 @@ class DslTest {
         val helloCommand = command {
             name { "hello" }
             arguments {
-                +stringArg { name { "name" } }
+                staticListArguments {
+                    +stringArg { name { "name" } }
+                }
             }
             handlerWithContext {
                 println("Hello ${it.getArg<String>("name")}")
@@ -74,15 +76,17 @@ class DslTest {
                 }
             }
             arguments {
-                +stringArg {
-                    name { "userId" }
-                    description { textOf("Identification of user to promote") }
-                    type = CustomArgumentType({it.toLowerCase()}, null, stringArgumentType, typeInfo())
+                staticListArguments {
+                    +stringArg {
+                        name { "userId" }
+                        description { textOf("Identification of user to promote") }
+                        type = CustomArgumentType({ it.toLowerCase() }, null, stringArgumentType, typeInfo())
+                    }
+                    +listArg(enumArg<Group> {
+                        name { "groupList" }
+                        description { textOf("Groups to add user to") }
+                    })
                 }
-                +listArg(enumArg<Group> {
-                    name {"groupList"}
-                    description { textOf("Groups to add user to") }
-                })
             }
 
             handlerWithContext {

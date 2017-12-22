@@ -216,7 +216,7 @@ class Download {
     ))
     lateinit var url: String
 
-    var connetions: Int = 0
+    var connections: Int = 0
 
 }
 

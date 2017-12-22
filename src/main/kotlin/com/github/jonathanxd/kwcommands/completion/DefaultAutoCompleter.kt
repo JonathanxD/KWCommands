@@ -43,10 +43,19 @@ class DefaultAutoCompleter : AutoCompleter {
                                  completions: Completions,
                                  commandManager: CommandManager,
                                  informationManager: InformationManager) {
+        val commands = mutableListOf<Command>()
+        val last = commandContainers.lastOrNull()
+        val root = if (command?.parent == null) command else command.superCommand
 
-        val commands = (command?.subCommands
-                ?: commandManager.registeredCommands) +
-                commandContainers.lastOrNull()?.command?.subCommands.orEmpty()
+        command?.subCommands?.let {
+            commands += it
+        }
+
+        commands += if (last?.command == command)
+            commandManager.registeredCommands.filter { it != root }
+        else
+            last?.command?.subCommands.orEmpty()
+
 
         completions.addAll(commands.flatMap { listOf(it.name) + it.alias })
     }
@@ -55,7 +64,7 @@ class DefaultAutoCompleter : AutoCompleter {
                                       arguments: List<ArgumentContainer<*>>,
                                       completions: Completions,
                                       informationManager: InformationManager) {
-        completions.addAll(command.arguments.flatMap { listOf(it.name) + it.alias })
+        completions.addAll(command.arguments.getArguments(arguments).flatMap { listOf(it.name) + it.alias })
     }
 
     override fun completeArgumentInput(command: Command,

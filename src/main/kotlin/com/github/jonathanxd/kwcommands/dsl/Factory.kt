@@ -423,7 +423,7 @@ class BuildingCommand {
     lateinit var name: String
     var description: TextComponent = "".asText()
     var handler: Handler? = null
-    val arguments = UList<Argument<*>>()
+    var arguments: Arguments = StaticListArguments()
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     val alias = UList<String>()
@@ -436,8 +436,9 @@ class BuildingCommand {
         this.description = f()
     }
 
-    inline fun arguments(f: UList<Argument<*>>.() -> Unit) =
-            f(this.arguments)
+    inline fun arguments(f: () -> Arguments) {
+        this.arguments = f()
+    }
 
     inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) =
             f(this.requirements)
@@ -480,7 +481,7 @@ class BuildingCommand {
             name = this.name,
             description = this.description,
             handler = this.handler,
-            arguments = this.arguments.coll.toList(),
+            arguments = this.arguments,
             requirements = this.requirements.coll.toList(),
             requiredInfo = this.requiredInfo.coll.toSet(),
             alias = this.alias.coll.toList()
@@ -497,3 +498,5 @@ inline fun handler(crossinline f: (commandContainer: CommandContainer,
             f(commandContainer, informationManager, resultHandler)
 }
 
+inline fun staticListArguments(f: UList<Argument<*>>.() -> Unit): Arguments =
+        UList<Argument<*>>().also(f).let { StaticListArguments(it.coll) }

@@ -112,7 +112,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 }
                 return cmd
             } else {
-                if (last.arguments.all { it.isOptional }) {
+                if (last.arguments.getArguments().all { it.isOptional }) {
                     list += last
                 } else {
                     return null
@@ -145,7 +145,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val input = next.rightOrNull() as? SingleInput ?: return right(false)
 
         if (input.content == "&") {
-            if (last.arguments.isNotEmpty())
+            if (last.arguments.getArguments().isNotEmpty())
                 return leftBooleanObj(createFailAME(last, emptyList(), containers, commandsIterator))
 
             containers += CommandContainer(last, emptyList(), last.handler)
@@ -170,40 +170,94 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
     }
 
+    private class ParsingBackedList(val parsing: ArgumentParsing, val origin: MutableList<ArgumentContainer<*>>):
+            MutableList<ArgumentContainer<*>> by origin {
+        override fun add(element: ArgumentContainer<*>): Boolean {
+            val r = this.origin.add(element)
+            this.parsing.reset()
+            return r
+        }
+
+        override fun addAll(elements: Collection<ArgumentContainer<*>>): Boolean {
+            val r = this.origin.addAll(elements)
+            this.parsing.reset()
+            return r
+        }
+
+        override fun add(index: Int, element: ArgumentContainer<*>) {
+            this.origin.add(index, element)
+            this.parsing.reset()
+        }
+
+        override fun addAll(index: Int, elements: Collection<ArgumentContainer<*>>): Boolean {
+            val r = this.origin.addAll(index, elements)
+            this.parsing.reset()
+            return r
+        }
+    }
+
+    private class ArgumentParsing(val arguments: Arguments) {
+        private val argumentList_ = mutableListOf<ArgumentContainer<*>>()
+        val argumentList = ParsingBackedList(this, argumentList_)
+
+        private var pos = 0
+        private var args: List<Argument<*>> = this.arguments.getArguments()
+
+        fun hasNext(): Boolean {
+            return args.isNotEmpty() && pos < args.size
+        }
+
+        fun next(): Argument<*> {
+            val arg = args[pos]
+            ++pos
+            return arg
+        }
+
+        internal fun reset() {
+            args = this.arguments.getArguments(this.argumentList_)
+            pos = 0
+        }
+
+        fun addContainer(container: ArgumentContainer<*>): Boolean {
+            val add = this.argumentList_.add(container)
+            this.reset()
+            return add
+        }
+
+        fun getByName(name: String): Argument<*>? =
+            this.args.firstOrNull { it.name == name }
+
+    }
+
     private fun parseArguments(commandsIterator: SourcedCharIterator,
                                command: Command,
                                parsedCommands: List<CommandContainer>): Either<ParseFail, List<ArgumentContainer<*>>> {
-        if (command.arguments.isEmpty()) {
+        if (command.arguments.getArguments().isEmpty()) {
             return right(emptyList())
         }
 
-        val currentArgs = command.arguments.toMutableList()
-        val args = mutableListOf<ArgumentContainer<*>>()
-        val required = command.arguments.count { !it.isOptional }
+        val parsing = ArgumentParsing(command.arguments)
+        val args = parsing.argumentList
+
         var currentRequired = 0
 
-        while (commandsIterator.hasNext() && currentArgs.isNotEmpty()) {
+        while (commandsIterator.hasNext() && parsing.hasNext()) {
             val state = commandsIterator.pos
             val get = commandsIterator.parseSingleInput(stringArgumentType)
 
             val input = get.rightOrNull() as? SingleInput ?: break
 
             val named = input.input.getArgumentNameOrNull()?.let { name ->
-                (currentArgs.firstOrNull { it.name == name }
-                        ?: return left(createFailANFE(command, args, name, parsedCommands, commandsIterator))).also {
-                    currentArgs.remove(it)
-                }
+                parsing.getByName(name)
+                        ?: return left(createFailANFE(command, args, name,
+                        parsedCommands, commandsIterator))
             }
 
             val argument = if (named != null) {
-                currentArgs.remove(named)
                 named
             } else {
                 commandsIterator.restore(state)
-                val i = currentArgs.iterator()
-                val next = i.next()
-                i.remove()
-                next
+                parsing.next()
             }
 
             val parse =
@@ -214,24 +268,44 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                         parseSingleArgument(commandsIterator, command, argument,
                                 args, named != null, parsedCommands)
 
-            if (parse.isRight && !argument.isOptional) {
+            if (parse.isRight && parse.right && !argument.isOptional) {
                 ++currentRequired
+            }
+
+            if (parse.isRight && !parse.right && argument.isOptional && named == null) {
+                @Suppress("UNCHECKED_CAST")
+                args += ArgumentContainer(argument,
+                        null,
+                        argument.argumentType.defaultValue,
+                        argument.handler as ArgumentHandler<Any?>?
+                )
             }
 
             if (parse.isLeft) {
                 if (argument.isOptional && named == null) {
+                    @Suppress("UNCHECKED_CAST")
+                    args += ArgumentContainer(argument,
+                            null,
+                            argument.argumentType.defaultValue,
+                            argument.handler as ArgumentHandler<Any?>?
+                    )
                     commandsIterator.restore(state)
                 } else {
                     return left(parse.left)
                 }
             }
+
+            commandsIterator.jumpBlankSpace()
         }
 
-        if (currentRequired != required) {
+        val commandArgumentsList = command.arguments.getArguments(args)
+        val required = commandArgumentsList.count { !it.isOptional }
+
+        if (required != 0) {
             return left(createFailAME(command, args, parsedCommands, commandsIterator))
         }
 
-        command.arguments.filter { a -> args.none { it.argument == a }
+        commandArgumentsList.filter { a -> args.none { it.argument == a }
                 && a.isOptional
                 && a.argumentType.defaultValue != null
         }.forEach {
@@ -244,7 +318,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
 
 
-        return right(args)
+        return right(parsing.argumentList)
     }
 
     private fun parseSingleArgument(commandsIterator: SourcedCharIterator,

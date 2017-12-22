@@ -155,8 +155,8 @@ class ExactListArgumentType<T>(val elementTypes: List<ArgumentType<*, *>>,
             elementTypes.getOrNull(index) ?: AnyArgumentType
 }
 
-class ListArgumentType<T>(val elementType: ArgumentType<*, *>,
-                          type: TypeInfo<out List<T>>)
+class ListArgumentType<out T>(val elementType: ArgumentType<*, *>,
+                              type: TypeInfo<out List<T>>)
     : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
     override val validator: Validator<ListInput> = ListValidator(this)
     override val transformer: Transformer<ListInput, List<T>> = ListTransformer(this)

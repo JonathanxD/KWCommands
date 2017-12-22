@@ -30,6 +30,8 @@ package com.github.jonathanxd.kwcommands.command
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.Arguments
+import com.github.jonathanxd.kwcommands.argument.StaticListArguments
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -44,7 +46,7 @@ class CommandBuilder {
     private lateinit var name: String
     private var description: TextComponent = Text.single("")
     private var handler: Handler? = null
-    private val arguments = mutableListOf<Argument<*>>()
+    private var arguments: Arguments = StaticListArguments(emptyList())
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private val alias = mutableListOf<String>()
@@ -92,32 +94,8 @@ class CommandBuilder {
     /**
      * Adds [Command.arguments].
      */
-    fun addArguments(arguments: List<Argument<*>>): CommandBuilder {
-        this.arguments.addAll(arguments)
-        return this
-    }
-
-    /**
-     * Add an [Argument][Command.arguments].
-     */
-    fun addArgument(argument: Argument<*>): CommandBuilder {
-        this.arguments.add(argument)
-        return this
-    }
-
-    /**
-     * Removes an [Argument][Command.arguments].
-     */
-    fun removeArgument(argument: Argument<*>): CommandBuilder {
-        this.arguments.remove(argument)
-        return this
-    }
-
-    /**
-     * Clear [Command.arguments]
-     */
-    fun clearArguments(): CommandBuilder {
-        this.arguments.clear()
+    fun arguments(arguments: Arguments): CommandBuilder {
+        this.arguments = arguments
         return this
     }
 
@@ -223,7 +201,7 @@ class CommandBuilder {
             name = this.name,
             description = this.description,
             handler = this.handler,
-            arguments = this.arguments.toList(),
+            arguments = this.arguments,
             requirements = this.requirements.toList(),
             requiredInfo = this.requiredInfo.toSet(),
             alias = this.alias.toList()

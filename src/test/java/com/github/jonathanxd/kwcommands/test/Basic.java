@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.reflection.Links;
 import com.github.jonathanxd.iutils.text.Text;
 import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.Argument;
+import com.github.jonathanxd.kwcommands.argument.StaticListArguments;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.information.Information;
 import com.github.jonathanxd.kwcommands.information.InformationProvider;
@@ -74,7 +75,7 @@ public class Basic {
                     return Unit.INSTANCE;
                 })
                 .addRequiredInfo(new RequiredInformation(SPEAKER_INFO_ID))
-                .addArgument(Argument.<SingleInput, Music>builder()
+                .arguments(new StaticListArguments(Argument.<Music>builder()
                         .name("music")
                         .argumentType(CommonArgTypesKt.enumArgumentType(Music.class))
                         .handler((argumentContainer, commandContainer, informationManager, resultHandler) -> {
@@ -86,7 +87,7 @@ public class Basic {
 
                             return Unit.INSTANCE;
                         })
-                        .build())
+                        .build()))
                 .build();
 
         processor.getParser().getCommandManager().registerCommand(command, this);
