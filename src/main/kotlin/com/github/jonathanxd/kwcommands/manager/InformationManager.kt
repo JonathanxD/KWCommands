@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.information.Information
@@ -140,7 +141,35 @@ interface InformationManager {
      *
      * @return Found information or `null` if information cannot be found.
      */
-    fun <T> find(id: Information.Id<T>, useProviders: Boolean = true): Information<T>?
+    fun <T> find(id: Information.Id<T>, useProviders: Boolean = true): Information<T>? =
+            this.find(id.type, id.tags, useProviders)
+
+    /**
+     * Find a information by [type] and [tags], this method will first lookup for `static information`, if no
+     * one information is found for specified [type] and [tags pair], it will return first non-null
+     * information provided by a registered [InformationProvider].
+     *
+     * If no one information can be found using [type]-[tags] combination,
+     * then the implementation should lookup by [tags] only and then [type] only, if no one information
+     * is found or more than one information matches the predicate, `null` is returned.
+     *
+     * @return Found information or `null` if information cannot be found.
+     */
+    fun <T> find(type: TypeInfo<out T>, tags: Array<out String>): Information<T>? =
+            this.find(type, tags, useProviders = true)
+
+    /**
+     * Find a information by [type] and [tags], this method will first lookup for `static information`, if no
+     * one information is found for specified [type] and [tags pair], it will return first non-null
+     * information provided by a registered [InformationProvider].
+     *
+     * If no one information can be found using [type]-[tags] combination,
+     * then the implementation should lookup by [tags] only and then [type] only, if no one information
+     * is found or more than one information matches the predicate, `null` is returned.
+     *
+     * @return Found information or `null` if information cannot be found.
+     */
+    fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean = true): Information<T>?
 
     /**
      * Same as [find], but with erased [Information.Id] type.

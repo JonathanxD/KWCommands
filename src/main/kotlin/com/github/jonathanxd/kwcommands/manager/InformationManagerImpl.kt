@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.collection.Comparators3
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoSortComparator
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.information.Information
@@ -67,20 +68,19 @@ class InformationManagerImpl : InformationManager {
             this.informationProviders_.remove(informationProvider)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> find(id: Information.Id<T>, useProviders: Boolean): Information<T>? {
-
+    override fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean): Information<T>? {
         val assignFound = mutableListOf<Information<*>>()
 
         informationSet_.forEach {
             val itId = it.id
 
-            val tagsMatch = id.tags.isEmpty() || id.tags.all { itId.tags.contains(it) }
+            val tagsMatch = tags.isEmpty() || tags.all { itId.tags.contains(it) }
 
-            if ((id.type == Default::class.java || id.type == itId.type)
+            if ((type == Default::class.java || type == itId.type)
                     && tagsMatch)
                 return it as Information<T>
 
-            if (tagsMatch && id.type.isAssignableFrom(itId.type))
+            if (tagsMatch && type.isAssignableFrom(itId.type))
                 assignFound += it
         }
 
@@ -92,7 +92,7 @@ class InformationManagerImpl : InformationManager {
             return null
 
         this.informationProviders_.forEach {
-            it.provide(id, this)?.let {
+            it.provide(type, tags, this)?.let {
                 return it
             }
         }
@@ -127,6 +127,6 @@ object InformationManagerVoid : InformationManager {
     override fun unregisterInformation(id: Information.Id<*>): Boolean = true
     override fun registerInformationProvider(informationProvider: InformationProvider): Boolean = true
     override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean = true
-    override fun <T> find(id: Information.Id<T>, useProviders: Boolean): Information<T>? = null
+    override fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean): Information<T>? = null
     override fun copy(): InformationManager = this
 }

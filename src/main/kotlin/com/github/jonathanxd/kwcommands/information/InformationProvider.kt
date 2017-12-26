@@ -42,25 +42,50 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
 interface InformationProvider {
 
     /**
+     * Provides information for [type] and [tags].
+     *
+     * @param type Type of requested information.
+     * @param tags Tags of requested information.
+     * @return Information or null if this provider cannot provide a information for provided [type] and [args].
+     */
+    fun <T> provide(type: TypeInfo<out T>, tags: Array<out String>, manager: InformationManager): Information<T>?
+
+    /**
      * Provides information for [id].
      *
      * @param id Id of requested information
      * @return Information or null if this provider cannot provide a information of [id].
      */
-    fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>?
+    fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>? =
+            this.provide(id.type, id.tags, manager)
 
     companion object {
         /**
-         * Creates unsafe [InformationProvider]. `null` is provided to [type] when a information is requested only by [id].
+         * Creates unsafe [InformationProvider].
+         * `null` is provided to [type] when a information is requested only by [id].
          */
         @Suppress("UNCHECKED_CAST")
         fun unsafe(provider: (id: Information.Id<*>,
                               manager: InformationManager) -> Information<*>?): InformationProvider =
                 object : InformationProvider {
-                    override fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>? {
-                        return provider(id, manager) as Information<T>?
-                    }
+                    override fun <T> provide(type: TypeInfo<out T>,
+                                             tags: Array<out String>, manager: InformationManager): Information<T>? =
+                            provider(Information.Id(type, tags), manager) as Information<T>?
 
+                }
+
+        /**
+         * Creates unsafe [InformationProvider].
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun unsafe(provider: (type: TypeInfo<*>,
+                              tags: Array<out String>,
+                              manager: InformationManager) -> Information<*>?): InformationProvider =
+                object : InformationProvider {
+                    override fun <T> provide(type: TypeInfo<out T>,
+                                             tags: Array<out String>,
+                                             manager: InformationManager): Information<T>? =
+                            provider(type, tags, manager) as Information<T>?
                 }
 
         /**
@@ -71,9 +96,30 @@ interface InformationProvider {
                         provider: (id: Information.Id<U>,
                                    manager: InformationManager) -> Information<U>?): InformationProvider =
                 object : InformationProvider {
-                    override fun <T> provide(id: Information.Id<T>, manager: InformationManager): Information<T>? {
-                        if (stype == id.type)
-                            return provider(id as Information.Id<U>, manager) as Information<T>?
+                    override fun <T> provide(type: TypeInfo<out T>,
+                                             tags: Array<out String>,
+                                             manager: InformationManager): Information<T>? {
+                        if (stype == type)
+                            return provider(Information.Id(type, tags) as Information.Id<U>, manager) as Information<T>?
+
+                        return null
+                    }
+                }
+
+        /**
+         * Creates a safe [InformationProvider] that is safe for [stype].
+         */
+        @Suppress("UNCHECKED_CAST")
+        fun <U> safeFor(stype: TypeInfo<U>,
+                        provider: (type: TypeInfo<out U>,
+                                   tags: Array<out String>,
+                                   manager: InformationManager) -> Information<U>?): InformationProvider =
+                object : InformationProvider {
+                    override fun <T> provide(type: TypeInfo<out T>,
+                                             tags: Array<out String>,
+                                             manager: InformationManager): Information<T>? {
+                        if (stype == type)
+                            return provider(type as TypeInfo<out U>, tags, manager) as Information<T>?
 
                         return null
                     }
