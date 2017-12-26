@@ -79,7 +79,7 @@ class SingleArgumentType<T>(
         type: TypeInfo<out T>)
     : BaseArgumentType<SingleInput, T>(transformer, validator, possibilities, defaultValue, SingleInputType, type) {
 
-    constructor(argumentTypeParser: ArgumentTypeParser<SingleInput, T>, defaultValue: T, type: TypeInfo<out T>):
+    constructor(argumentTypeParser: ArgumentTypeParser<SingleInput, T>, defaultValue: T?, type: TypeInfo<out T>):
             this(argumentTypeParser, argumentTypeParser, argumentTypeParser, defaultValue, type)
 
     override fun getListType(index: Int): ArgumentType<*, *> = this

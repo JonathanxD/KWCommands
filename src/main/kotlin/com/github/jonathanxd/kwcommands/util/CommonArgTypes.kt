@@ -29,10 +29,7 @@ package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
-import com.github.jonathanxd.kwcommands.argument.AnyArgumentType
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
-import com.github.jonathanxd.kwcommands.argument.CustomArgumentType
-import com.github.jonathanxd.kwcommands.argument.SingleArgumentType
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.dsl.stringTransformer
 import com.github.jonathanxd.kwcommands.dsl.stringValidator
 import com.github.jonathanxd.kwcommands.parser.*
@@ -158,6 +155,15 @@ fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
                            possibilitiesFunc: Possibilities,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
         SingleArgumentType(transformer, validator, possibilitiesFunc, null, typeInfo)
+
+fun <T> simpleArgumentType(parser: ArgumentTypeParser<SingleInput, T>,
+                           defaultValue: T?,
+                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
+        SingleArgumentType(parser, defaultValue, typeInfo)
+
+fun <T> simpleArgumentType(parser: ArgumentTypeParser<SingleInput, T>,
+                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
+        SingleArgumentType(parser, null, typeInfo)
 
 fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
                            validator: Validator<SingleInput>,
