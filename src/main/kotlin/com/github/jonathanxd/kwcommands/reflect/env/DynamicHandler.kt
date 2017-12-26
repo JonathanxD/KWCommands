@@ -36,7 +36,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
@@ -59,13 +59,13 @@ class DynamicHandler(val name: String,
     private var argumentHandler: OptObject<ArgumentHandler<Any?>> = none()
 
     override fun handle(commandContainer: CommandContainer,
-                        informationManager: InformationManager,
+                        informationProviders: InformationProviders,
                         resultHandler: ResultHandler): Any {
 
         if (!handler.isPresent)
             this.resolveHandlers(commandContainer.command)
 
-        return handler.value.handle(commandContainer, informationManager, resultHandler)
+        return handler.value.handle(commandContainer, informationProviders, resultHandler)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -152,12 +152,12 @@ class DynamicHandler(val name: String,
 
     override fun handle(argumentContainer: ArgumentContainer<Any?>,
                         commandContainer: CommandContainer,
-                        informationManager: InformationManager,
+                        informationProviders: InformationProviders,
                         resultHandler: ResultHandler): Any {
         if (!argumentHandler.isPresent)
             this.resolveHandlers(argumentContainer.argument, commandContainer.command)
 
-        return this.argumentHandler.value.handle(argumentContainer, commandContainer, informationManager, resultHandler)
+        return this.argumentHandler.value.handle(argumentContainer, commandContainer, informationProviders, resultHandler)
     }
 
     enum class Type {

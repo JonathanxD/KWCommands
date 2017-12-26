@@ -34,7 +34,7 @@ import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.exception.ArgumentMissingException
 import com.github.jonathanxd.kwcommands.exception.InfoMissingException
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
@@ -42,11 +42,11 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * Context of a dispatched command.
  *
  * @property commandContainer Dispatched command container.
- * @property informationManager Manager of information.
+ * @property informationProviders Providers of information.
  * @property resultHandler Handler of command result.
  */
 data class CommandContext(val commandContainer: CommandContainer,
-                          val informationManager: InformationManager,
+                          val informationProviders: InformationProviders,
                           val resultHandler: ResultHandler) {
 
     fun <T> getArgById(name: String): T =
@@ -68,15 +68,15 @@ data class CommandContext(val commandContainer: CommandContainer,
                     ?: throw InfoMissingException("Information with id '$infoId' is missing!")
 
     fun <T> getOptInfo(infoId: Information.Id<T>): Information<T>? =
-            this.informationManager.find(infoId)
+            this.informationProviders.find(infoId)
 
     fun <T> getInfoErased(infoId: Information.Id<*>): Information<T> =
-            this.informationManager.findErased(infoId)
+            this.informationProviders.findErased(infoId)
                     ?: throw InfoMissingException("Information with id '$infoId' is missing!")
 
 
     fun <T> getOptInfoErased(infoId: Information.Id<*>): Information<T>? =
-            this.informationManager.findErased(infoId)
+            this.informationProviders.findErased(infoId)
 
     fun <T> getInfoValue(infoId: Information.Id<T>): T =
             this.getInfo(infoId).value
@@ -107,12 +107,12 @@ data class CommandContext(val commandContainer: CommandContainer,
 
     inline fun <reified T> getInfo(tags: Array<String>): Information<T> =
             Information.Id(typeInfo<T>(), tags).let { infoId ->
-                this.informationManager.find(infoId)
+                this.informationProviders.find(infoId)
                         ?: throw InfoMissingException("Information with id '$infoId' is missing!")
             }
 
     inline fun <reified T> getOptInfo(tags: Array<String>): Information<T>? =
-            this.informationManager.find(Information.Id(typeInfo(), tags))
+            this.informationProviders.find(Information.Id(typeInfo(), tags))
 
     inline fun <reified T> getInfoValue(tags: Array<String>): T =
             this.getInfo<T>(tags).value

@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import java.util.*
 
 /**
@@ -36,7 +36,7 @@ import java.util.*
  * of information, the first type is the `static information`, a `static information` must be provided before
  * command handling. The second type of information is `provided information`, the provided information is
  * provided by the [InformationProvider] and this information is requested during command handling.
- * [InformationManager] will always lookup for static information first, if no static information is found, it will call
+ * [InformationProviders] will always lookup for static information first, if no static information is found, it will call
  * [InformationProvider.provide] of each registered provider and will return the first non-null provided information.
  *
  *

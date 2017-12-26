@@ -39,8 +39,8 @@ import com.github.jonathanxd.kwcommands.json.DefaultJsonParser;
 import com.github.jonathanxd.kwcommands.json.MapTypeResolver;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -84,21 +84,21 @@ public class JsonAnnotationTest {
 
         CommandProcessor processor = Processors.createCommonProcessor(manager);
 
-        InformationManagerImpl informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
-        informationManager.<JsonTest.Player>registerInformation(new Information.Id<>(TypeInfo.of(JsonTest.Player.class),
+        informationProviders.<JsonTest.Player>registerInformation(new Information.Id<>(TypeInfo.of(JsonTest.Player.class),
                 new String[]{"player"}), s -> s.equals("perm.register"), "player requesting register.");
 
         final String pname = "huh";
         final String pemail = "huh@email.com";
 
-        this.handle("register " + pname + " " + pemail, processor, informationManager);
+        this.handle("register " + pname + " " + pemail, processor, informationProviders);
 
         Assert.assertEquals(pname, this.name);
         Assert.assertEquals(pemail, this.email);
         Assert.assertEquals(1, this.called);
 
-        this.handle("register any " + pname, processor, informationManager);
+        this.handle("register any " + pname, processor, informationProviders);
 
         Assert.assertEquals(pname, this.name);
         Assert.assertEquals(null, this.email);
@@ -120,11 +120,11 @@ public class JsonAnnotationTest {
 
     private List<CommandResult> handle(String commandString,
                                        CommandProcessor processor,
-                                       InformationManager informationManager) {
+                                       InformationProviders informationProviders) {
 
         Either<ParseFail, List<CommandResult>> commandResults = processor.parseAndDispatch(
                 commandString,
-                this, informationManager);
+                this, informationProviders);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
 

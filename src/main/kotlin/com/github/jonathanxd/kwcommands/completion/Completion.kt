@@ -34,11 +34,10 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.OwnerProvider
-import com.github.jonathanxd.kwcommands.parser.SingleInput
 
 interface Completion {
 
@@ -54,15 +53,15 @@ interface Completion {
      */
     fun complete(input: String,
                  owner: Any?,
-                 informationManager: InformationManager): List<String> =
-            this.completeWithOwnerFunc(input, {owner}, informationManager)
+                 informationProviders: InformationProviders): List<String> =
+            this.completeWithOwnerFunc(input, {owner}, informationProviders)
 
     /**
      * Gets suggestions to complete [input].
      */
     fun completeWithOwnerFunc(input: String,
                               ownerProvider: OwnerProvider,
-                              informationManager: InformationManager): List<String>
+                              informationProviders: InformationProviders): List<String>
 
 }
 
@@ -96,7 +95,7 @@ interface Completions {
  * when `hello KW` is sent to completer to get suggestions, the implementation of this interface should return
  * `WCommands` and `KWCommands`, and the implementation of [Completion] will choose only `KWCommands` as completion.
  *
- * This class also receives an [InformationManager] to provide some values, this is not used by default
+ * This class also receives an [InformationProviders] to provide some values, this is not used by default
  * implementation.
  */
 interface AutoCompleter {
@@ -107,7 +106,7 @@ interface AutoCompleter {
      * an invalid input).
      */
     fun handleNonCompletable(fail: ParseFail,
-                             informationManager: InformationManager) = Unit
+                             informationProviders: InformationProviders) = Unit
 
     /**
      * Gets sub-command completion for [command].
@@ -116,7 +115,7 @@ interface AutoCompleter {
                         commandContainers: List<CommandContainer>,
                         completions: Completions,
                         commandManager: CommandManager,
-                        informationManager: InformationManager) = Unit
+                        informationProviders: InformationProviders) = Unit
 
     /**
      * Gets completions for argument name (without `--`).
@@ -124,7 +123,7 @@ interface AutoCompleter {
     fun completeArgumentName(command: Command,
                              arguments: List<ArgumentContainer<*>>,
                              completions: Completions,
-                             informationManager: InformationManager) = Unit
+                             informationProviders: InformationProviders) = Unit
 
     /**
      * Gets completions for [argument].
@@ -135,7 +134,7 @@ interface AutoCompleter {
                               argumentType: ArgumentType<*, *>,
                               input: Input?,
                               completions: Completions,
-                              informationManager: InformationManager) = Unit
+                              informationProviders: InformationProviders) = Unit
 
 
 

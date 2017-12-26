@@ -32,7 +32,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Handler
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
@@ -55,14 +55,14 @@ object NonePossibilities : None(), Possibilities {
 }
 
 object NoneHandler : None(), Handler {
-    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager,
+    override fun handle(commandContainer: CommandContainer, informationProviders: InformationProviders,
                         resultHandler: ResultHandler): Any =
             Unit
 }
 
 object NoneArgumentHandler : None(), ArgumentHandler<Any?> {
     override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer,
-                        informationManager: InformationManager, resultHandler: ResultHandler): Any =
+                        informationProviders: InformationProviders, resultHandler: ResultHandler): Any =
             Unit
 }
 

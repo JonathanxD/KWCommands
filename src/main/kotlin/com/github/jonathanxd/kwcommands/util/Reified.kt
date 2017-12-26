@@ -30,9 +30,9 @@ package com.github.jonathanxd.kwcommands.util
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 
-inline fun <reified T> InformationManager.registerInformation(tags: Array<String>, value: T, description: String? = null)
+inline fun <reified T> InformationProviders.registerInformation(tags: Array<String>, value: T, description: String? = null)
         = this.registerInformation(Information.Id(typeInfo(), tags), value, description)
 
 inline fun <reified T> Information(tags: Array<String>, value: T, description: String?): Information<T> =

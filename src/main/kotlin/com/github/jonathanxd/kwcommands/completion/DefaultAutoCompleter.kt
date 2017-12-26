@@ -33,7 +33,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.parser.*
 
 class DefaultAutoCompleter : AutoCompleter {
@@ -42,7 +42,7 @@ class DefaultAutoCompleter : AutoCompleter {
                                  commandContainers: List<CommandContainer>,
                                  completions: Completions,
                                  commandManager: CommandManager,
-                                 informationManager: InformationManager) {
+                                 informationProviders: InformationProviders) {
         val commands = mutableListOf<Command>()
         val last = commandContainers.lastOrNull()
         val root = if (command?.parent == null) command else command.superCommand
@@ -63,7 +63,7 @@ class DefaultAutoCompleter : AutoCompleter {
     override fun completeArgumentName(command: Command,
                                       arguments: List<ArgumentContainer<*>>,
                                       completions: Completions,
-                                      informationManager: InformationManager) {
+                                      informationProviders: InformationProviders) {
         completions.addAll(command.arguments.getArguments(arguments).flatMap { listOf(it.name) + it.alias })
     }
 
@@ -73,7 +73,7 @@ class DefaultAutoCompleter : AutoCompleter {
                                        argumentType: ArgumentType<*, *>,
                                        input: Input?,
                                        completions: Completions,
-                                       informationManager: InformationManager) {
+                                       informationProviders: InformationProviders) {
 
         when (argumentType.inputType) {
             is SingleInputType -> {

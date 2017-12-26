@@ -32,7 +32,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.*
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.util.*
 import java.util.*
@@ -60,16 +60,16 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
 
     override fun completeWithOwnerFunc(input: String,
                                        ownerProvider: OwnerProvider,
-                                       informationManager: InformationManager): List<String> {
+                                       informationProviders: InformationProviders): List<String> {
         val suggestions = mutableListOf<String>()
         val iter = IndexedSourcedCharIter(input)
 
         val parse = parser.parseWithOwnerFunction(iter, ownerProvider)
 
         if (parse.isRight) {
-            completeSuccess(parse.right, iter, suggestions, informationManager)
+            completeSuccess(parse.right, iter, suggestions, informationProviders)
         } else {
-            complete(parse.left, suggestions, informationManager)
+            complete(parse.left, suggestions, informationProviders)
         }
 
         return suggestions
@@ -78,7 +78,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
     private fun completeSuccess(commandContainers: List<CommandContainer>,
                                 iter: SourcedCharIterator,
                                 suggestion: MutableList<String>,
-                                informationManager: InformationManager) {
+                                informationProviders: InformationProviders) {
         val completions = ListCompletionsImpl()
         val last = commandContainers.lastOrNull()
 
@@ -86,14 +86,14 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 commandContainers,
                 completions,
                 this.parser.commandManager,
-                informationManager)
+                informationProviders)
 
         if (last != null) {
             suggestArguments(last.command,
                     last.arguments.filter { it.isDefined },
                     iter,
                     completions,
-                    informationManager)
+                    informationProviders)
         }
 
         if (completions.list.isNotEmpty()) {
@@ -128,9 +128,9 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                  parsedArgs: List<ArgumentContainer<*>>,
                                  iter: SourcedCharIterator,
                                  completions: ListCompletionsImpl,
-                                 informationManager: InformationManager) {
+                                 informationProviders: InformationProviders) {
         val completions2 = ListCompletionsImpl()
-        this.autoCompleters.completeArgumentName(command, parsedArgs, completions2, informationManager)
+        this.autoCompleters.completeArgumentName(command, parsedArgs, completions2, informationProviders)
 
         completions2.retainIfAnyMatch { parsedArgs.none { arg -> arg.argument.name == it } }
         completions2.map { "--$it" }
@@ -151,7 +151,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                             next.argumentType,
                             EmptyInput(iter.sourceString),
                             completions,
-                            informationManager)
+                            informationProviders)
                 }
                 is MapInputType -> {
                     completions.add("{")
@@ -166,7 +166,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
 
     private fun complete(parseFail: ParseFail,
                          suggestion: MutableList<String>,
-                         informationManager: InformationManager) {
+                         informationProviders: InformationProviders) {
         val parsedCommands = parseFail.parsedCommands
         val iter = parseFail.iter
 
@@ -177,7 +177,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         val completionList = completions.list
 
         if (parseFail.iter.hasNext()) {
-            this.autoCompleters.handleNonCompletable(parseFail, informationManager)
+            this.autoCompleters.handleNonCompletable(parseFail, informationProviders)
             return
         }
 
@@ -189,7 +189,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                         parseFail.parsedCommands,
                         completions,
                         parseFail.manager,
-                        informationManager)
+                        informationProviders)
 
                 completions.retainIfAnyMatch { it.startsWith(cmd) }
             }
@@ -206,10 +206,10 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 parseFail.parsedCommands,
                                 completions,
                                 parseFail.manager,
-                                informationManager)
+                                informationProviders)
                     }
 
-                    suggestArguments(command, parsedArgs, iter, completions, informationManager)
+                    suggestArguments(command, parsedArgs, iter, completions, informationProviders)
                 }
 
             }
@@ -218,7 +218,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 val parsedArgs = parseFail.parsedArgs
                 val input: String = parseFail.input
 
-                this.autoCompleters.completeArgumentName(command, parsedArgs, completions, informationManager)
+                this.autoCompleters.completeArgumentName(command, parsedArgs, completions, informationProviders)
 
                 completions.retainIfAnyMatch { it.startsWith(input) }
                 completions.map { "--$it" }
@@ -246,7 +246,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 fail.argumentType,
                                 fail.input,
                                 completions,
-                                informationManager)
+                                informationProviders)
                     }
                     is InvalidInputForArgumentTypeFail -> {
                         this.autoCompleters.completeArgumentInput(command,
@@ -255,7 +255,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 fail.argumentType,
                                 null,
                                 completions,
-                                informationManager)
+                                informationProviders)
 
                         completions.retainIfAnyMatch { it.startsWith(fail.input.getString()) }
                     }
@@ -268,7 +268,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                     fail.argumentType,
                                     fail.input,
                                     completions,
-                                    informationManager)
+                                    informationProviders)
                         }
                     }
                     is NoMoreElementsInputParseFail -> {
@@ -280,7 +280,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                     fail.argumentType,
                                     fail.input,
                                     completions,
-                                    informationManager)
+                                    informationProviders)
                     }
                     else -> {
                         this.autoCompleters.completeArgumentInput(command, parsedArgs,
@@ -288,7 +288,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 fail.argumentType,
                                 fail.input,
                                 completions,
-                                informationManager)
+                                informationProviders)
                     }
                 }
 

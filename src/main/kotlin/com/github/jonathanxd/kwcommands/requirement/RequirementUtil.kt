@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.requirement
 
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 
 /**
  * Check if all [Information] matches the [requirements][Requirement].
@@ -36,7 +36,7 @@ import com.github.jonathanxd.kwcommands.manager.InformationManager
  * @return Empty list if all requirements was satisfied or a list with unsatisfied requirements.
  */
 @Suppress("UNCHECKED_CAST")
-fun List<Requirement<*, *>>.checkRequirements(manager: InformationManager): List<UnsatisfiedRequirement<*>> {
+fun List<Requirement<*, *>>.checkRequirements(manager: InformationProviders): List<UnsatisfiedRequirement<*>> {
     val fails = mutableListOf<UnsatisfiedRequirement<*>>()
 
     this.forEach {

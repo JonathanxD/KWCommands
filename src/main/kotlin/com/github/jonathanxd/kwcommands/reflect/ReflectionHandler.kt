@@ -36,7 +36,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandContext
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.element.*
 import java.lang.invoke.MethodHandles
@@ -60,7 +60,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
 
     @Suppress("UNCHECKED_CAST")
     override fun handle(commandContainer: CommandContainer,
-                        informationManager: InformationManager,
+                        informationProviders: InformationProviders,
                         resultHandler: ResultHandler): Any {
 
         val args = mutableListOf<Any?>()
@@ -71,7 +71,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                     args += commandContainer.arguments.find { parameter.argument.name == it.argument.name }?.value
                 }
                 is ElementParameter.InformationParameter<*> -> {
-                    val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)
+                    val information = informationProviders.find(parameter.id/*, parameter.infoComponent*/)
 
                     if (!parameter.isOptional && information == null) {
                         args.add(null)
@@ -84,7 +84,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                     }
                 }
                 is ElementParameter.CtxParameter -> {
-                    args += CommandContext(commandContainer, informationManager, resultHandler)
+                    args += CommandContext(commandContainer, informationProviders, resultHandler)
                 }
             }
         }
@@ -97,7 +97,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
 
     override fun handle(argumentContainer: ArgumentContainer<Any>,
                         commandContainer: CommandContainer,
-                        informationManager: InformationManager,
+                        informationProviders: InformationProviders,
                         resultHandler: ResultHandler): Any {
 
         val parameter = element.parameters.first()
@@ -109,7 +109,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                 } ?: Unit
             }
             is ElementParameter.InformationParameter<*> -> {
-                val information = informationManager.find(parameter.id/*, parameter.infoComponent*/)
+                val information = informationProviders.find(parameter.id/*, parameter.infoComponent*/)
 
                 if (!parameter.isOptional && information == null) {
                     Unit
@@ -122,7 +122,7 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                 }
             }
             is ElementParameter.CtxParameter -> {
-                link.invoke(CommandContext(commandContainer, informationManager, resultHandler)) ?: Unit
+                link.invoke(CommandContext(commandContainer, informationProviders, resultHandler)) ?: Unit
             }
         }
     }

@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 /**
@@ -41,12 +41,12 @@ interface Handler {
      * Handles the [command][commandContainer] and [arguments][Argument] passed to it.
      *
      * @param commandContainer Parsed command.
-     * @param informationManager Information manager.
+     * @param informationProviders Information providers.
      * @param resultHandler Particular result handler.
      * @return Value result of command handling ([Unit] if none)
      */
     fun handle(commandContainer: CommandContainer,
-               informationManager: InformationManager,
+               informationProviders: InformationProviders,
                resultHandler: ResultHandler): Any
 
 }

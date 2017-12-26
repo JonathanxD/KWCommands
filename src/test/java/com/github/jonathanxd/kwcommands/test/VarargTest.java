@@ -35,8 +35,8 @@ import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -62,7 +62,7 @@ public class VarargTest {
         CommandManager commandManager = new CommandManagerImpl();
         CommandProcessor processor = Processors.createCommonProcessor(commandManager);
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
         List<Command> commands = reflectionEnvironment.fromClass(VarargTest.class,
                 aClass -> this, this);
@@ -75,7 +75,7 @@ public class VarargTest {
         Either<ParseFail, List<CommandResult>> f1 = processor.parseAndDispatch(
                 "varargcmd 1 hey man --n2 5",
                 this,
-                informationManager);
+                informationProviders);
 
         PrinterKt.handleFailAndThrow(handler, f1, sysOutWHF);
 
@@ -86,7 +86,7 @@ public class VarargTest {
         Either<ParseFail, List<CommandResult>> f2 = processor.parseAndDispatch(
                 "varargcmd 1 --names hey kw --n2 -4",
                 this,
-                informationManager);
+                informationProviders);
 
         PrinterKt.handleFailAndThrow(handler, f2, sysOutWHF);
 

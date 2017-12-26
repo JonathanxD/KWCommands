@@ -36,8 +36,8 @@ import com.github.jonathanxd.kwcommands.completion.Completion;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -64,7 +64,7 @@ public class CompletionTest {
         CommandManager commandManager = aio.getCommandManager();
         CommandProcessor processor = aio.getProcessor();
         ReflectionEnvironment reflectionEnvironment = aio.getReflectionEnvironment();
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
         Completion completion = aio.getCompletion();
 
         List<Command> commands = reflectionEnvironment.fromClass(CompletionTest.class, aClass -> this, this);
@@ -82,34 +82,34 @@ public class CompletionTest {
         String x;
 
         x = "mapcmd 1 --values {a=\"man, i l u = {\", ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(Collections3.listOf(), complete);
 
         x = "mapcmd 1 --values {a=C, ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(Collections3.listOf("A", "B"), complete);
 
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(Collections3.listOf("["), complete);
 
         x = "setmap 1 --values {name=Jonathan,values={age=18,";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(Collections3.listOf("languages"), complete);
 
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         List<String> expected = Collections3.listOf("]");
         expected.addAll(ArraysKt.map(Languages.values(), Languages::name));
         Assert.assertEquals(expected, complete);
 
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[Ja";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 ArraysKt.map(Languages.values(), Languages::name).stream()
@@ -118,73 +118,73 @@ public class CompletionTest {
                 complete);
 
         x = "";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertTrue(complete.containsAll(Collections3.listOf("mapcmd", "setmap")));
 
         x = "m";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("mapcmd"),
                 complete);
 
         x = "mc";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertTrue(complete.containsAll(Collections3.listOf("mapcmd", "setmap")));
 
         x = "mapcmd";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "mapcmd ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("a", "--n", "--values", "--n2"),
                 complete);
 
         x = "mapcmd 1";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "mapcmd 1 ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("--values", "--n2", "{"),
                 complete);
 
         x = "mapcmd 1 {";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("}", "A", "B"),
                 complete);
 
         x = "mapcmd 1 { ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("}", "A", "B"),
                 complete);
 
         x = "completeTest1";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "completeTest1 ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertTrue(Collections3.listOf(
                 "completeTest2", "completeTest2_5", "setmap", "testE",
@@ -192,111 +192,111 @@ public class CompletionTest {
         ).containsAll(complete));
 
         x = "completeTest1 completeTest2";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "completeTest1 completeTest2 ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertTrue(Collections3.listOf("completeTest3", "completeTest4", "setmap",
                 "testE", "testEOpt", "mapcmd").containsAll(complete));
 
         x = "completeTest1 completeTest2 completeTest3";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "completeTest1 completeTest2 completeTest4";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "completeTest1 completeTest2 completeTest4 ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertTrue(
                 Collections3.listOf("completeTest1", "mapcmd", "setmap", "testE", "testEOpt", "--name")
                 .containsAll(complete));
 
         x = "testE";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "testE ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("--value", "AAC", "AXD", "BBA", "BBD"),
                 complete);
 
         x = "testE  ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(),
                 complete);
 
         x = "testE --value";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "testE --value ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("AAC", "AXD", "BBA", "BBD"),
                 complete);
 
         x = "testE --value A";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("AAC", "AXD"),
                 complete);
 
         x = "testE --value AA";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("AAC"),
                 complete);
 
         x = "testE --value AX";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("AXD"),
                 complete);
 
         x = "testE --value AXD";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "testEOpt --value";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf(" "),
                 complete);
 
         x = "testEOpt --value ";
-        complete = completion.complete(x, null, informationManager);
+        complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
                 Collections3.listOf("AAC", "AXD", "BBA", "BBD"),

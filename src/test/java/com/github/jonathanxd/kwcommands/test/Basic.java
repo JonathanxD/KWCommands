@@ -39,10 +39,9 @@ import com.github.jonathanxd.kwcommands.information.InformationProvider;
 import com.github.jonathanxd.kwcommands.information.RequiredInformation;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider;
-import com.github.jonathanxd.kwcommands.parser.SingleInput;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.Processors;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
@@ -67,8 +66,8 @@ public class Basic {
         Command command = Command.builder()
                 .name("play")
                 .description(Text.of("Play a music on instrument"))
-                .handler((commandContainer, informationManager, resultHandler) -> {
-                    Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
+                .handler((commandContainer, informationProviders, resultHandler) -> {
+                    Information<Speaker> speakerInfo = informationProviders.findOrEmpty(SPEAKER_INFO_ID);
                     if (!speakerInfo.isEmpty()) {
                         speakerInfo.getValue().speak("...");
                     }
@@ -78,8 +77,8 @@ public class Basic {
                 .arguments(new StaticListArguments(Argument.<Music>builder()
                         .name("music")
                         .argumentType(CommonArgTypesKt.enumArgumentType(Music.class))
-                        .handler((argumentContainer, commandContainer, informationManager, resultHandler) -> {
-                            Information<Speaker> speakerInfo = informationManager.findOrEmpty(SPEAKER_INFO_ID);
+                        .handler((argumentContainer, commandContainer, informationProviders, resultHandler) -> {
+                            Information<Speaker> speakerInfo = informationProviders.findOrEmpty(SPEAKER_INFO_ID);
 
                             if (!speakerInfo.isEmpty()) {
                                 speakerInfo.getValue().speak(String.format("Playing %s", argumentContainer.getValue().name()));
@@ -92,7 +91,7 @@ public class Basic {
 
         processor.getParser().getCommandManager().registerCommand(command, this);
 
-        InformationManager manager = new InformationManagerImpl();
+        InformationProviders manager = new InformationProvidersImpl();
 
         manager.registerInformationProvider(InformationProvider.Companion.safeFor(TypeInfo.of(Speaker.class),
                 (id, imanager) -> {
@@ -117,11 +116,11 @@ public class Basic {
 
         reflection.registerCommands(reflection.fromClass(Play.class, f, this), this);
 
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
-        informationManager.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
+        informationProviders.registerInformation(SPEAKER_INFO_ID, (Speaker) System.out::println, null);
 
-        processor.parseAndDispatch("play a c", this, informationManager);
+        processor.parseAndDispatch("play a c", this, informationProviders);
     }
 
 

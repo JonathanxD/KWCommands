@@ -31,16 +31,15 @@ import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.collection.Comparators3
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoSortComparator
-import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvider
 import java.util.*
 import java.util.function.Function
 
 /**
- * Common implementation of [InformationManager].
+ * Common implementation of [InformationProviders].
  */
-class InformationManagerImpl : InformationManager {
+class InformationProvidersImpl : InformationProviders {
 
     private val informationSet_ = mutableSetOf<Information<*>>()
     private val informationProviders_ = mutableSetOf<InformationProvider>()
@@ -49,7 +48,7 @@ class InformationManagerImpl : InformationManager {
     override val informationProviders: Set<InformationProvider> = Collections.unmodifiableSet(this.informationProviders_)
 
     init {
-        this.registerInformation(INFORMATION_MANAGER_ID, this, "Information manager")
+        this.registerInformation(INFORMATION_PROVIDERS_ID, this, "Information manager")
     }
 
     override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean =
@@ -100,8 +99,8 @@ class InformationManagerImpl : InformationManager {
         return null
     }
 
-    override fun copy(): InformationManager {
-        val newManager = InformationManagerImpl()
+    override fun copy(): InformationProviders {
+        val newManager = InformationProvidersImpl()
 
         newManager.informationSet_.addAll(this.informationSet_)
         newManager.informationProviders_.addAll(this.informationProviders_)
@@ -118,7 +117,7 @@ class InformationManagerImpl : InformationManager {
 /**
  * Empty information manager.
  */
-object InformationManagerVoid : InformationManager {
+object InformationProvidersVoid : InformationProviders {
 
     override val informationSet: Set<Information<*>> get() = emptySet()
     override val informationProviders: Set<InformationProvider> get() = emptySet()
@@ -128,5 +127,5 @@ object InformationManagerVoid : InformationManager {
     override fun registerInformationProvider(informationProvider: InformationProvider): Boolean = true
     override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean = true
     override fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean): Information<T>? = null
-    override fun copy(): InformationManager = this
+    override fun copy(): InformationProviders = this
 }

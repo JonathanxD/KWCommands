@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 /**
@@ -43,13 +43,13 @@ interface ArgumentHandler<T> {
      *
      * @param argumentContainer parsed argument.
      * @param commandContainer Parsed command.
-     * @param informationManager Information manager.
+     * @param informationProviders Information providers.
      * @param resultHandler Result handler.
      * @return Value result of argument handling ([Unit] if none)
      */
     fun handle(argumentContainer: ArgumentContainer<T>,
                commandContainer: CommandContainer,
-               informationManager: InformationManager,
+               informationProviders: InformationProviders,
                resultHandler: ResultHandler): Any
 
     companion object {
@@ -58,13 +58,13 @@ interface ArgumentHandler<T> {
          */
         inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>,
                                                      commandContainer: CommandContainer,
-                                                     informationManager: InformationManager,
+                                                     informationProviders: InformationProviders,
                                                      resultHandler: ResultHandler) -> Any) = object : ArgumentHandler<T> {
             override fun handle(argumentContainer: ArgumentContainer<T>,
                                 commandContainer: CommandContainer,
-                                informationManager: InformationManager,
+                                informationProviders: InformationProviders,
                                 resultHandler: ResultHandler): Any =
-                    function(argumentContainer, commandContainer, informationManager, resultHandler)
+                    function(argumentContainer, commandContainer, informationProviders, resultHandler)
         }
 
     }

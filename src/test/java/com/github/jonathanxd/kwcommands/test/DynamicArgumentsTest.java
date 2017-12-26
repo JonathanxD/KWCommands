@@ -44,8 +44,8 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer;
 import com.github.jonathanxd.kwcommands.command.CommandContext;
 import com.github.jonathanxd.kwcommands.command.Handler;
 import com.github.jonathanxd.kwcommands.completion.CompletionImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersVoid;
 import com.github.jonathanxd.kwcommands.processor.ResultHandler;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
@@ -80,35 +80,35 @@ public class DynamicArgumentsTest {
 
         CompletionImpl completion = aio.getCompletion();
 
-        List<String> complete = completion.complete("create ", this, InformationManagerVoid.INSTANCE);
+        List<String> complete = completion.complete("create ", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf("--type", "TypeA", "TypeB"), complete);
 
-        complete = completion.complete("create TypeA ", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeA ", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf("--list", "["), complete);
 
-        complete = completion.complete("create TypeB ", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeB ", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf("--map", "{"), complete);
 
-        complete = completion.complete("create TypeB {", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeB {", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf("}", "TypeA", "TypeB"), complete);
 
-        complete = completion.complete("create TypeB {TypeA=c", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeB {TypeA=c", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf(",", "}"), complete);
 
-        complete = completion.complete("create TypeB {TypeA=c,", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeB {TypeA=c,", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf("TypeA", "TypeB"), complete);
 
-        complete = completion.complete("create TypeB {TypeA=c}", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeB {TypeA=c}", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf(), complete);
 
-        complete = completion.complete("create TypeB {TypeA=c} ", this, InformationManagerVoid.INSTANCE);
+        complete = completion.complete("create TypeB {TypeA=c} ", this, InformationProvidersVoid.INSTANCE);
 
         Assert.assertEquals(Collections3.listOf(), complete);
     }
@@ -119,11 +119,11 @@ public class DynamicArgumentsTest {
 
         aio.loadObj(this).registerLoaded();
 
-        aio.parseAndDispatch("create TypeA [A, 1]", InformationManagerVoid.INSTANCE);
+        aio.parseAndDispatch("create TypeA [A, 1]", InformationProvidersVoid.INSTANCE);
         Assert.assertTrue(this.dispatched);
         this.reset();
 
-        aio.parseAndDispatch("create TypeB {TypeB=1}", InformationManagerVoid.INSTANCE);
+        aio.parseAndDispatch("create TypeB {TypeB=1}", InformationProvidersVoid.INSTANCE);
         Assert.assertTrue(this.dispatched);
         this.reset();
     }
@@ -134,11 +134,11 @@ public class DynamicArgumentsTest {
 
         aio.loadObj(this).registerLoaded();
 
-        aio.parseAndDispatch("create2 TypeA [A, 1]", InformationManagerVoid.INSTANCE);
+        aio.parseAndDispatch("create2 TypeA [A, 1]", InformationProvidersVoid.INSTANCE);
         Assert.assertTrue(this.dispatched);
         this.reset();
 
-        aio.parseAndDispatch("create2 TypeB {TypeB=1}", InformationManagerVoid.INSTANCE);
+        aio.parseAndDispatch("create2 TypeB {TypeB=1}", InformationProvidersVoid.INSTANCE);
         Assert.assertTrue(this.dispatched);
         this.reset();
     }
@@ -189,7 +189,7 @@ public class DynamicArgumentsTest {
         @NotNull
         @Override
         public Object handle(@NotNull CommandContainer commandContainer,
-                             @NotNull InformationManager informationManager,
+                             @NotNull InformationProviders informationProviders,
                              @NotNull ResultHandler resultHandler) {
             return Unit.INSTANCE;
         }

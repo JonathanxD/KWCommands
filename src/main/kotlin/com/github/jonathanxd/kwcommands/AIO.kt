@@ -32,7 +32,7 @@ import com.github.jonathanxd.kwcommands.completion.CompletionImpl
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.instanceProvider
 import com.github.jonathanxd.kwcommands.parser.CommandParserImpl
@@ -99,12 +99,12 @@ class AIO(val owner: Any) {
     /**
      * Complete commands of this [owner].
      */
-    fun complete(commandString: String, informationManager: InformationManager) =
-            this.completion.complete(commandString, this.owner, informationManager)
+    fun complete(commandString: String, informationProviders: InformationProviders) =
+            this.completion.complete(commandString, this.owner, informationProviders)
 
     /**
      * Parse and dispatch commands of this [owner].
      */
-    fun parseAndDispatch(commandString: String, informationManager: InformationManager) =
-            this.processor.parseAndDispatch(commandString, owner, informationManager)
+    fun parseAndDispatch(commandString: String, informationProviders: InformationProviders) =
+            this.processor.parseAndDispatch(commandString, owner, informationProviders)
 }

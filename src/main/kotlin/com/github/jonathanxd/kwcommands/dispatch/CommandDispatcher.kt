@@ -28,13 +28,11 @@
 package com.github.jonathanxd.kwcommands.dispatch
 
 import com.github.jonathanxd.iutils.option.Options
-import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.manager.InformationManager
-import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersVoid
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
@@ -87,12 +85,12 @@ interface CommandDispatcher {
      * This function will first check requirements, and then handle arguments and the command.
      *
      * @param commands Command to handle.
-     * @param informationManager Information provide manager.
+     * @param informationProviders Information providers.
      * @return Result of command handling process. May be command handler return values or values added via
      * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
      * each command.
      */
     fun dispatch(commands: List<CommandContainer>,
-                 informationManager: InformationManager = InformationManagerVoid): List<CommandResult>
+                 informationProviders: InformationProviders = InformationProvidersVoid): List<CommandResult>
 
 }

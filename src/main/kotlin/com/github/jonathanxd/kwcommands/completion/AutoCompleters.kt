@@ -34,7 +34,7 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.parser.Input
 
 /**
@@ -43,9 +43,9 @@ import com.github.jonathanxd.kwcommands.parser.Input
 class AutoCompleters(private val completers: List<AutoCompleter>) : AutoCompleter {
 
     override fun handleNonCompletable(fail: ParseFail,
-                                      informationManager: InformationManager) {
+                                      informationProviders: InformationProviders) {
         completers.forEach {
-            it.handleNonCompletable(fail, informationManager)
+            it.handleNonCompletable(fail, informationProviders)
         }
     }
 
@@ -53,18 +53,18 @@ class AutoCompleters(private val completers: List<AutoCompleter>) : AutoComplete
                                  commandContainers: List<CommandContainer>,
                                  completions: Completions,
                                  commandManager: CommandManager,
-                                 informationManager: InformationManager) {
+                                 informationProviders: InformationProviders) {
         completers.forEach {
-            it.completeCommand(command, commandContainers, completions, commandManager, informationManager)
+            it.completeCommand(command, commandContainers, completions, commandManager, informationProviders)
         }
     }
 
     override fun completeArgumentName(command: Command,
                                       arguments: List<ArgumentContainer<*>>,
                                       completions: Completions,
-                                      informationManager: InformationManager) {
+                                      informationProviders: InformationProviders) {
         completers.forEach {
-            it.completeArgumentName(command, arguments, completions, informationManager)
+            it.completeArgumentName(command, arguments, completions, informationProviders)
         }
     }
 
@@ -74,9 +74,9 @@ class AutoCompleters(private val completers: List<AutoCompleter>) : AutoComplete
                                        argumentType: ArgumentType<*, *>,
                                        input: Input?,
                                        completions: Completions,
-                                       informationManager: InformationManager) {
+                                       informationProviders: InformationProviders) {
         completers.forEach {
-            it.completeArgumentInput(command, arguments, argument, argumentType, input, completions, informationManager)
+            it.completeArgumentInput(command, arguments, argument, argumentType, input, completions, informationProviders)
         }
 
     }

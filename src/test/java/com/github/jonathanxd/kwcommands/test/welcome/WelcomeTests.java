@@ -36,8 +36,8 @@ import com.github.jonathanxd.kwcommands.json.DefaultJsonParser;
 import com.github.jonathanxd.kwcommands.json.MapTypeResolver;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -56,9 +56,9 @@ public class WelcomeTests {
         CommandManager commandManager = new CommandManagerImpl();
         CommandProcessor processor = Processors.createCommonProcessor(commandManager);
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
-        this.register(informationManager, "1.0");
+        this.register(informationProviders, "1.0");
 
         List<Command> commands = reflectionEnvironment.fromClass(Welcome10.class, aClass -> new Welcome10(), this);
 
@@ -67,7 +67,7 @@ public class WelcomeTests {
         HelpInfoHandler handler = this.getHelper();
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        processor.parseAndDispatch("welcome", this, informationManager).ifLeft(f -> {
+        processor.parseAndDispatch("welcome", this, informationProviders).ifLeft(f -> {
             handler.handleFail(f, sysOutWHF);
         });
     }
@@ -77,14 +77,14 @@ public class WelcomeTests {
         CommandManager commandManager = new CommandManagerImpl();
         CommandProcessor processor = Processors.createCommonProcessor(commandManager);
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
         MapTypeResolver mapTypeResolver = new MapTypeResolver();
 
         mapTypeResolver.set("Logger", Logger.class);
         mapTypeResolver.set("User", User.class);
         mapTypeResolver.set("PermissionTester", PermissionTester.class);
 
-        this.register(informationManager, "1.1");
+        this.register(informationProviders, "1.1");
 
         List<Command> commands = reflectionEnvironment.fromJsonClass(
                 Welcome11.class,
@@ -96,7 +96,7 @@ public class WelcomeTests {
         HelpInfoHandler handler = this.getHelper();
         CommonPrinter sysOutWHF = Printers.INSTANCE.getSysOutWHF();
 
-        processor.parseAndDispatch("mycommands welcome", this, informationManager).ifLeft(f -> {
+        processor.parseAndDispatch("mycommands welcome", this, informationProviders).ifLeft(f -> {
             handler.handleFail(f, sysOutWHF);
         });
     }
@@ -105,12 +105,12 @@ public class WelcomeTests {
         return new CommonHelpInfoHandler();
     }
 
-    private void register(InformationManager informationManager, String version) {
+    private void register(InformationProviders informationProviders, String version) {
         Information.Id<Logger> loggerId = new Information.Id<>(TypeInfo.of(Logger.class), new String[]{"logger"});
         Information.Id<User> userId = new Information.Id<>(TypeInfo.of(User.class), new String[]{"user"});
 
-        informationManager.registerInformation(loggerId, this.getLogger(version), "Default provided logger");
-        informationManager.registerInformation(userId, this.getUser(), "Default provided user");
+        informationProviders.registerInformation(loggerId, this.getLogger(version), "Default provided logger");
+        informationProviders.registerInformation(userId, this.getUser(), "Default provided user");
     }
 
     private Logger getLogger(String version) {

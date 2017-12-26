@@ -34,7 +34,7 @@ import com.github.jonathanxd.kwcommands.dsl.staticListArguments
 import com.github.jonathanxd.kwcommands.dsl.stringArg
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.util.KLocale
@@ -66,7 +66,7 @@ class NamedArgTest {
             }
         }
 
-        val infoManager = InformationManagerImpl()
+        val infoManager = InformationProvidersImpl()
         val manager = CommandManagerImpl()
         val processor = Processors.createCommonProcessor(manager)
 

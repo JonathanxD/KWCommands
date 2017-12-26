@@ -33,7 +33,7 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.*
 import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.MissingInformation
@@ -59,7 +59,7 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
             this.dispatchHandlers.remove(dispatchHandler)
 
     override fun dispatch(commands: List<CommandContainer>,
-                          informationManager: InformationManager): List<CommandResult> {
+                          informationProviders: InformationProviders): List<CommandResult> {
         val results = mutableListOf<CommandResult>()
         val perCommandResults = mutableListOf<CommandResult>()
 
@@ -76,18 +76,18 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
 
             container?.let {
                 val argWithReq = it.arguments.map {
-                    it to it.argument.requirements.checkRequirements(informationManager)
+                    it to it.argument.requirements.checkRequirements(informationProviders)
                 }
 
                 val argWithInfoReq = it.arguments.map {
-                    it to it.argument.requiredInfo.checkRequiredInfo(informationManager)
+                    it to it.argument.requiredInfo.checkRequiredInfo(informationProviders)
                 }
 
                 val commandReq =
-                        command.command.requirements.checkRequirements(informationManager)
+                        command.command.requirements.checkRequirements(informationProviders)
 
                 val commandInfoReq =
-                        command.command.requiredInfo.checkRequiredInfo(informationManager)
+                        command.command.requiredInfo.checkRequiredInfo(informationProviders)
 
                 if (commandReq.isNotEmpty()) {
                     perCommandResults.add(UnsatisfiedRequirementsResult(commandReq, null, it))
@@ -134,7 +134,7 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                                     current = arg,
                                     targetList = perCommandResults)
 
-                            val handle = handler.handle(arg, it, informationManager, resultHandler)
+                            val handle = handler.handle(arg, it, informationProviders, resultHandler)
 
                             if (resultHandler.shouldCancel())
                                 shouldExecuteCommand = false
@@ -150,7 +150,7 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                                 targetList = perCommandResults)
 
                         it.handler?.let { handler ->
-                            val handle = handler.handle(it, informationManager, resultHandler)
+                            val handle = handler.handle(it, informationProviders, resultHandler)
 
                             resultHandler.result(handle)
                         }

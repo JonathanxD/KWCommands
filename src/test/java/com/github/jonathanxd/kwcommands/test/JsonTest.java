@@ -27,14 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.test;
 
-import com.github.jonathanxd.iutils.collection.Collections3;
 import com.github.jonathanxd.iutils.exception.RethrowException;
 import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.iutils.text.Text;
 import com.github.jonathanxd.iutils.text.TextComponent;
 import com.github.jonathanxd.iutils.type.TypeInfo;
-import com.github.jonathanxd.kwcommands.argument.Argument;
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
 import com.github.jonathanxd.kwcommands.argument.ArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.command.CommandContainer;
@@ -48,11 +45,10 @@ import com.github.jonathanxd.kwcommands.json.MapTypeResolver;
 import com.github.jonathanxd.kwcommands.json.TypeResolverKt;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.parser.Input;
 import com.github.jonathanxd.kwcommands.parser.SingleInput;
-import com.github.jonathanxd.kwcommands.parser.SingleInputType;
 import com.github.jonathanxd.kwcommands.parser.Validation;
 import com.github.jonathanxd.kwcommands.parser.ValidationKt;
 import com.github.jonathanxd.kwcommands.parser.Validator;
@@ -141,9 +137,9 @@ public class JsonTest {
 
         CommandProcessor processor = Processors.createCommonProcessor(manager);
 
-        InformationManagerImpl informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
-        informationManager.<JsonTest.Player>registerInformation(new Information.Id<>(TypeInfo.of(JsonTest.Player.class),
+        informationProviders.<JsonTest.Player>registerInformation(new Information.Id<>(TypeInfo.of(JsonTest.Player.class),
                 new String[]{"player"}), s -> s.equals("perm.register"), "player requesting register.");
 
         final String pname = "huh";
@@ -151,7 +147,7 @@ public class JsonTest {
 
         Either<ParseFail, List<CommandResult>> commandResults = processor.parseAndDispatch(
                 "register " + pname + " " + pemail,
-                this, informationManager);
+                this, informationProviders);
 
         CommonHelpInfoHandler commonHelpInfoHandler = new CommonHelpInfoHandler();
 
@@ -194,7 +190,7 @@ public class JsonTest {
         @NotNull
         @Override
         public Object handle(@NotNull CommandContainer commandContainer,
-                             @NotNull InformationManager informationManager,
+                             @NotNull InformationProviders informationProviders,
                              @NotNull ResultHandler resultHandler) {
             return null;
         }

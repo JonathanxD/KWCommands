@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.test;
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
 import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.reflect.annotation.AfterDispatch;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
@@ -66,7 +66,7 @@ public class ReflectWithAfterDispatch {
 
 
         aio.getProcessor().parseAndDispatch("say hello calc plus 4 4", this,
-                new InformationManagerImpl());
+                new InformationProvidersImpl());
 
         Assert.assertEquals(2, handled);
         Assert.assertEquals(1, handled2);

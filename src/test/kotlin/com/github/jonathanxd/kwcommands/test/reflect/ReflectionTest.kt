@@ -33,7 +33,6 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.*
-import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.parser.valid
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
@@ -63,7 +62,7 @@ class ReflectionTest {
 
     @Test
     fun test() {
-        val information = InformationManagerImpl()
+        val information = InformationProvidersImpl()
 
         information.registerInformation(informationId { tags { +"player" } }, Player)
 
@@ -113,7 +112,7 @@ class ReflectionTest {
 
     @Test
     fun game() {
-        val information = InformationManagerImpl()
+        val information = InformationProvidersImpl()
 
         information.registerInformation(informationId { tags { +"player" } }, Player)
 
@@ -183,7 +182,7 @@ class ReflectionTest {
 
     @Test
     fun testOptionalInfo() {
-        val information = InformationManagerImpl()
+        val information = InformationProvidersImpl()
 
         val simplePlayer = SimplePlayer("Player9")
 

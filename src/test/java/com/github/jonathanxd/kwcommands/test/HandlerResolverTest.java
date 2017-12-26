@@ -36,9 +36,9 @@ import com.github.jonathanxd.kwcommands.command.Handler;
 import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerKt;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersKt;
 import com.github.jonathanxd.kwcommands.parser.CommandParser;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
@@ -71,12 +71,12 @@ public class HandlerResolverTest {
         aio.loadObj(this)
                 .registerLoaded();
 
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
-        informationManager.registerRecommendations(aio.getCommandManager(), aio.getParser(), aio.getDispatcher());
+        informationProviders.registerRecommendations(aio.getCommandManager(), aio.getParser(), aio.getDispatcher());
 
         Either<ParseFail, List<CommandResult>> firstA =
-                aio.parseAndDispatch("first A", informationManager);
+                aio.parseAndDispatch("first A", informationProviders);
 
         PrinterKt.handleFailAndThrow(aio.getHelp(), firstA, Printers.INSTANCE.getSysOutWHF());
         Assert.assertTrue(firstA.isRight());
@@ -110,12 +110,12 @@ public class HandlerResolverTest {
         @NotNull
         @Override
         public Object handle(@NotNull CommandContainer commandContainer,
-                             @NotNull InformationManager informationManager,
+                             @NotNull InformationProviders informationProviders,
                              @NotNull ResultHandler resultHandler) {
             return ">> "+this.instance.first(
                     commandContainer.getArgumentValue("name", TypeInfo.of(String.class)),
-                    informationManager.findOrEmpty(InformationManagerKt.COMMAND_MANAGER_ID).getValue(),
-                    informationManager.findOrEmpty(InformationManagerKt.COMMAND_PARSER_ID).getValue());
+                    informationProviders.findOrEmpty(InformationProvidersKt.COMMAND_MANAGER_ID).getValue(),
+                    informationProviders.findOrEmpty(InformationProvidersKt.COMMAND_PARSER_ID).getValue());
         }
     }
 

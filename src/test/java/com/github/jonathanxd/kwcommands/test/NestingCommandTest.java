@@ -31,7 +31,7 @@ import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerVoid;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersVoid;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.processor.ValueResult;
@@ -53,7 +53,7 @@ public class NestingCommandTest {
                 .registerLoaded();
 
         Either<ParseFail, List<CommandResult>> first_second =
-                aio.parseAndDispatch("first second 2", InformationManagerVoid.INSTANCE);
+                aio.parseAndDispatch("first second 2", InformationProvidersVoid.INSTANCE);
 
         PrinterKt.handleFailAndThrow(aio.getHelp(), first_second, Printers.INSTANCE.getSysOutWHF());
         Assert.assertTrue(first_second.isRight());

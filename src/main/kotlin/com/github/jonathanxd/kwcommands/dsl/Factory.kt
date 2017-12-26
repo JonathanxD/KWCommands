@@ -35,7 +35,7 @@ import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.*
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.manager.InformationManager
+import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -97,14 +97,14 @@ class BuildingArgument<I : Input, T> {
 
     inline fun handler(crossinline f: (argumentContainer: ArgumentContainer<T>,
                                        commandContainer: CommandContainer,
-                                       informationManager: InformationManager,
+                                       informationProviders: InformationProviders,
                                        resultHandler: ResultHandler) -> Any) {
         this.handler = object : ArgumentHandler<T> {
             override fun handle(argumentContainer: ArgumentContainer<T>,
                                 commandContainer: CommandContainer,
-                                informationManager: InformationManager,
+                                informationProviders: InformationProviders,
                                 resultHandler: ResultHandler): Any =
-                    f(argumentContainer, commandContainer, informationManager, resultHandler)
+                    f(argumentContainer, commandContainer, informationProviders, resultHandler)
 
         }
     }
@@ -278,13 +278,13 @@ inline fun <T> requireInfoPlain(f: BuildingRequiredInfo<T>.() -> Unit): Required
 
 inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContainer<T>,
                                                commandContainer: CommandContainer,
-                                               informationManager: InformationManager,
+                                               informationProviders: InformationProviders,
                                                resultHandler: ResultHandler) -> Any): ArgumentHandler<T> = object : ArgumentHandler<T> {
     override fun handle(argumentContainer: ArgumentContainer<T>,
                         commandContainer: CommandContainer,
-                        informationManager: InformationManager,
+                        informationProviders: InformationProviders,
                         resultHandler: ResultHandler): Any =
-            f(argumentContainer, commandContainer, informationManager, resultHandler)
+            f(argumentContainer, commandContainer, informationProviders, resultHandler)
 
 }
 
@@ -451,22 +451,22 @@ class BuildingCommand {
             f(this.alias)
 
     inline fun handler(crossinline f: (commandContainer: CommandContainer,
-                                       informationManager: InformationManager,
+                                       informationProviders: InformationProviders,
                                        resultHandler: ResultHandler) -> Any) {
         this.handler = object : Handler {
             override fun handle(commandContainer: CommandContainer,
-                                informationManager: InformationManager,
+                                informationProviders: InformationProviders,
                                 resultHandler: ResultHandler): Any =
-                    f(commandContainer, informationManager, resultHandler)
+                    f(commandContainer, informationProviders, resultHandler)
         }
     }
 
     inline fun handlerWithContext(crossinline f: (context: CommandContext) -> Any) {
         this.handler = object : Handler {
             override fun handle(commandContainer: CommandContainer,
-                                informationManager: InformationManager,
+                                informationProviders: InformationProviders,
                                 resultHandler: ResultHandler): Any =
-                    f(CommandContext(commandContainer, informationManager, resultHandler))
+                    f(CommandContext(commandContainer, informationProviders, resultHandler))
         }
     }
 
@@ -492,10 +492,10 @@ inline fun command(f: BuildingCommand.() -> Unit): Command =
         BuildingCommand().also { f(it) }.toCommand()
 
 inline fun handler(crossinline f: (commandContainer: CommandContainer,
-                                   informationManager: InformationManager,
+                                   informationProviders: InformationProviders,
                                    resultHandler: ResultHandler) -> Any) = object : Handler {
-    override fun handle(commandContainer: CommandContainer, informationManager: InformationManager, resultHandler: ResultHandler): Any =
-            f(commandContainer, informationManager, resultHandler)
+    override fun handle(commandContainer: CommandContainer, informationProviders: InformationProviders, resultHandler: ResultHandler): Any =
+            f(commandContainer, informationProviders, resultHandler)
 }
 
 inline fun staticListArguments(f: UList<Argument<*>>.() -> Unit): Arguments =

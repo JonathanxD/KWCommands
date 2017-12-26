@@ -37,7 +37,7 @@ import com.github.jonathanxd.kwcommands.parser.CommandParser
 @JvmField
 val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
 @JvmField
-val INFORMATION_MANAGER_ID = Information.Id(typeInfo<InformationManager>(), arrayOf("information_manager"))
+val INFORMATION_PROVIDERS_ID = Information.Id(typeInfo<InformationProviders>(), arrayOf("information_providers"))
 @JvmField
 val COMMAND_PARSER_ID = Information.Id(typeInfo<CommandParser>(), arrayOf("command_parser"))
 @JvmField
@@ -46,7 +46,7 @@ val COMMAND_DISPATCHER_ID = Information.Id(typeInfo<CommandDispatcher>(), arrayO
 /**
  * Register and provide information.
  */
-interface InformationManager {
+interface InformationProviders {
 
     /**
      * Static information set
@@ -88,7 +88,7 @@ interface InformationManager {
     fun registerInformation(information: Information<*>): Boolean
 
     /**
-     * Unregister information with id [id].
+     * Unregister static information with id [id].
      */
     fun unregisterInformation(id: Information.Id<*>): Boolean
 
@@ -180,7 +180,7 @@ interface InformationManager {
     /**
      * Creates a safe copy of this manager, modifications on the copy does not affect this instance.
      */
-    fun copy(): InformationManager
+    fun copy(): InformationProviders
 
     // With id variants
 

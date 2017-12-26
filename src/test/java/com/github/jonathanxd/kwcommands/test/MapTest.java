@@ -37,8 +37,8 @@ import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
 import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
-import com.github.jonathanxd.kwcommands.manager.InformationManager;
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl;
+import com.github.jonathanxd.kwcommands.manager.InformationProviders;
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.parser.ListInputType;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
@@ -69,7 +69,7 @@ public class MapTest {
         CommandManager commandManager = new CommandManagerImpl();
         CommandProcessor processor = Processors.createCommonProcessor(commandManager);
         ReflectionEnvironment reflectionEnvironment = new ReflectionEnvironment(commandManager);
-        InformationManager informationManager = new InformationManagerImpl();
+        InformationProviders informationProviders = new InformationProvidersImpl();
 
         List<Command> commands = reflectionEnvironment.fromClass(MapTest.class, aClass -> this, this);
 
@@ -83,7 +83,7 @@ public class MapTest {
         run = processor.parseAndDispatch(
                 "mapcmd 897 { project = KWCommands } --n2 -8",
                 this,
-                informationManager);
+                informationProviders);
 
         PrinterKt.handleFail(localizedHandler, run, localizedSysOutWHF);
 
@@ -97,7 +97,7 @@ public class MapTest {
                         "--values {a=\"man, i l u = {\", uhu=s} " +
                         "--n2 2",
                 this,
-                informationManager);
+                informationProviders);
 
         Assert.assertEquals(1, this.n);
         Assert.assertEquals(MapUtils.mapOf("a", "man, i l u = {", "uhu", "s"), this.values);
@@ -110,7 +110,7 @@ public class MapTest {
                         //"--values {a=\"man, \"" +
                         "--n2 2",
                 this,
-                informationManager);
+                informationProviders);
 
         localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
 
@@ -126,7 +126,7 @@ public class MapTest {
                         //"--values {a=\"man, \"" +
                         "--n2 2",
                 this,
-                informationManager);
+                informationProviders);
 
 
         localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);

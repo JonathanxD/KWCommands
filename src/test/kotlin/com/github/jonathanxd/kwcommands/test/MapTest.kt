@@ -34,7 +34,7 @@ import com.github.jonathanxd.kwcommands.argument.CustomArgumentType
 import com.github.jonathanxd.kwcommands.dsl.*
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InformationManagerImpl
+import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.util.KLocale
@@ -94,7 +94,7 @@ class MapTest2 {
             }
         }
 
-        val infoManager = InformationManagerImpl()
+        val infoManager = InformationProvidersImpl()
         infoManager.registerInformation(informationId<DslTest.Group> { tags { +"group" } }, DslTest.Group.ADMIN, "")
         val manager = CommandManagerImpl()
         val processor = Processors.createCommonProcessor(manager)
