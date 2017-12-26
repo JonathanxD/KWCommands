@@ -78,13 +78,17 @@ class SingleArgumentType<T>(
         defaultValue: T?,
         type: TypeInfo<out T>)
     : BaseArgumentType<SingleInput, T>(transformer, validator, possibilities, defaultValue, SingleInputType, type) {
+
+    constructor(argumentTypeParser: ArgumentTypeParser<SingleInput, T>, defaultValue: T, type: TypeInfo<out T>):
+            this(argumentTypeParser, argumentTypeParser, argumentTypeParser, defaultValue, type)
+
     override fun getListType(index: Int): ArgumentType<*, *> = this
     override fun getMapKeyType(index: Int): ArgumentType<*, *> = this
     override fun getMapValueType(index: Int): ArgumentType<*, *> = this
     override fun hasType(index: Int): Boolean = true
 }
 
-class CustomArgumentType<T, I: Input, V>(
+class CustomArgumentType<out T, I: Input, V>(
         val converter: (V) -> T,
         defaultValue: T?,
         val argumentType: ArgumentType<I, V>,
