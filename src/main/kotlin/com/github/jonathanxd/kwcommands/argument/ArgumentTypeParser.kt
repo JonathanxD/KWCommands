@@ -27,9 +27,20 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
+import com.github.jonathanxd.kwcommands.parser.*
 
-abstract class ArgumentTypeParser<in I: Input, out T>: Validator<I>, Transformer<I, T>, Possibilities
+abstract class ArgumentTypeParser<I: Input, out T>: Validator<I>, Transformer<I, T>, Possibilities {
+
+    abstract fun validate(argumentType: ArgumentType<I, *>, input: I): Validation
+    abstract fun transform(input: I): T
+    abstract fun possibilities(): List<Input>
+
+    override fun invoke(argumentType: ArgumentType<I, *>, value: I): Validation =
+            this.validate(argumentType, value)
+
+    override fun invoke(value: I): T =
+            this.transform(value)
+
+    override fun invoke(): List<Input> =
+            this.possibilities()
+}
