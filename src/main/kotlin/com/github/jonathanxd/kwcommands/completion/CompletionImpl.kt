@@ -167,7 +167,6 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
     private fun complete(parseFail: ParseFail,
                          suggestion: MutableList<String>,
                          informationProviders: InformationProviders) {
-        val parsedCommands = parseFail.parsedCommands
         val iter = parseFail.iter
 
         if (!iter.isValid())

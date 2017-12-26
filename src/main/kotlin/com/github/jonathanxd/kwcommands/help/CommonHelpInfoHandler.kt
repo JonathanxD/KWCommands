@@ -58,8 +58,8 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 printer.printPlain(Texts.getArgumentCommandsMissingText(command.fullname))
 
                 if (providedArgs.isNotEmpty()) {
-                    val args = providedArgs.joinToString { it.argument.name }
-                    printer.printPlain(Text.of("  ", Texts.getProvidedArgumentsText(), ": ", args))
+                    val providedArgsNames = providedArgs.joinToString { it.argument.name }
+                    printer.printPlain(Text.of("  ", Texts.getProvidedArgumentsText(), ": ", providedArgsNames))
                 }
 
                 printer.printPlain(Text.of("  ", Texts.getMissingArgumentText(), ": ",

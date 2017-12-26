@@ -148,7 +148,7 @@ fun Cmd.toKCommand(manager: CommandManager,
     val description = this.description
     val parent = this.resolveParents(manager, owner)
     val argumentsInstance =
-            annotatedElement.getDeclaredAnnotation(DynamicArgs::class.java)?.value?.get() as? Arguments
+            annotatedElement.getDeclaredAnnotation(DynamicArgs::class.java)?.value?.get()
                     ?: StaticListArguments(arguments)
 
     val cmd = Command(parent = parent ?: superCommand,
