@@ -59,3 +59,38 @@ class StaticListArguments(val argumentList: List<Argument<*>>) : Arguments {
             if (current.isEmpty()) this.getArguments()
             else this.argumentList.filter { curr -> current.none { it.argument == curr } }
 }
+
+class StaticListArgumentsBuilder {
+    private val arguments = mutableListOf<Argument<*>>()
+
+    fun addArgument(argument: Argument<*>): StaticListArgumentsBuilder {
+        this.arguments += argument
+        return this
+    }
+
+    fun addArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilder {
+        this.arguments += arguments
+        return this
+    }
+
+    fun removeArgument(argument: Argument<*>): StaticListArgumentsBuilder {
+        this.arguments -= argument
+        return this
+    }
+
+    fun removeArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilder {
+        this.arguments -= arguments
+        return this
+    }
+
+    fun setArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilder =
+        this.clear().addArguments(arguments)
+
+    fun clear(): StaticListArgumentsBuilder {
+        this.arguments.clear()
+        return this
+    }
+
+    fun build(): StaticListArguments =
+            StaticListArguments(this.arguments.toList())
+}

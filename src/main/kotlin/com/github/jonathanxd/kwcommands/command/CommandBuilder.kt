@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.Arguments
 import com.github.jonathanxd.kwcommands.argument.StaticListArguments
+import com.github.jonathanxd.kwcommands.argument.StaticListArgumentsBuilder
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -98,6 +99,12 @@ class CommandBuilder {
         this.arguments = arguments
         return this
     }
+
+    /**
+     * Creates and adds arguments of builded [StaticListArguments].
+     */
+    fun staticArguments(): StaticListArgumentsBuilderToCommand =
+            StaticListArgumentsBuilderToCommand(this)
 
     /**
      * Adds [Command.requirements].
@@ -207,4 +214,40 @@ class CommandBuilder {
             alias = this.alias.toList()
     )
 
+}
+
+class StaticListArgumentsBuilderToCommand(private val cmdBuilder: CommandBuilder) {
+    private val builder = StaticListArgumentsBuilder()
+
+    fun addArgument(argument: Argument<*>): StaticListArgumentsBuilderToCommand {
+        this.builder.addArgument(argument)
+        return this
+    }
+
+    fun addArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilderToCommand {
+        this.builder.addArguments(arguments)
+        return this
+    }
+
+    fun removeArgument(argument: Argument<*>): StaticListArgumentsBuilderToCommand {
+        this.builder.removeArgument(argument)
+        return this
+    }
+
+    fun removeArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilderToCommand {
+        this.builder.removeArguments(arguments)
+        return this
+    }
+
+    fun setArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilderToCommand =
+            this.clear().addArguments(arguments)
+
+    fun clear(): StaticListArgumentsBuilderToCommand {
+        this.builder.clear()
+        return this
+    }
+
+    fun build(): CommandBuilder {
+        return this.cmdBuilder.arguments(this.builder.build())
+    }
 }
