@@ -107,44 +107,6 @@ interface InformationManager {
     fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean
 
     /**
-     * Find a information by [id], this method will first lookup for `static information`, if no
-     * one information is found for specified [id], it will return first non-null information provided
-     * by a registered [InformationProvider].
-     *
-     * If no one information can be found using [type][Information.Id.type]-[tags][Information.Id.tags] combination,
-     * then the implementation should lookup by [type][Information.Id.type] only, if one information has the same
-     * [type][Information.Id.type] as [id], then this information should be returned, if more than one information
-     * has the same type, the implementation will lookup for an assignable information, if no one information is found,
-     * then `null` should be returned.
-     *
-     * @return Found information or `null` if information cannot be found.
-     */
-    fun <T> find(id: Information.Id<T>): Information<T>? =
-            this.find(id, true)
-
-    /**
-     * Same as [find], but with erased [Information.Id] type.
-     */
-    @Suppress("UNCHECKED_CAST")
-    fun <T> findErased(id: Information.Id<*>): Information<T>? =
-            this.find(id as Information.Id<T>, true)
-
-    /**
-     * Find a information by [id], this method will first lookup for `static information`, if no
-     * one information is found for specified [id], it will return first non-null information provided
-     * by a registered [InformationProvider].
-     *
-     * If no one information can be found using [id][Information.Id.id]-[tags][Information.Id.tags] combination,
-     * then the implementation should lookup by [id][Information.Id.id] only, if one information has the same
-     * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
-     * has the same id, then `null` should be returned.
-     *
-     * @return Found information or `null` if information cannot be found.
-     */
-    fun <T> find(id: Information.Id<T>, useProviders: Boolean = true): Information<T>? =
-            this.find(id.type, id.tags, useProviders)
-
-    /**
      * Find a information by [type] and [tags], this method will first lookup for `static information`, if no
      * one information is found for specified [type] and [tags pair], it will return first non-null
      * information provided by a registered [InformationProvider].
@@ -172,11 +134,102 @@ interface InformationManager {
     fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean = true): Information<T>?
 
     /**
+     * Same as [find], but with erased [type].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> findErased(type: TypeInfo<*>, tags: Array<out String>): Information<T>? =
+            this.find(type as TypeInfo<out T>, tags, useProviders = true)
+
+    /**
+     * Same as [find], but with erased [type].
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> findErased(type: TypeInfo<*>, tags: Array<out String>, useProviders: Boolean = true): Information<T>? =
+            this.find(type as TypeInfo<out T>, tags, useProviders)
+
+    /**
+     * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
+     *
+     * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
+     * lead to cast exception.
+     */
+    fun <T> findOrEmpty(type: TypeInfo<out T>, args: Array<out String>): Information<T> =
+            this.find(type, args, useProviders = true) ?: Information.empty()
+
+    /**
+     * Same as [findOrEmpty] but with erased [type]
+     */
+    fun <T> findErasedOrEmpty(type: TypeInfo<*>, args: Array<out String>): Information<T> =
+            this.findErased(type, args) ?: Information.empty()
+
+    /**
+     * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
+     *
+     * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
+     * lead to cast exception.
+     */
+    fun <T> findOrEmpty(type: TypeInfo<out T>, args: Array<out String>, useProviders: Boolean = true): Information<T> =
+            this.find(type, args, useProviders) ?: Information.empty()
+
+    /**
+     * Same as [findOrEmpty] but with erased [type]
+     */
+    fun <T> findErasedOrEmpty(type: TypeInfo<*>, args: Array<out String>, useProviders: Boolean = true): Information<T> =
+            this.findErased(type, args, useProviders) ?: Information.empty()
+
+    /**
+     * Creates a safe copy of this manager, modifications on the copy does not affect this instance.
+     */
+    fun copy(): InformationManager
+
+    // With id variants
+
+    /**
+     * Find a information by [id], this method will first lookup for `static information`, if no
+     * one information is found for specified [id], it will return first non-null information provided
+     * by a registered [InformationProvider].
+     *
+     * If no one information can be found using [id][Information.Id.id]-[tags][Information.Id.tags] combination,
+     * then the implementation should lookup by [id][Information.Id.id] only, if one information has the same
+     * [id][Information.Id.id] as [id], then this information should be returned, if more than one information
+     * has the same id, then `null` should be returned.
+     *
+     * @return Found information or `null` if information cannot be found.
+     */
+    fun <T> find(id: Information.Id<T>, useProviders: Boolean = true): Information<T>? =
+            this.find(id.type, id.tags, useProviders)
+
+
+    /**
+     * Find a information by [id], this method will first lookup for `static information`, if no
+     * one information is found for specified [id], it will return first non-null information provided
+     * by a registered [InformationProvider].
+     *
+     * If no one information can be found using [type][Information.Id.type]-[tags][Information.Id.tags] combination,
+     * then the implementation should lookup by [type][Information.Id.type] only, if one information has the same
+     * [type][Information.Id.type] as [id], then this information should be returned, if more than one information
+     * has the same type, the implementation will lookup for an assignable information, if no one information is found,
+     * then `null` should be returned.
+     *
+     * @return Found information or `null` if information cannot be found.
+     */
+    fun <T> find(id: Information.Id<T>): Information<T>? =
+            this.find(id.type, id.tags, true)
+
+    /**
+     * Same as [find], but with erased [Information.Id] type.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T> findErased(id: Information.Id<*>): Information<T>? =
+            this.find(id.type as TypeInfo<out T>, id.tags, true)
+
+    /**
      * Same as [find], but with erased [Information.Id] type.
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> findErased(id: Information.Id<*>, useProviders: Boolean = true): Information<T>? =
-            this.find(id as Information.Id<T>, useProviders)
+            this.find(id.type as TypeInfo<out T>, id.tags, useProviders)
+
 
     /**
      * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
@@ -185,13 +238,7 @@ interface InformationManager {
      * lead to cast exception.
      */
     fun <T> findOrEmpty(id: Information.Id<T>): Information<T> =
-            this.find(id) ?: Information.empty()
-
-    /**
-     * Same as [findOrEmpty] but with erased [Information.Id]
-     */
-    fun <T> findErasedOrEmpty(id: Information.Id<*>): Information<T> =
-            this.findErased(id) ?: Information.empty()
+            this.find(id.type, id.tags) ?: Information.empty()
 
     /**
      * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
@@ -200,16 +247,20 @@ interface InformationManager {
      * lead to cast exception.
      */
     fun <T> findOrEmpty(id: Information.Id<T>, useProviders: Boolean = true): Information<T> =
-            this.find(id, useProviders) ?: Information.empty()
+            this.find(id.type, id.tags, useProviders) ?: Information.empty()
+
+    /**
+     * Same as [findOrEmpty] but with erased [Information.Id]
+     */
+    fun <T> findErasedOrEmpty(id: Information.Id<*>): Information<T> =
+            this.findErased(id.type, id.tags) ?: Information.empty()
+
 
     /**
      * Same as [findOrEmpty] but with erased [Information.Id]
      */
     fun <T> findErasedOrEmpty(id: Information.Id<*>, useProviders: Boolean = true): Information<T> =
-            this.findErased(id, useProviders) ?: Information.empty()
+            this.findErased(id.type, id.tags, useProviders) ?: Information.empty()
 
-    /**
-     * Creates a safe copy of this manager, modifications on the copy does not affect this instance.
-     */
-    fun copy(): InformationManager
+
 }
