@@ -37,10 +37,10 @@ import com.github.jonathanxd.kwcommands.parser.Input
  * @property input Input argument value(s).
  * @property value Value of argument.
  */
-data class ArgumentContainer<T> constructor(val argument: Argument<T>,
-                                            val input: Input?,
-                                            val value: T?,
-                                            var handler: ArgumentHandler<T>?) : Container {
+data class ArgumentContainer<T>(val argument: Argument<T>,
+                                val input: Input?,
+                                val value: T?,
+                                var handler: ArgumentHandler<T>?) : Container {
 
     /**
      * Returns true if this argument is defined.

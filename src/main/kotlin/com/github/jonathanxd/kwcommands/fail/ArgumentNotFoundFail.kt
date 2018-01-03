@@ -31,14 +31,16 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
+import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 /**
  * Command not found by [name][input].
  */
 class ArgumentNotFoundFail(val command: Command,
                            val parsedArgs: List<ArgumentContainer<*>>,
-                           val input: String,
+                           input: Input,
                            parsedCommands: List<CommandContainer>,
                            manager: CommandManager,
-                           iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)
+                           iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, input, iter)

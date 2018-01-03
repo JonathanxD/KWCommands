@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.test.reflect
 
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.jwiutils.kt.right
 import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.dsl.informationId
@@ -40,6 +41,7 @@ import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeProvider
+import com.github.jonathanxd.kwcommands.reflect.env.ArgumentTypeStorage
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import com.github.jonathanxd.kwcommands.reflect.env.cast
 import com.github.jonathanxd.kwcommands.requirement.Reason
@@ -53,8 +55,9 @@ import org.junit.Test
 class ReflectionTest {
 
     val simplePlayerArgumentType = simpleArgumentType(
-            transformer { it: SingleInput -> SimplePlayer(it.input) },
-            validator { _, _: SingleInput -> valid() },
+            argumentParser<SingleInput, SimplePlayer> { value, valueOrValidationFactory ->
+                valueOrValidationFactory.value(SimplePlayer(value.input))
+            },
             EmptyPossibilitesFunc,
             null,
             typeInfo()
@@ -119,6 +122,17 @@ class ReflectionTest {
         val manager = CommandManagerImpl()
         val env = ReflectionEnvironment(manager)
 
+        ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
+            override fun <T> provide(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>? {
+                if (type == TypeInfo.of(SimplePlayer::class.java)) {
+                    return simplePlayerArgumentType.cast(type)
+                }
+
+                return null
+            }
+
+        })
+
         env.registerCommands(env.fromClass(World::class, instanceProvider { it.newInstance() }, this), this)
 
         val printer = CommonPrinter(KLocale.localizer, ::println)
@@ -131,18 +145,7 @@ class ReflectionTest {
         processor.parseAndDispatch("world setblock 10 10 0 stone", this, information)
                 .assertAll(listOf("setted block STONE at 10, 10, 0"))
 
-        ReflectionEnvironment.registerGlobal(object : ArgumentTypeProvider {
-            override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
-                if (type == TypeInfo.of(SimplePlayer::class.java)) {
-                    return simplePlayerArgumentType.cast(type)
-                }
-
-                return null
-            }
-
-        })
-
-        processor.parseAndDispatch("world tpto Adm A,B,C", this, information)
+        processor.parseAndDispatch("world tpto Adm A B C", this, information)
                 .assertAll(listOf("teleported A, B, C to Adm!"))
     }
 
@@ -234,7 +237,7 @@ class World {
                  )) block: Block): Any = "setted block $block at $x, $y, $z"
 
     @Cmd(name = "tpto", description = "Teleport [players] to [target] player")
-    fun tpTo(@Arg("target") target: String, @Arg("players") players: List<SimplePlayer>): Any =
+    fun tpTo(@Arg("target") target: String, @Arg("players", multiple = true) players: List<SimplePlayer>): Any =
             "teleported ${players.map { it.name }.joinToString()} to $target!"
 }
 

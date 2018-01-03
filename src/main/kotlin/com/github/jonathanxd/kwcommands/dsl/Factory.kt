@@ -291,20 +291,16 @@ inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContai
 
 // Additionals
 
-val stringValidator: Validator<SingleInput> = StringValidator
 val stringTransformer: Transformer<SingleInput, String> = StringTransformer
+val stringParser: ArgumentParser<SingleInput, String> = StringParser
 
-val intValidator: Validator<SingleInput> = IntValidator
-val intTransformer: Transformer<SingleInput, Int> = IntTransformer
+val intParser: ArgumentParser<SingleInput, Int> = IntParser
 
-val longValidator: Validator<SingleInput> = LongValidator
-val longTransformer: Transformer<SingleInput, Long> = LongTransformer
+val longParser: ArgumentParser<SingleInput, Long> = LongParser
 
-val doubleValidator: Validator<SingleInput> = DoubleValidator
-val doubleTransformer: Transformer<SingleInput, Double> = DoubleTransformer
+val doubleParser: ArgumentParser<SingleInput, Double> = DoubleParser
 
-val booleanValidator: Validator<SingleInput> = BooleanValidator
-val booleanTransformer: Transformer<SingleInput, Boolean> = BooleanTransformer
+val booleanParser: ArgumentParser<SingleInput, Boolean> = BooleanParser
 
 val booleanPossibilities = BooleanPossibilities
 

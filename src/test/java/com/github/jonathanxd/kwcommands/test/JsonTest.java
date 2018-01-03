@@ -47,11 +47,14 @@ import com.github.jonathanxd.kwcommands.manager.CommandManager;
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationProviders;
 import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
+import com.github.jonathanxd.kwcommands.parser.ArgumentParser;
 import com.github.jonathanxd.kwcommands.parser.Input;
 import com.github.jonathanxd.kwcommands.parser.SingleInput;
 import com.github.jonathanxd.kwcommands.parser.Validation;
 import com.github.jonathanxd.kwcommands.parser.ValidationKt;
 import com.github.jonathanxd.kwcommands.parser.Validator;
+import com.github.jonathanxd.kwcommands.parser.ValueOrValidation;
+import com.github.jonathanxd.kwcommands.parser.ValueOrValidationFactory;
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
@@ -112,7 +115,7 @@ public class JsonTest {
         resolver.set("Player", Player.class);
         resolver.set("String", String.class);
         resolver.set("MyHandler", MyHandler.class);
-        resolver.set("EmailValidator", EmailValidator.class);
+        resolver.set("EmailParser", EmailParser.class);
         resolver.set("ReqTester", ReqTester.class);
         resolver.getLoaders().add(o.getClass().getClassLoader());
     }
@@ -212,27 +215,19 @@ public class JsonTest {
         }
     }
 
-
-    public static class EmailValidator implements Validator {
-        public static final EmailValidator INSTANCE = new EmailValidator();
+    public static class EmailParser implements ArgumentParser<SingleInput, String> {
+        public static final EmailParser INSTANCE = new EmailParser();
         private static final Pattern REGEX = Pattern.compile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])");
         private static final Predicate<String> pred = REGEX.asPredicate();
 
         @NotNull
         @Override
-        public TextComponent getName() {
-            return Text.of("Email Validator");
-        }
+        public ValueOrValidation<String> parse(@NotNull SingleInput input,
+                                               @NotNull ValueOrValidationFactory valueOrValidationFactory) {
+            if (!pred.test(input.getInput()))
+                return valueOrValidationFactory.invalid();
 
-        @NotNull
-        @Override
-        public Validation invoke(@NotNull ArgumentType argumentType,
-                                 @NotNull Input value) {
-            return value instanceof SingleInput && pred.test(((SingleInput) value).getInput())
-                    ? ValidationKt.valid()
-                    :
-                    ValidationKt.invalid(value, argumentType, this, Text.of("Invalid email format"));
+            return valueOrValidationFactory.value(input.getInput());
         }
-
     }
 }

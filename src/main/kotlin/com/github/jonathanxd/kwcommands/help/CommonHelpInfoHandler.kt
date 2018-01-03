@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.help
 import com.github.jonathanxd.iutils.function.collector.Collectors3
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.text.converter.TextLocalizer
+import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
 import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
@@ -46,6 +46,9 @@ import com.github.jonathanxd.kwcommands.util.*
 class CommonHelpInfoHandler : HelpInfoHandler {
 
     override fun handleFail(parseFail: ParseFail, printer: Printer) {
+        @Suppress("NAME_SHADOWING")
+        val parseFail = (parseFail as? ContinuableFail)?.fail ?: parseFail
+
         when (parseFail) {
             is ArgumentsMissingFail -> {
                 val command = parseFail.command
@@ -74,7 +77,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val command = parseFail.command
                 val parsed = parseFail.parsedArgs
                 val input = parseFail.input
-                printer.printPlain(Texts.getArgumentNotFoundText(input, command.fullname))
+                printer.printPlain(Texts.getArgumentNotFoundText(input.content, command.fullname))
 
                 if (parsed.isNotEmpty()) {
                     printer.printPlain(Text.of(Texts.getParsedArgumentsText(),
@@ -132,7 +135,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 if (validation.invalids.isNotEmpty()) {
                     printer.printEmpty()
                     printer.printPlain(Texts.getInvalidInputsText().and(Text.of(":")))
-                    for ((validationInput, _, validator, msg, supported) in validation.invalids) {
+                    for ((validationInput, _, parser, supported) in validation.invalids) {
                         printer.printEmpty()
 
                         val rangeText = Text.of(
@@ -156,8 +159,8 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                         printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
                                 ": ", supportedText
                         ))
-                        msg?.let { printer.printPlain(Text.of(" | ", Texts.getMessageText(), ": ", it)) }
-                        printer.printPlain(Text.of(" | ", Texts.getValidatorText(), ": ", validator.name))
+                        printer.printPlain(Text.of(" | ", Texts.getParserText(), ": ",
+                                Text.localizable("parser.${parser::class.java.simpleName.toLowerCase()}")))
                     }
                     printer.printEmpty()
                 }
@@ -198,7 +201,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 val argument = parseFail.arg
                 val fail = parseFail.inputParseFail
                 val input = fail.input
-                val inputType = parseFail.inputParseFail.argumentType.inputType
+                val inputType = parseFail.inputParseFail.input.type
 
                 printer.printPlain(
                         Text.of(Texts.getMalformedInputText(inputType.getTypeString())))
@@ -212,7 +215,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 printer.printEmpty()
 
-                val source = parseFail.iter.sourceString
+                val source = parseFail.source
 
                 val rangeText = Text.of(
                         Texts.getInputRangeText(input.start.toString(), input.end.toString()), ": ")

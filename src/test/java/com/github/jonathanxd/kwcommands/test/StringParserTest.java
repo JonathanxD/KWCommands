@@ -73,21 +73,21 @@ public class StringParserTest {
     @Test
     public void parserTest() {
         this.iter.restore(SourcedCharIterator.Companion.getStateZero());
-        StringParseKt.parseSingleInput(this.iter, CommonArgTypesKt.getStringArgumentType())
+        StringParseKt.parseSingleInput(this.iter/*, CommonArgTypesKt.getStringArgumentType()*/)
                 .rightOrGet(this::fail);
     }
 
     @Test
     public void mapParserTest() {
         this.mapIter.restore(SourcedCharIterator.Companion.getStateZero());
-        StringParseKt.parseMapInput(this.mapIter, this.mapArgType)
+        StringParseKt.parseMapInput(this.mapIter/*, this.mapArgType*/)
                 .rightOrGet(this::fail);
     }
 
     @Test
     public void listParserTest() {
         this.listIter.restore(SourcedCharIterator.Companion.getStateZero());
-        StringParseKt.parseListInput(this.listIter, this.listArgumentType)
+        StringParseKt.parseListInput(this.listIter/*, this.listArgumentType*/)
                 .rightOrGet(this::fail);
     }
 }

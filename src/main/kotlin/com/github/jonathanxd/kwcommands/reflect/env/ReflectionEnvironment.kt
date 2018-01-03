@@ -30,9 +30,7 @@ package com.github.jonathanxd.kwcommands.reflect.env
 import com.github.jonathanxd.iutils.reflection.Invokables
 import com.github.jonathanxd.iutils.reflection.Link
 import com.github.jonathanxd.iutils.reflection.Links
-import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
@@ -43,8 +41,6 @@ import com.github.jonathanxd.kwcommands.json.getCommandJsonObj
 import com.github.jonathanxd.kwcommands.json.resolveJsonString
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
-import com.github.jonathanxd.kwcommands.parser.SingleInput
-import com.github.jonathanxd.kwcommands.parser.Transformer
 import com.github.jonathanxd.kwcommands.reflect.CommandFactoryQueue
 import com.github.jonathanxd.kwcommands.reflect.HandlerResolver
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
@@ -54,7 +50,6 @@ import com.github.jonathanxd.kwcommands.reflect.util.*
 import com.github.jonathanxd.kwcommands.util.*
 import java.lang.invoke.MethodHandles
 import java.lang.reflect.*
-import java.util.*
 import kotlin.reflect.KClass
 
 typealias JsonParserResolver = (Class<*>) -> JsonCommandParser
@@ -121,7 +116,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getOrNull(type: TypeInfo<T>): ArgumentType<*, T>? =
-            this.argumentTypeProviders.getArgumentType(type) ?: getGlobalArgumentTypeOrNull(type)
+            this.argumentTypeProviders.getArgumentType(type, this)
+                    ?: getGlobalArgumentTypeOrNull(type)
 
 
     /**
@@ -664,19 +660,20 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
             }
 
             override fun <T> getArgumentTypeOrNull(type: TypeInfo<T>): ArgumentType<*, T>? {
-                return this.set.getArgumentType(type)
+                return this.set.getArgumentType(type, this)
             }
 
             override fun <T> getArgumentType(type: TypeInfo<T>): ArgumentType<*, T> {
-                return this.set.getArgumentType(type) ?: throw IllegalArgumentException("No argument type provider for type: $type.")
+                return this.set.getArgumentType(type, this)
+                        ?: throw IllegalArgumentException("No argument type provider for type: $type.")
             }
 
         }
 
 
         @Suppress("UNCHECKED_CAST")
-        fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>): ArgumentType<*, T>? =
-                (this.getFirstOrNull({ it.provide(type) }, { it != null }) ?: this.let {
+        fun <T> Set<ArgumentTypeProvider>.getArgumentType(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>? =
+                (this.getFirstOrNull({ it.provide(type, storage) }, { it != null }) ?: this.let {
                     it.filterIsInstance<ConcreteProvider>().forEach {
                         if (it.argumentType.type.typeParameters.isEmpty()
                                 && it.argumentType.type.classLiteral == type.classLiteral)
@@ -708,12 +705,12 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
         init {
             // Data types
             registerGlobal(DefaultProvider)
-            registerGlobal(CollectionProvider(GLOBAL))
+            //registerGlobal(CollectionProvider(GLOBAL))
         }
 
         object DefaultProvider : ArgumentTypeProvider {
 
-            override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
+            override fun <T> provide(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>? {
 
                 if (type.isResolved || type.canResolve()) {
                     val typeClass = type.typeClass
@@ -722,7 +719,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                             && type.typeParameters.size == 1) {
                         val component = type.typeParameters.single()
 
-                        provide(component)?.let { provided ->
+                        storage.getArgumentTypeOrNull(component)?.let { provided ->
                             @Suppress("UNCHECKED_CAST")
                             return ListArgumentType<Any?>(provided, type.cast()) as ArgumentType<*, T>
                             /*return ArgumentType(
@@ -738,8 +735,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                             && type.typeParameters.size == 2) {
                         val (keyComponent, valueComponent) = type.typeParameters
 
-                        val keyType = provide(keyComponent)
-                        val valueType = provide(valueComponent)
+                        val keyType = storage.getArgumentTypeOrNull(keyComponent)
+                        val valueType = storage.getArgumentTypeOrNull(valueComponent)
 
                         if (keyType != null && valueType != null) {
                             @Suppress("UNCHECKED_CAST")
@@ -760,9 +757,8 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
                     if (typeClass.isEnum) {
                         return simpleArgumentType(
-                                EnumTransformer(typeClass),
-                                EnumValidator(typeClass),
-                                EnumPossibilitiesFunc(typeClass),
+                                EnumParser(typeClass),
+                                EnumPossibilities(typeClass),
                                 type
                         ).cast(type)
 
@@ -802,7 +798,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
 
         }
 
-        class CollectionProvider(val storage: ArgumentTypeStorage) : ArgumentTypeProvider {
+        /*class CollectionProvider(val storage: ArgumentTypeStorage) : ArgumentTypeProvider {
             override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
                 val component = type.typeParameters.singleOrNull() ?: TypeInfo.of(String::class.java)
 
@@ -817,7 +813,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                 return null
             }
 
-        }
+        }*/
     }
 
     private data class RMethodElement(val element: Element, val arguments: List<Argument<*>>, val requiredInfo: Set<RequiredInformation>)

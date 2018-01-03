@@ -25,57 +25,36 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.printer
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
-import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.iutils.`object`.Either
 
-/**
- * Command printer
- */
-interface Printer {
+interface StatedIterator<T> : Iterator<Either<InputParseFail, T>> {
+    val char: SourcedCharIterator
+    val pos: Int
+    fun restore(pos: Int)
 
-    val localizer: TextLocalizer
+    fun hasPrevious(): Boolean
+    fun previous(): Either<InputParseFail, T>
 
-    /**
-     * Prints command to buffer.
-     *
-     * @param command Command to print.
-     * @param level   Command inheritance level (0 for main commands).
-     */
-    fun printCommand(command: Command, level: Int)
+    fun nextOrNull(): Either<InputParseFail, T>? = if (this.hasNext()) this.next() else null
+    fun previousOrNull(): Either<InputParseFail, T>? = if (this.hasPrevious()) this.previous() else null
+}
 
-    /**
-     * Prints from root command to [command] to buffer.
-     *
-     * This will print all recursive parent commands of [command] and the [command] itself to buffer.
-     *
-     * @param command Command to print.
-     * @param level   Base command inheritance level (0 for main commands).
-     */
-    fun printFromRoot(command: Command, level: Int)
+class ListBackedStatedIterator<T>(val list: List<Either<InputParseFail, T>>,
+                                  override val char: SourcedCharIterator): StatedIterator<T> {
+    override var pos: Int = -1
 
-    /**
-     * Prints command directly to an [output][out].
-     *
-     * @param command Command to print.
-     * @param level   Command inheritance level (0 for main commands).
-     */
-    fun printTo(command: Command, level: Int, out: (String) -> Unit)
+    override fun restore(pos: Int) {
+        this.pos = pos
+    }
 
-    /**
-     * Prints plain [text].
-     */
-    fun printPlain(text: TextComponent)
+    override fun previous(): Either<InputParseFail, T> = this.list[pos--]
 
-    /**
-     * Prints empty plain text
-     */
-    fun printEmpty()
+    override fun hasPrevious(): Boolean = pos > -1
 
-    /**
-     * Flush buffer texts to predefined output.
-     */
-    fun flush()
+    override fun hasNext(): Boolean = this.pos + 1 < this.list.size
+
+    override fun next(): Either<InputParseFail, T> = this.list[++pos]
+
 }

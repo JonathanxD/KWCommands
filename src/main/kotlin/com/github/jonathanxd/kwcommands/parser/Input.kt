@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.parser
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
 /**
  * Holds the input of argument. When the [start] is equal to [end] and both is `0`, this means that input

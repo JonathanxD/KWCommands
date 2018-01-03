@@ -31,9 +31,9 @@ import com.github.jonathanxd.iutils.localization.Locale
 import com.github.jonathanxd.iutils.localization.LocaleManager
 import com.github.jonathanxd.iutils.localization.Locales
 import com.github.jonathanxd.iutils.localization.MapLocaleManager
-import com.github.jonathanxd.iutils.text.converter.DefaultTextLocalizer
-import com.github.jonathanxd.iutils.text.converter.FastTextLocalizer
-import com.github.jonathanxd.iutils.text.converter.TextLocalizer
+import com.github.jonathanxd.iutils.text.localizer.DefaultTextLocalizer
+import com.github.jonathanxd.iutils.text.localizer.FastTextLocalizer
+import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
 import com.github.jonathanxd.kwcommands.printer.Printers
 import java.nio.file.Paths
 
