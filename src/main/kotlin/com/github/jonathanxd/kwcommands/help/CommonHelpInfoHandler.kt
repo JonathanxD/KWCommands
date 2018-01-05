@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.help
 import com.github.jonathanxd.iutils.function.collector.Collectors3
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.text.converter.TextLocalizer
+import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
 import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
