@@ -102,14 +102,14 @@ public class CompletionTest {
         complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(Collections3.listOf("languages"), complete);
-*/
+
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[";
         complete = completion.complete(x, null, informationProviders);
 
         List<String> expected = Collections3.listOf("]");
         expected.addAll(ArraysKt.map(Languages.values(), Languages::name));
         Assert.assertEquals(expected, complete);
-
+*/
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[Ja";
         complete = completion.complete(x, null, informationProviders);
 

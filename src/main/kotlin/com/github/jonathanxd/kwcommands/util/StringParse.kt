@@ -380,7 +380,7 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
                 true)
 
         if (elem.isLeft) {
-            list += elem.left.input
+            list += (elem.left.root ?: elem.left.input)
             return left(elem.left.also { it.root = createListInput() })
         } else {
             list += elem.right
@@ -512,7 +512,7 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
                 true)
 
         if (k.isLeft) {
-            map += k.left.input to EmptyInput(this.sourceString)
+            map += (k.left.root ?: k.left.input) to EmptyInput(this.sourceString)
             return left(k.left.also { it.root = createMapInput() })
         }
 
@@ -544,7 +544,7 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
                 true)
 
         if (v.isLeft) {
-            map += k.right to v.left.input
+            map += k.right to (v.left.root ?: v.left.input)
             return left(v.left.also { it.root = createMapInput() })
         }
 

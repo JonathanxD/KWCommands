@@ -255,6 +255,22 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 when (fail) {
                     is TokenExpectedFail -> {
                         suggestion += fail.tokens.map { it.toString() }
+
+                        val elementType = getType(argument.argumentType, fail.root, fail.input)
+
+                        if (elementType != null) {
+                            val completions2 = ListCompletionsImpl()
+                            this.autoCompleters.completeArgumentInput(command,
+                                    parsedArgs,
+                                    argument,
+                                    elementType,
+                                    fail.input,
+                                    completions2,
+                                    informationProviders)
+
+                            completions2.retainIfAnyMatch { it.startsWith(fail.input.getString()) }
+                            completions.merge(completions2)
+                        }
                     }
                     is TokenOrElementExpectedFail -> {
                         suggestion += fail.tokens.map { it.toString() }
@@ -400,6 +416,18 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                     getType(v, null, value)?.let {
                                         return it
                                     }
+
+                                val kparse = k.parse(key)
+
+                                if (kparse.isInvalid) {
+                                    return k
+                                }
+
+                                val vparse = v.parse(value)
+
+                                if (vparse.isInvalid) {
+                                    return v
+                                }
                             }
                         }
                     }
