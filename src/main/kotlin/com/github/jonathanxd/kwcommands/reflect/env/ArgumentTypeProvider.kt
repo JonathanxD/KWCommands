@@ -36,7 +36,7 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 @FunctionalInterface
 interface ArgumentTypeProvider {
 
-    fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>?
+    fun <T> provide(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>?
 
 }
 
@@ -45,7 +45,7 @@ class ConcreteProviders : ArgumentTypeProvider {
     private val list = mutableListOf<ArgumentType<*, *>>()
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? {
+    override fun <T> provide(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>? {
 
         return (this.list.find { it.type == type } ?: this.list.find {
             it.type.typeParameters.isEmpty() && it.type.classLiteral == type.classLiteral
@@ -58,7 +58,7 @@ class ConcreteProviders : ArgumentTypeProvider {
 class ConcreteProvider(val argumentType: ArgumentType<*, *>) : ArgumentTypeProvider {
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> provide(type: TypeInfo<T>): ArgumentType<*, T>? =
+    override fun <T> provide(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>? =
             if (this.argumentType.type == type || this.argumentType.type.isCompatible(type))
                 this.argumentType as? ArgumentType<*, T>
             else null

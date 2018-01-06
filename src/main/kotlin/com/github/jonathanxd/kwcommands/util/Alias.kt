@@ -27,45 +27,17 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 
-
-typealias ValidatorAlias<I> = (argumentType: ArgumentType<I, *>, value: I) -> Validation
-typealias TransformerAlias<I, T> = (value: I) -> T
-typealias PossibilitiesFuncAlias = () -> List<Input>
-
-inline fun <I : Input> validator(crossinline func: (argumentType: ArgumentType<I, *>, value: I) -> Validation) =
-        object : Validator<I> {
-            override fun invoke(argumentType: ArgumentType<I, *>, value: I): Validation = func(argumentType, value)
+inline fun <I : Input, T> argumentParser(crossinline func:
+                                         (value: I, validationFactory: ValueOrValidationFactory) -> ValueOrValidation<T>) =
+        object : ArgumentParser<I, T> {
+            override fun parse(input: I, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<T> =
+                    func(input, valueOrValidationFactory)
         }
 
-inline fun <I : Input, T> transformer(crossinline func: (value: I) -> T) =
-        object : Transformer<I, T> {
-            override fun invoke(value: I): T = func(value)
-
-        }
-
-inline fun possibilitiesFunc(crossinline func: () -> List<Input>) =
+inline fun possibilities(crossinline func: () -> List<Input>) =
         object : Possibilities {
             override fun invoke(): List<Input> =
                     func()
-        }
-
-
-@JvmName("stringValidator")
-inline fun validator(crossinline func: (argumentType: ArgumentType<*, *>, value: String) -> Boolean) =
-        object : Validator<Input> {
-            override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
-                    (value as? SingleInput)?.let {
-                        if (func(argumentType, it.input)) valid()
-                        else invalid(value, argumentType, this, null)
-                    } ?: invalid(value, argumentType, this, null)
-
-        }
-
-@JvmName("stringTransformer")
-inline fun <T> transformer(crossinline func: (value: String) -> T) =
-        object : Transformer<SingleInput, T> {
-            override fun invoke(value: SingleInput): T = func(value.input)
         }

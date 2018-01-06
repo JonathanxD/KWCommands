@@ -81,8 +81,8 @@ interface TextsStub {
     @Section("info", "valid_input_types")
     fun getValidInputTypesText(): TextComponent
 
-    @Section("info", "validator")
-    fun getValidatorText(): TextComponent
+    @Section("info", "parser")
+    fun getParserText(): TextComponent
 
     @Section("info", "argument_type")
     fun getArgumentTypeText(): TextComponent

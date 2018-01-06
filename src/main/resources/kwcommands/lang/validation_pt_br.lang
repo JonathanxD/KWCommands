@@ -29,3 +29,9 @@ message.expected_input_map=Mapa de valores esperado
 
 message.expected_enum=Valor constante de enumeração esperado
 message.invalid_enum=Valor constante de enumeração inválido
+
+
+parser.intparser=Analisador numérico
+parser.listparser=Analisador de listas
+parser.listformatcheckparser=Analisador verificador de formato de listas
+parser.mapformatcheckparser=Analisador verificador de formato de mapas

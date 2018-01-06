@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
-import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
 data class Validation(val invalids: List<ValidatedElement>) {
@@ -47,8 +46,7 @@ data class Validation(val invalids: List<ValidatedElement>) {
 
 data class ValidatedElement(val input: Input,
                             val argumentType: ArgumentType<*, *>,
-                            val validator: Validator<*>,
-                            val message: TextComponent?,
+                            val parser: ArgumentParser<*, *>,
                             val inputType: InputType<*>)
 
 fun valid(): Validation = VALID
@@ -62,16 +60,13 @@ fun validation(validations: List<Validation>): Validation =
 
 fun invalid(input: Input,
             argumentType: ArgumentType<*, *>,
-            validator: Validator<*>,
-            message: TextComponent?): Validation =
-        Validation(listOf(validatedElement(input, argumentType, validator, message, argumentType.inputType)))
+            parser: ArgumentParser<*, *>): Validation =
+        Validation(listOf(validatedElement(input, argumentType, parser, argumentType.inputType)))
 
-@JvmOverloads
 fun validatedElement(input: Input,
                      argumentType: ArgumentType<*, *>,
-                     validator: Validator<*>,
-                     message: TextComponent? = null,
+                     parser: ArgumentParser<*, *>,
                      supported: InputType<*>): ValidatedElement =
-        ValidatedElement(input, argumentType, validator, message, supported)
+        ValidatedElement(input, argumentType, parser, supported)
 
 val VALID = Validation(emptyList())

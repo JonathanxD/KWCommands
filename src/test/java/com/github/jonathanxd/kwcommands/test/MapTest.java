@@ -29,9 +29,11 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.map.MapUtils;
 import com.github.jonathanxd.iutils.object.Either;
+import com.github.jonathanxd.iutils.type.TypeInfo;
 import com.github.jonathanxd.kwcommands.argument.SingleArgumentType;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.fail.ArgumentInputParseFail;
+import com.github.jonathanxd.kwcommands.fail.InvalidInputForArgumentFail;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
 import com.github.jonathanxd.kwcommands.help.HelpInfoHandler;
@@ -40,6 +42,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl;
 import com.github.jonathanxd.kwcommands.manager.InformationProviders;
 import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.parser.ListInputType;
+import com.github.jonathanxd.kwcommands.parser.ValidatedElement;
 import com.github.jonathanxd.kwcommands.printer.Printer;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandProcessor;
@@ -51,6 +54,7 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.util.InvalidInputForArgumentTypeFail;
 import com.github.jonathanxd.kwcommands.util.KLocale;
 import com.github.jonathanxd.kwcommands.util.PrinterKt;
+import com.github.jonathanxd.kwcommands.util.TokenExpectedFail;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -117,7 +121,7 @@ public class MapTest {
         Assert.assertTrue(parse.isLeft());
         Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
         ArgumentInputParseFail fail = (ArgumentInputParseFail) parse.getLeft();
-        Assert.assertTrue(fail.getInputParseFail() instanceof InvalidInputForArgumentTypeFail);
+        Assert.assertTrue(fail.getInputParseFail() instanceof TokenExpectedFail); // , or } was expected
 
         parse = processor.parseAndDispatch(
                 "mapcmd " +
@@ -132,15 +136,15 @@ public class MapTest {
         localizedHandler.handleFail(parse.getLeft(), localizedSysOutWHF);
 
         Assert.assertTrue(parse.isLeft());
-        Assert.assertTrue(parse.getLeft() instanceof ArgumentInputParseFail);
+        Assert.assertTrue(parse.getLeft() instanceof InvalidInputForArgumentFail); // String expected, list found
 
-        fail = (ArgumentInputParseFail) parse.getLeft();
-        Assert.assertTrue(fail.getInputParseFail() instanceof InvalidInputForArgumentTypeFail);
+        InvalidInputForArgumentFail ifail = (InvalidInputForArgumentFail) parse.getLeft();
 
-        InvalidInputForArgumentTypeFail unex = (InvalidInputForArgumentTypeFail) fail.getInputParseFail();
-        Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
-        Assert.assertTrue(unex.getArgumentType() instanceof SingleArgumentType<?>);
-        Assert.assertTrue(unex.getInput().getType() instanceof ListInputType);
+        Assert.assertTrue(ifail.getValidation().isInvalid());
+        Assert.assertEquals(1, ifail.getValidation().getInvalids().size());
+        ValidatedElement validatedElement = ifail.getValidation().getInvalids().get(0);
+        Assert.assertEquals(TypeInfo.of(String.class), validatedElement.getArgumentType().getType());
+        Assert.assertEquals(ListInputType.INSTANCE, validatedElement.getInput().getType());
     }
 
     @Cmd(description = "Vararg test")

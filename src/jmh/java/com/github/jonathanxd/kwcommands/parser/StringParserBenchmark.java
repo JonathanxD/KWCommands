@@ -80,21 +80,21 @@ public class StringParserBenchmark {
     @Benchmark
     public void parserBench() {
         this.iter.restore(SourcedCharIterator.Companion.getStateZero());
-        StringParseKt.parseSingleInput(this.iter, CommonArgTypesKt.getStringArgumentType())
+        StringParseKt.parseSingleInput(this.iter/*, CommonArgTypesKt.getStringArgumentType()*/)
                 .rightOrGet(this::fail);
     }
 
     @Benchmark
     public void mapParserBench() {
         this.mapIter.restore(SourcedCharIterator.Companion.getStateZero());
-        StringParseKt.parseMapInput(this.mapIter, this.mapArgType)
+        StringParseKt.parseMapInput(this.mapIter/*, this.mapArgType*/)
                 .rightOrGet(this::fail);
     }
 
     @Benchmark
     public void listParserBench() {
         this.listIter.restore(SourcedCharIterator.Companion.getStateZero());
-        StringParseKt.parseListInput(this.listIter, this.listArgumentType)
+        StringParseKt.parseListInput(this.listIter/*, this.listArgumentType*/)
                 .rightOrGet(this::fail);
     }
 

@@ -51,6 +51,9 @@ data class Argument<out T>(val name: String,
                            val requirements: List<Requirement<*, *>>,
                            val requiredInfo: Set<RequiredInformation>,
                            val handler: ArgumentHandler<out T>? = null) {
+
+    fun parse(input: Input) = this.argumentType.parse(input)
+
     companion object {
         @JvmStatic
         fun <T> builder() = ArgumentBuilder<T>()

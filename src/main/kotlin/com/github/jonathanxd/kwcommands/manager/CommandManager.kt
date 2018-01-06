@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
-import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.Information
 

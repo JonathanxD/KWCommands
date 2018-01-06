@@ -32,9 +32,11 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
+import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.InputType
 import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 import com.github.jonathanxd.kwcommands.util.InputParseFail
+import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 // This class needs a better name
 class CommandInputParseFail(val command: Command,
@@ -44,4 +46,4 @@ class CommandInputParseFail(val command: Command,
                             val fail: InputParseFail,
                             parsedCommands: List<CommandContainer>,
                             manager: CommandManager,
-                            iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)
+                            iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, fail.input, iter)

@@ -27,7 +27,68 @@
  */
 package com.github.jonathanxd.kwcommands.parser
 
+import com.github.jonathanxd.kwcommands.argument.ArgumentType
+
 @FunctionalInterface
-interface Transformer<in I: Input, out T> {
+interface Transformer<in I : Input, out T> {
     operator fun invoke(value: I): T
+}
+
+@FunctionalInterface
+interface ArgumentParser<in I : Input, out T> {
+    fun parse(input: I, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<T>
+}
+
+interface ValueOrValidationFactory {
+    fun <T> invalid(): ValueOrValidation<T>
+    fun <T> invalid(validation: Validation): ValueOrValidation<T>
+    fun <T> value(value: T): ValueOrValidation<T>
+}
+
+class ValueOrValidationFactoryImpl(val input: Input,
+                                   val argumentType: ArgumentType<*, *>,
+                                   val parser: ArgumentParser<*, *>) : ValueOrValidationFactory {
+    override fun <T> invalid(): ValueOrValidation<T> =
+            ValueOrValidation.Invalid(invalid(input, argumentType, parser))
+
+    override fun <T> invalid(validation: Validation): ValueOrValidation<T> =
+            ValueOrValidation.Invalid(validation)
+
+    override fun <T> value(value: @UnsafeVariance T): ValueOrValidation<T> =
+            ValueOrValidation.Value(value)
+}
+
+sealed class ValueOrValidation<out T> {
+    abstract val isValue: Boolean
+    abstract val isInvalid: Boolean
+    abstract val value: T
+    abstract val validation: Validation
+    abstract fun <R> mapIfValue(func: (T) -> R): ValueOrValidation<R>
+
+    data class Value<out T>(override val value: T) : ValueOrValidation<T>() {
+        override val isValue: Boolean
+            get() = true
+        override val isInvalid: Boolean
+            get() = false
+        override val validation: Validation
+            get() = throw IllegalStateException("Cannot get validation from value container!")
+
+        override fun <R> mapIfValue(func: (T) -> R): ValueOrValidation<R> =
+                Value(func(this.value))
+    }
+
+    data class Invalid<T>(override val validation: Validation) : ValueOrValidation<T>() {
+        override val isValue: Boolean
+            get() = false
+        override val isInvalid: Boolean
+            get() = true
+        override val value: T
+            get() = throw IllegalStateException("Cannot get value from Invalid validation container!")
+
+        operator fun plus(invalid: Invalid<T>): Invalid<T> =
+                Invalid(validation + invalid.validation)
+
+        override fun <R> mapIfValue(func: (T) -> R): ValueOrValidation<R> =
+                Invalid(validation)
+    }
 }

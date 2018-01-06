@@ -29,7 +29,7 @@ package com.github.jonathanxd.kwcommands.test
 
 import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.text.Text
-import com.github.jonathanxd.jwiutils.kt.asText
+import com.github.jonathanxd.iutils.kt.asText
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.argument.StaticListArguments

@@ -29,10 +29,23 @@ package com.github.jonathanxd.kwcommands.fail
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 open class ParseFail(val parsedCommands: List<CommandContainer>,
                      val manager: CommandManager,
-                     val iter: SourcedCharIterator)
+                     val iter: StatedIterator<Input>)
 
+open class SourcedParseFail(parsedCommands: List<CommandContainer>,
+                            manager: CommandManager,
+                            open val source: String,
+                            iter: StatedIterator<Input>) : ParseFail(parsedCommands, manager, iter) {
+}
 
+open class InputedParseFail(parsedCommands: List<CommandContainer>,
+                            manager: CommandManager,
+                            val input: Input,
+                            iter: StatedIterator<Input>) : SourcedParseFail(parsedCommands, manager, input.source, iter) {
+    override val source: String
+        get() = this.input.source
+}

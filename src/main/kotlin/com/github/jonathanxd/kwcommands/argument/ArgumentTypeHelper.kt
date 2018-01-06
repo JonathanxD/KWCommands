@@ -29,17 +29,9 @@ package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.kwcommands.parser.*
 
-abstract class ArgumentTypeParser<I: Input, out T>: Validator<I>, Transformer<I, T>, Possibilities {
+abstract class ArgumentTypeHelper<in I : Input, out T> : Possibilities, ArgumentParser<I, T> {
 
-    abstract fun validate(argumentType: ArgumentType<I, *>, input: I): Validation
-    abstract fun transform(input: I): T
     abstract fun possibilities(): List<Input>
-
-    override fun invoke(argumentType: ArgumentType<I, *>, value: I): Validation =
-            this.validate(argumentType, value)
-
-    override fun invoke(value: I): T =
-            this.transform(value)
 
     override fun invoke(): List<Input> =
             this.possibilities()

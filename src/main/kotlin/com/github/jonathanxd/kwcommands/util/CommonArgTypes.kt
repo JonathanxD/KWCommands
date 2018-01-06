@@ -28,81 +28,73 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.jwiutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.*
-import com.github.jonathanxd.kwcommands.dsl.stringTransformer
-import com.github.jonathanxd.kwcommands.dsl.stringValidator
-import com.github.jonathanxd.kwcommands.parser.*
+import com.github.jonathanxd.kwcommands.dsl.stringParser
+import com.github.jonathanxd.kwcommands.parser.ArgumentParser
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.Possibilities
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 import java.util.*
 
 
 val charArgumentType = SingleArgumentType<Char>(
-        CharTransformer,
-        CharValidator,
+        CharParser,
         CharPossibilities,
         null,
         TypeInfo.of(Char::class.java)
 )
 
 val byteArgumentType = SingleArgumentType<Byte>(
-        ByteTransformer,
-        ByteValidator,
+        ByteParser,
         BytePossibilities,
         null,
         TypeInfo.of(Byte::class.java)
 )
 
 val shortArgumentType = SingleArgumentType<Short>(
-        ShortTransformer,
-        ShortValidator,
+        ShortParser,
         ShortPossibilities,
         null,
         TypeInfo.of(Short::class.java)
 )
 
 val intArgumentType = SingleArgumentType<Int>(
-        IntTransformer,
-        IntValidator,
+        IntParser,
         IntPossibilities,
         null,
         TypeInfo.of(Int::class.java)
 )
 
 val longArgumentType = SingleArgumentType<Long>(
-        LongTransformer,
-        LongValidator,
+        LongParser,
         LongPossibilities,
         null,
         TypeInfo.of(Long::class.java)
 )
 
 val doubleArgumentType = SingleArgumentType<Double>(
-        DoubleTransformer,
-        DoubleValidator,
+        DoubleParser,
         DoublePossibilities,
         null,
         TypeInfo.of(Double::class.java)
 )
 
 val floatArgumentType = SingleArgumentType<Float>(
-        FloatTransformer,
-        FloatValidator,
+        FloatParser,
         FloatPossibilities,
         null,
         TypeInfo.of(Float::class.java)
 )
 
 val booleanArgumentType = SingleArgumentType<Boolean>(
-        BooleanTransformer,
-        BooleanValidator,
+        BooleanParser,
         BooleanPossibilities,
         null,
         TypeInfo.of(Boolean::class.java)
 )
 
 val stringArgumentType = SingleArgumentType<String>(
-        stringTransformer,
-        stringValidator,
+        stringParser,
         StringPossibilities,
         null,
         TypeInfo.of(String::class.java)
@@ -110,65 +102,60 @@ val stringArgumentType = SingleArgumentType<String>(
 
 val anyArgumentType = AnyArgumentType
 
-fun <I: Input, T> optArgumentType(argumentType: ArgumentType<I, T>): ArgumentType<I, Optional<T>> =
+fun <I : Input, T> optArgumentType(argumentType: ArgumentType<I, T>): ArgumentType<I, Optional<T>> =
         CustomArgumentType({ Optional.of(it) }, Optional.empty(), argumentType,
                 TypeInfo.builderOf(Optional::class.java).of(argumentType.type).buildGeneric())
 
-fun <I: Input> optIntArgumentType(argumentType: ArgumentType<I, Int>): ArgumentType<I, OptionalInt> =
+fun <I : Input> optIntArgumentType(argumentType: ArgumentType<I, Int>): ArgumentType<I, OptionalInt> =
         CustomArgumentType({ OptionalInt.of(it) }, OptionalInt.empty(), argumentType,
                 TypeInfo.builderOf(OptionalInt::class.java).build())
 
-fun <I: Input> optDoubleArgumentType(argumentType: ArgumentType<I, Double>): ArgumentType<I, OptionalDouble> =
+fun <I : Input> optDoubleArgumentType(argumentType: ArgumentType<I, Double>): ArgumentType<I, OptionalDouble> =
         CustomArgumentType({ OptionalDouble.of(it) }, OptionalDouble.empty(), argumentType,
                 TypeInfo.builderOf(OptionalDouble::class.java).build())
 
-fun <I: Input> optLongArgumentType(argumentType: ArgumentType<I, Long>): ArgumentType<I, OptionalLong> =
+fun <I : Input> optLongArgumentType(argumentType: ArgumentType<I, Long>): ArgumentType<I, OptionalLong> =
         CustomArgumentType({ OptionalLong.of(it) }, OptionalLong.empty(), argumentType,
                 TypeInfo.builderOf(OptionalLong::class.java).build())
 
 fun stringArgumentType() = SingleArgumentType<String>(
-        stringTransformer,
-        StringValidator,
+        stringParser,
         StringPossibilities,
         null,
         TypeInfo.of(String::class.java)
 )
 
 fun stringArgumentType(str: String) = SingleArgumentType<String>(
-        stringTransformer,
-        ExactStringValidator(str),
+        ExactStringParser(str),
         ExactStringPossibilities(str),
         null,
         TypeInfo.of(String::class.java)
 )
 
 fun <T> enumArgumentType(enumType: Class<T>) = SingleArgumentType<T>(
-        EnumTransformer(enumType),
-        EnumValidator(enumType),
-        EnumPossibilitiesFunc(enumType),
+        EnumParser(enumType),
+        EnumPossibilities(enumType),
         null,
         TypeInfo.of(enumType)
 )
 
-fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
-                           validator: Validator<SingleInput>,
-                           possibilitiesFunc: Possibilities,
+fun <T> simpleArgumentType(parser: ArgumentParser<SingleInput, T>,
+                           possibilities: Possibilities,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(transformer, validator, possibilitiesFunc, null, typeInfo)
+        SingleArgumentType(parser, possibilities, null, typeInfo)
 
-fun <T> simpleArgumentType(parser: ArgumentTypeParser<SingleInput, T>,
+fun <T> simpleArgumentType(helper: ArgumentTypeHelper<SingleInput, T>,
                            defaultValue: T?,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(parser, defaultValue, typeInfo)
+        SingleArgumentType(helper, defaultValue, typeInfo)
 
-fun <T> simpleArgumentType(parser: ArgumentTypeParser<SingleInput, T>,
+fun <T> simpleArgumentType(helper: ArgumentTypeHelper<SingleInput, T>,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(parser, null, typeInfo)
+        SingleArgumentType(helper, null, typeInfo)
 
-fun <T> simpleArgumentType(transformer: Transformer<SingleInput, T>,
-                           validator: Validator<SingleInput>,
-                           possibilitiesFunc: Possibilities,
+fun <T> simpleArgumentType(parser: ArgumentParser<SingleInput, T>,
+                           possibilities: Possibilities,
                            defaultValue: T?,
                            typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(transformer, validator, possibilitiesFunc, defaultValue, typeInfo)
+        SingleArgumentType(parser, possibilities, defaultValue, typeInfo)
 

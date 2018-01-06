@@ -31,8 +31,9 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
+import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 class CommandNotFoundFail(val commandStr: Input,
                           parsedCommands: List<CommandContainer>,
                           manager: CommandManager,
-                          iter: SourcedCharIterator) : ParseFail(parsedCommands, manager, iter)
+                          iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, commandStr, iter)

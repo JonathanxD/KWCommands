@@ -29,3 +29,8 @@ message.expected_input_map=Map of values was expected
 
 message.expected_enum=Enum constant was expected
 message.invalid_enum=Invalid enum constant
+
+parser.intparser=Integer parser
+parser.listparser=List parser
+parser.listformatcheckparser=List format check parser
+parser.mapformatcheckparser=Map format check parser

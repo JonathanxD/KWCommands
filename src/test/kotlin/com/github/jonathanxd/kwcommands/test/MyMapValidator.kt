@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.argument.ComplexMapArgumentType
 import com.github.jonathanxd.kwcommands.argument.ListArgumentType
 import com.github.jonathanxd.kwcommands.argument.PairArgumentType

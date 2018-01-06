@@ -81,15 +81,17 @@ public class CompletionTest {
 
         String x;
 
+
         x = "mapcmd 1 --values {a=\"man, i l u = {\", ";
         complete = completion.complete(x, null, informationProviders);
 
-        Assert.assertEquals(Collections3.listOf(), complete);
+        Assert.assertEquals(Collections3.listOf("A", "B"), complete);
 
         x = "mapcmd 1 --values {a=C, ";
         complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(Collections3.listOf("A", "B"), complete);
+
 
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=";
         complete = completion.complete(x, null, informationProviders);

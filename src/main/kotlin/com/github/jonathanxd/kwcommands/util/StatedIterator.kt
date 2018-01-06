@@ -27,40 +27,40 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.SingleArgumentType
-import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.kt.left
+import com.github.jonathanxd.kwcommands.parser.EmptyInput
 
-/**
- * This property provides the "inheritance" level of this command.
- */
-val Command.level: Int
-    get() {
-        var current: Command? = this.parent
-        var count = 0
+interface StatedIterator<T> : Iterator<Either<InputParseFail, T>> {
+    val char: SourcedCharIterator
+    val pos: Int
+    fun restore(pos: Int)
 
-        while (current != null) {
-            ++count
-            current = current.parent
-        }
+    fun hasPrevious(): Boolean
+    fun previous(): Either<InputParseFail, T>
 
-        return count
+    fun nextOrNull(): Either<InputParseFail, T>? = if (this.hasNext()) this.next() else null
+    fun previousOrNull(): Either<InputParseFail, T>? = if (this.hasPrevious()) this.previous() else null
+}
+
+class ListBackedStatedIterator<T>(val list: List<Either<InputParseFail, T>>,
+                                  override val char: SourcedCharIterator) : StatedIterator<T> {
+    override var pos: Int = -1
+
+    override fun restore(pos: Int) {
+        this.pos = pos
     }
 
-fun Command.toStr() = this.fullname
+    override fun previous(): Either<InputParseFail, T> = this.list[pos--]
 
-fun Iterable<Argument<*>>.toStr() = this.joinToString { it.toStr() }
-fun Argument<*>.toStr() = this.name
+    override fun hasPrevious(): Boolean = pos > -1
 
-val Argument<*>.nameWithType
-    get() =
-        "${this.name}: ${this.typeStr}"
+    override fun hasNext(): Boolean = this.pos + 1 < this.list.size
 
-val Argument<*>.typeStr: String
-    get() = if (this.argumentType.type.canResolve()) this.argumentType.type.toString() else this.argumentType.type.classLiteral
+    override fun next(): Either<InputParseFail, T> =
+            if (pos + 1 >= this.list.size)
+                left(NoMoreElementsInputParseFail(EmptyInput(char.sourceString)))
+            else
+                this.list[++pos]
 
-fun Argument<*>.isBoolean(): Boolean =
-        this.argumentType is SingleArgumentType<*>
-                && this.argumentType.type.toFullString().let { it == "boolean" || it == "java.lang.Boolean" }
-                && this.argumentType.parse(SingleInput("true", "true", 0, 4)).isValue
+}
