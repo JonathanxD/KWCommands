@@ -29,13 +29,7 @@ package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
-data class Validation(val invalids: List<ValidatedElement>) {
-
-    constructor(vararg validations: Validation) :
-            this(validations
-                    .map { it.invalids }
-                    .fold(mutableListOf<ValidatedElement>()) { acc, r -> acc.addAll(r); acc })
-
+data class Validation(val invalids: List<InvalidElement>) {
 
     operator fun plus(validation: Validation): Validation =
             Validation(this.invalids + validation.invalids)
@@ -44,29 +38,27 @@ data class Validation(val invalids: List<ValidatedElement>) {
     val isInvalid get() = this.invalids.isNotEmpty()
 }
 
-data class ValidatedElement(val input: Input,
-                            val argumentType: ArgumentType<*, *>,
-                            val parser: ArgumentParser<*, *>,
-                            val inputType: InputType<*>)
+data class InvalidElement(val input: Input,
+                          val argumentType: ArgumentType<*, *>,
+                          val parser: ArgumentParser<*, *>)
 
 fun valid(): Validation = VALID
-fun validation(invalid: ValidatedElement): Validation =
+fun validation(invalid: InvalidElement): Validation =
         Validation(listOf(invalid))
 
 fun validation(validations: List<Validation>): Validation =
         Validation(validations
                 .map { it.invalids }
-                .fold(mutableListOf<ValidatedElement>()) { acc, r -> acc.addAll(r); acc })
+                .fold(mutableListOf()) { acc, r -> acc.addAll(r); acc })
 
 fun invalid(input: Input,
             argumentType: ArgumentType<*, *>,
             parser: ArgumentParser<*, *>): Validation =
-        Validation(listOf(validatedElement(input, argumentType, parser, argumentType.inputType)))
+        Validation(listOf(invalidElement(input, argumentType, parser)))
 
-fun validatedElement(input: Input,
-                     argumentType: ArgumentType<*, *>,
-                     parser: ArgumentParser<*, *>,
-                     supported: InputType<*>): ValidatedElement =
-        ValidatedElement(input, argumentType, parser, supported)
+fun invalidElement(input: Input,
+                   argumentType: ArgumentType<*, *>,
+                   parser: ArgumentParser<*, *>): InvalidElement =
+        InvalidElement(input, argumentType, parser)
 
 val VALID = Validation(emptyList())

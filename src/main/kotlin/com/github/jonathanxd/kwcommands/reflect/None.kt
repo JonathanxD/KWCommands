@@ -38,14 +38,9 @@ import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 sealed class None
 
-object NoneValidator : None(), Validator<Input> {
-    override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation =
-            valid()
-}
-
-object NoneTransformer : None(), Transformer<Input, Any> {
-    override fun invoke(value: Input): Any =
-            value.toPlain()
+object NoneParser : None(), ArgumentParser<Input, Any> {
+    override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any> =
+            valueOrValidationFactory.value(input.toPlain())
 
 }
 

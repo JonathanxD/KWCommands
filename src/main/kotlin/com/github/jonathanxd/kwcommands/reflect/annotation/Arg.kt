@@ -34,18 +34,21 @@ import com.github.jonathanxd.kwcommands.reflect.NoneArgumentType
 import kotlin.reflect.KClass
 
 /**
- * Argument specification. By default, [validator], [transformer], [possibilities] and depending on
- * annotated element, [handler], is determined by default by the reflection system based on type and in registered
- * [Argument Types][ArgumentType], changing these values overrides this behavior,
- * so, changing the [validator] of an argument will cause the reflection system to use
- * the specified [validator] instead of the determined one.
+ * Argument specification.
  *
- * @property value Identification and name of argument
- * @property alias Alias to argument
+ * By default, [argumentType] is determined depending on type of annotated element
+ * and [handler] is determined by default by the reflection system based on type and in registered.
+ *
+ * When added to a field, the field value will be replaced by the value parsed from dispatched commands.
+ * This annotation only have effects in fields when the enclosing class is annotated with [Cmd] and there is
+ * no function annotated with [CmdHandler] in the class.
+ *
+ * @property value Identification and name of argument. (defaults to annotated element name)
+ * @property alias Alias to argument.
  * @property description Argument description.
- * @property optional Whether this argument is optional.
+ * @property optional Whether this argument is optional
  * @property requirements Requirements of the argument.
- * @property argumentType Type of argument.
+ * @property argumentType Type of argument. (by default is determined by Reflection Environment)
  * @property handler Argument handler (if this annotated element is a field, an field setter handler will
  * be used as default handler instead of [NoneArgumentHandler]) (**this property overrides default handler**).
  */
@@ -55,7 +58,6 @@ annotation class Arg(val value: String = "",
                      val alias: Array<String> = [],
                      val description: String = "",
                      val optional: Boolean = false,
-                     val multiple: Boolean = false,
                      val requirements: Array<Require> = [],
                      val argumentType: KClass<out () -> ArgumentType<*, *>> = NoneArgumentType::class,
                      val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class)

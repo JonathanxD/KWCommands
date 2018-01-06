@@ -291,7 +291,6 @@ inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContai
 
 // Additionals
 
-val stringTransformer: Transformer<SingleInput, String> = StringTransformer
 val stringParser: ArgumentParser<SingleInput, String> = StringParser
 
 val intParser: ArgumentParser<SingleInput, Int> = IntParser

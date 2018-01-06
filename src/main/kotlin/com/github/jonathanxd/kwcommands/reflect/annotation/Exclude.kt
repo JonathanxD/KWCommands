@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
 /**
- * Exclude annotated field/property from argument creation.
+ * Exclude annotated field/property from argument creation for classes annotated with [Ctx].
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)

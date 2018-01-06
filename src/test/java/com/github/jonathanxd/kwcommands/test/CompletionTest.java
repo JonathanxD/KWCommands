@@ -225,7 +225,7 @@ public class CompletionTest {
 
         Assert.assertTrue(
                 Collections3.listOf("completeTest1", "mapcmd", "setmap", "testE", "testEOpt", "--name")
-                .containsAll(complete));
+                        .containsAll(complete));
 
         x = "testE";
         complete = completion.complete(x, null, informationProviders);
@@ -313,7 +313,7 @@ public class CompletionTest {
 
     @Cmd(description = "Vararg test")
     public void mapcmd(@Arg("n") int n,
-                       @Arg(value = "values", multiple = true) Map<E, X> values,
+                       @Arg(value = "values") Map<E, X> values,
                        @Arg("n2") int n2) {
 
     }
@@ -322,7 +322,7 @@ public class CompletionTest {
 
     @Cmd(description = "Set map test")
     public void setmap(@Arg("n") int n,
-                       @Arg(value = "values", multiple = true,
+                       @Arg(value = "values",
                                argumentType = MyMapArgTypeProvider.class) Map<String, Object> values) {
 
     }

@@ -186,18 +186,6 @@ object BooleanPossibilities : Possibilities {
 // String
 val STRING_DEFAULT_VALUE: String? = null
 
-object StringValidator : Validator<SingleInput> {
-    override fun invoke(argumentType: ArgumentType<SingleInput, *>, value: SingleInput): Validation =
-            valid()
-
-}
-
-object StringTransformer : Transformer<SingleInput, String> {
-    override fun invoke(value: SingleInput): String =
-            value.input
-
-}
-
 class ExactStringParser(val string: String) : ArgumentParser<SingleInput, String> {
     override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<String> =
             if (input.input == string)
@@ -220,12 +208,9 @@ object StringPossibilities : Possibilities by EmptyPossibilitesFunc
 
 // Any
 
-object AnyTransformer : Transformer<Input, Any> {
-    override fun invoke(value: Input): Any = value.toPlain()
-}
-
-object AnyValidator : Validator<Input> {
-    override fun invoke(argumentType: ArgumentType<Input, *>, value: Input): Validation = valid()
+object AnyParser : ArgumentParser<Input, Any> {
+    override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any> =
+            valueOrValidationFactory.value(input.toPlain())
 }
 
 object AnyPossibilities : Possibilities {

@@ -133,7 +133,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                 if (validation.invalids.isNotEmpty()) {
                     printer.printEmpty()
                     printer.printPlain(Texts.getInvalidInputsText().and(Text.of(":")))
-                    for ((validationInput, _, parser, supported) in validation.invalids) {
+                    for ((validationInput, argType, parser) in validation.invalids) {
                         printer.printEmpty()
 
                         val rangeText = Text.of(
@@ -152,7 +152,9 @@ class CommonHelpInfoHandler : HelpInfoHandler {
                         printer.printPlain(Text.of(" | ", Texts.getInputTypeText(),
                                 ": ", validationInput.type.getTypeString()))
 
-                        val supportedText = Text.of(supported.getTypeString())
+                        printer.printPlain(Text.of(" | ", Texts.getArgumentTypeText(), ": ", argument.typeStr))
+
+                        val supportedText = Text.of(argType.inputType.getTypeString())
 
                         printer.printPlain(Text.of(" | ", Texts.getValidInputTypesText(),
                                 ": ", supportedText

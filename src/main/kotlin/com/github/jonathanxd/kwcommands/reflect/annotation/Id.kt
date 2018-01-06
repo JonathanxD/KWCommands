@@ -32,9 +32,19 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import kotlin.reflect.KClass
 
+/**
+ * Specified identification of a [information][Info] request.
+ *
+ * Either [value] or [typeInfo] must be provided, otherwise Reflection Environment will throw an exception.
+ *
+ * @property value Type of the information
+ * @property typeInfo Used in place of [value] to provide a [TypeInfo] literal to be used instead
+ * of Java type, this is recommended to be used to specify a type with generic information.
+ * @property tags Tags to be used to identify the requested information.
+ */
 annotation class Id(val value: KClass<*> = Default::class,
                     val typeLiter: String = "",
-                    vararg val tags: String = arrayOf())
+                    vararg val tags: String = [])
 
 fun Id.idTypeInfo(inferred: TypeInfo<*>): TypeInfo<*> =
         this.typeInfoOrNull ?: inferred

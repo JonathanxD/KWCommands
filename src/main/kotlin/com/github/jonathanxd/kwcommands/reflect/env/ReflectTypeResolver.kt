@@ -34,9 +34,6 @@ import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.json.DelegatedTypeResolver
 import com.github.jonathanxd.kwcommands.json.TypeResolver
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
-import com.github.jonathanxd.kwcommands.parser.Possibilities
-import com.github.jonathanxd.kwcommands.parser.Transformer
-import com.github.jonathanxd.kwcommands.parser.Validator
 
 /**
  * Adds support to method handler, example:

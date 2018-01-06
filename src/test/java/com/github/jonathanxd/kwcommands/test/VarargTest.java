@@ -97,7 +97,7 @@ public class VarargTest {
 
     @Cmd(description = "Vararg test")
     public void varargcmd(@Arg("n") int n,
-                          @Arg(value = "names", multiple = true) List<String> names,
+                          @Arg(value = "names") List<String> names,
                           @Arg("n2") int n2) {
         this.n = n;
         this.names = names;

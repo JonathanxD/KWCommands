@@ -235,7 +235,7 @@ class World {
                  )) block: Block): Any = "setted block $block at $x, $y, $z"
 
     @Cmd(name = "tpto", description = "Teleport [players] to [target] player")
-    fun tpTo(@Arg("target") target: String, @Arg("players", multiple = true) players: List<SimplePlayer>): Any =
+    fun tpTo(@Arg("target") target: String, @Arg("players") players: List<SimplePlayer>): Any =
             "teleported ${players.map { it.name }.joinToString()} to $target!"
 }
 

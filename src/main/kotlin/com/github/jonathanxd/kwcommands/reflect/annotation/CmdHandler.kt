@@ -34,7 +34,7 @@ package com.github.jonathanxd.kwcommands.reflect.annotation
  * this annotation will have no effect.
  *
  * Obs²: Does not annotate more than one function with this annotation in the same class, KWCommands will always
- * consider first found function.
+ * consider first found function, which is unpredictable.
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)

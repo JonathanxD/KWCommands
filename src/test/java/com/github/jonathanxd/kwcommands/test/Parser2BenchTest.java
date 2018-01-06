@@ -82,8 +82,8 @@ public class Parser2BenchTest {
 
     @Cmd(description = "Bench test")
     public Integer bench(@Arg("n") int n,
-                         @Arg(value = "names", multiple = true) List<String> names,
-                         @Arg(value = "types", multiple = true) List<Type> types) {
+                         @Arg(value = "names") List<String> names,
+                         @Arg(value = "types") List<Type> types) {
         return n + names.size() + types.size();
     }
 

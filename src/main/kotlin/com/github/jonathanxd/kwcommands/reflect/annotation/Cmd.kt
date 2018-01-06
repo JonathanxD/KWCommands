@@ -32,21 +32,33 @@ import com.github.jonathanxd.kwcommands.reflect.NoneHandler
 import kotlin.reflect.KClass
 
 /**
+ * Annotated on command specification elements, such as classes and functions.
+ *
+ * The function or class can be also annotated with [DynamicArgs] to use a dynamic argument resolver
+ * instead of default resolver.
+ *
+ * When added to classes, all fields are automatically considered [arguments][Arg], [Exclude] can be use to prevent
+ * annotated field being considered an argument of command. This only applies to classes where there are no
+ * function annotated with [CmdHandler], this annotation prevents fields from being considered arguments,
+ * and uses arguments specified in the function.
+ *
  * @property order Command order.
  * @property name Command name.
  * @property description Command description.
  * @property alias Aliases to command.
  * @property parents Path to parent command (if this command is a sub command).
  * @property requirements Command requirements.
- * @property handler Command handler (if this annotated element is a function, an function invoker handler will
- * be used as default handler instead of [NoneHandler]) (**this property overrides default handler**).
+ * @property handler Command handler (for functions, defaults to function invocation with
+ * corresponding [arguments][Arg], [information][Info] and [command context][Ctx], for classes, defaults to a handler
+ * that does nothing, if the class have any function annotated with [CmdHandler], the annotated function
+ * will be invoked following same principles specified previously).
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 annotation class Cmd(val order: Int = 0,
                      val name: String = "",
                      val description: String = "",
-                     val alias: Array<String> = arrayOf(),
-                     val parents: Array<String> = arrayOf(),
-                     val requirements: Array<Require> = arrayOf(),
+                     val alias: Array<String> = [],
+                     val parents: Array<String> = [],
+                     val requirements: Array<Require> = [],
                      val handler: KClass<out Handler> = NoneHandler::class)

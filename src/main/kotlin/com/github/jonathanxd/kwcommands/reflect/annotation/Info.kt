@@ -34,19 +34,21 @@ import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.reflect.element.infoComponent
 
 /**
- * Information request.
+ * Used to request an information.
  *
  * The annotated element should be of either types:
  *
  * - [Information] with a reified type of value type
  * - [Information] [value][Information.value] type.
  *
- * If the annotated element type is [value][Information.value] type (and not [Information]) it should be nullable if
- * [Info] is [optional][isOptional].
+ * If the annotated element type is of the [value][Information.value] type (and not [Information]) and
+ * [isOptional] is set to `true`, then type of annotated element should be nullable
+ * (Language nullable (such as Kotlin nullable) or with `Nullable` annotation), this is not a rule, but is a
+ * recommendation. When annotated element type is [Information], it will never be null, if the information is not
+ * present, then an [Information.EMPTY] will be provided.
  *
- * @property value Id of information.
- * @property isOptional If true, a [Information.EMPTY] will be passed if
- * a information with provided [id][value] cannot be found.
+ * @property value Identification of requested information.
+ * @property isOptional Whether information is optional or not.
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER)

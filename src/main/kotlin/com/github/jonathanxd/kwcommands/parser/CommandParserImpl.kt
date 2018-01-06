@@ -439,10 +439,10 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                         peek_,
                         argument,
                         args,
-                        validation(validatedElement(peek_,
+                        validation(invalidElement(peek_,
                                 argument.argumentType,
-                                ListFormatCheckParser,
-                                ListInputType)),
+                                ListFormatCheckParser
+                        )),
                         parsedCommands,
                         inputsIter))
             } else {
@@ -506,10 +506,10 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                     peek_,
                     argument,
                     args,
-                    validation(validatedElement(peek_,
+                    validation(invalidElement(peek_,
                             argument.argumentType,
-                            MapFormatCheckParser,
-                            MapInputType)),
+                            MapFormatCheckParser
+                    )),
                     parsedCommands,
                     inputsIter))
         }

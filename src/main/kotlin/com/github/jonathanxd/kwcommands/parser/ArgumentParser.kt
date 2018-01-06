@@ -30,11 +30,6 @@ package com.github.jonathanxd.kwcommands.parser
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
 @FunctionalInterface
-interface Transformer<in I : Input, out T> {
-    operator fun invoke(value: I): T
-}
-
-@FunctionalInterface
 interface ArgumentParser<in I : Input, out T> {
     fun parse(input: I, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<T>
 }

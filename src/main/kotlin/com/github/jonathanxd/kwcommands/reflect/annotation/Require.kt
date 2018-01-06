@@ -28,11 +28,12 @@
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.information.Information
 import kotlin.reflect.KClass
 
 /**
- * Requires a [subject] information to have a value that matches [data]. (uses [testerType] to test
- * requirement).
+ * Requires a [subject information][subject] [value][Information.value] to match [data] according to
+ * [data tester][testerType].
  *
  * @property subject Subject information id.
  * @property testerType Type of the [RequirementTester] (must be a singleton class).
