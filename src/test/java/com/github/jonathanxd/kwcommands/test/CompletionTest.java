@@ -81,7 +81,7 @@ public class CompletionTest {
 
         String x;
 
-/*
+
         x = "mapcmd 1 --values {a=\"man, i l u = {\", ";
         complete = completion.complete(x, null, informationProviders);
 
@@ -109,7 +109,7 @@ public class CompletionTest {
         List<String> expected = Collections3.listOf("]");
         expected.addAll(ArraysKt.map(Languages.values(), Languages::name));
         Assert.assertEquals(expected, complete);
-*/
+
         x = "setmap 1 --values {name=Jonathan,values={age=18,languages=[Ja";
         complete = completion.complete(x, null, informationProviders);
 

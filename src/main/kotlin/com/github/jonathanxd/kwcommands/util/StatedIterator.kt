@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.kt.left
+import com.github.jonathanxd.kwcommands.parser.EmptyInput
 
 interface StatedIterator<T> : Iterator<Either<InputParseFail, T>> {
     val char: SourcedCharIterator
@@ -42,7 +44,7 @@ interface StatedIterator<T> : Iterator<Either<InputParseFail, T>> {
 }
 
 class ListBackedStatedIterator<T>(val list: List<Either<InputParseFail, T>>,
-                                  override val char: SourcedCharIterator): StatedIterator<T> {
+                                  override val char: SourcedCharIterator) : StatedIterator<T> {
     override var pos: Int = -1
 
     override fun restore(pos: Int) {
@@ -55,6 +57,10 @@ class ListBackedStatedIterator<T>(val list: List<Either<InputParseFail, T>>,
 
     override fun hasNext(): Boolean = this.pos + 1 < this.list.size
 
-    override fun next(): Either<InputParseFail, T> = this.list[++pos]
+    override fun next(): Either<InputParseFail, T> =
+            if (pos + 1 >= this.list.size)
+                left(NoMoreElementsInputParseFail(EmptyInput(char.sourceString)))
+            else
+                this.list[++pos]
 
 }

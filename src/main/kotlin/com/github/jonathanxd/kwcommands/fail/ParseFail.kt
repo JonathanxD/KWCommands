@@ -27,12 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.fail
 
-import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.util.InputParseFail
-import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 open class ParseFail(val parsedCommands: List<CommandContainer>,
@@ -42,28 +39,13 @@ open class ParseFail(val parsedCommands: List<CommandContainer>,
 open class SourcedParseFail(parsedCommands: List<CommandContainer>,
                             manager: CommandManager,
                             open val source: String,
-                            iter: StatedIterator<Input>): ParseFail(parsedCommands, manager, iter) {
+                            iter: StatedIterator<Input>) : ParseFail(parsedCommands, manager, iter) {
 }
 
 open class InputedParseFail(parsedCommands: List<CommandContainer>,
                             manager: CommandManager,
                             val input: Input,
-                            iter: StatedIterator<Input>): SourcedParseFail(parsedCommands, manager, input.source, iter) {
+                            iter: StatedIterator<Input>) : SourcedParseFail(parsedCommands, manager, input.source, iter) {
     override val source: String
         get() = this.input.source
-}
-
-
-class InputParsingParseFail(val failures: List<InputParseFail>,
-                            val parsed: List<Input>,
-                            iter: StatedIterator<Input>,
-                            parsedCommands: List<CommandContainer>,
-                            manager: CommandManager): InputedParseFail(parsedCommands, manager, failures.last().input, iter)
-
-class ContinuableFail(val fail: InputParsingParseFail,
-                      val continuableParse: ContinuableParse,
-                      iter: StatedIterator<Input>): InputedParseFail(fail.parsedCommands, fail.manager, fail.input, iter)
-
-interface ContinuableParse {
-    fun resume(): Either<ParseFail, List<CommandContainer>>
 }

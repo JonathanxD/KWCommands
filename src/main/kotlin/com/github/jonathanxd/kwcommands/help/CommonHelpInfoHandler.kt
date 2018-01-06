@@ -46,8 +46,6 @@ import com.github.jonathanxd.kwcommands.util.*
 class CommonHelpInfoHandler : HelpInfoHandler {
 
     override fun handleFail(parseFail: ParseFail, printer: Printer) {
-        @Suppress("NAME_SHADOWING")
-        val parseFail = (parseFail as? ContinuableFail)?.fail ?: parseFail
 
         when (parseFail) {
             is ArgumentsMissingFail -> {

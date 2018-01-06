@@ -28,11 +28,9 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.kt.*
 import com.github.jonathanxd.iutils.opt.specialized.OptChar
 import com.github.jonathanxd.iutils.opt.specialized.OptObject
-import com.github.jonathanxd.jwiutils.kt.*
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
-import com.github.jonathanxd.kwcommands.argument.PairArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 
 const val ESCAPE = '\\'
@@ -42,8 +40,8 @@ const val MAP_CLOSE = '}'
 const val LIST_OPEN = '['
 const val LIST_CLOSE = ']'
 
-const val OPEN_TAG = '"';
-const val OPEN_TAG2 = '\'';
+const val OPEN_TAG = '"'
+const val OPEN_TAG2 = '\''
 
 fun String.escaped() = this.escape('\\')
 fun String.isArgumentName() = this.startsWith("--")
@@ -678,41 +676,3 @@ class TokenOrElementExpectedFail(val tokens: List<Char>,
  * @param iter Iterator.
  */
 class NextElementNotFoundFail(input: Input) : InputParseFail(input)
-
-class TypeNotFoundFail(input: Input) : InputParseFail(input)
-
-class ListTypeGetter(val types: List<ArgumentType<*, *>>) : TypeGetter {
-    override fun get(index: Int): ArgumentType<*, *>? =
-            if (types.size < index) null else types[index]
-}
-
-class SingleTypeGetter(val type: ArgumentType<*, *>) : TypeGetter {
-    override fun get(index: Int): ArgumentType<*, *>? = type
-}
-
-interface TypeGetter {
-    fun get(index: Int): ArgumentType<*, *>?
-}
-
-class ListMapTypeGetter(val types: List<PairArgumentType<*, *>>) : MapTypeGetter {
-    override fun getKey(index: Int): ArgumentType<*, *>? =
-            if (types.size < index) null else types[index].aPairType
-
-    override fun getValue(index: Int): ArgumentType<*, *>? =
-            if (types.size < index) null else types[index].bPairType
-
-}
-
-class SingleMapTypeGetter(val keyType: ArgumentType<*, *>,
-                          val valueType: ArgumentType<*, *>) : MapTypeGetter {
-    override fun getKey(index: Int): ArgumentType<*, *>? = keyType
-    override fun getValue(index: Int): ArgumentType<*, *>? = valueType
-}
-
-
-interface MapTypeGetter {
-    fun getKey(index: Int): ArgumentType<*, *>?
-    fun getValue(index: Int): ArgumentType<*, *>?
-}
-
-

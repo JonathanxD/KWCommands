@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.test
 
-import com.github.jonathanxd.jwiutils.kt.ifLeftSide
-import com.github.jonathanxd.jwiutils.kt.textOf
+import com.github.jonathanxd.iutils.kt.ifLeftSide
+import com.github.jonathanxd.iutils.kt.textOf
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.dsl.intArg
 import com.github.jonathanxd.kwcommands.dsl.staticListArguments

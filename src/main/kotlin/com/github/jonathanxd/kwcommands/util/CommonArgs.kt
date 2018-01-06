@@ -28,8 +28,8 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.`object`.Either
-import com.github.jonathanxd.jwiutils.kt.left
-import com.github.jonathanxd.jwiutils.kt.right
+import com.github.jonathanxd.iutils.kt.left
+import com.github.jonathanxd.iutils.kt.right
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 

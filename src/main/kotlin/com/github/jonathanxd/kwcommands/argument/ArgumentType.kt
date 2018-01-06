@@ -29,7 +29,7 @@ package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.jwiutils.kt.typeInfo
+import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.parser.*
 
 abstract class ArgumentType<I : Input, out T>(val defaultValue: T?,
