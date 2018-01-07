@@ -223,16 +223,17 @@ class Download {
 @Cmd(name = "world", description = "World actions")
 class World {
 
-    @Cmd(name = "setblock", description = "Sets the block in position x, y, z",
-            requirements = arrayOf(
-                    Require(subject = Id(Player::class, "player"), data = "world.modify", testerType = PermissionRequirementTest::class)
-            ))
+    @Cmd(name = "setblock", description = "Sets the block in position x, y, z")
+    @Require(subject = Id(Player::class, "player"), data = "world.modify", testerType = PermissionRequirementTest::class)
     fun setBlock(@Arg("x") x: Int,
                  @Arg("y") y: Int,
                  @Arg("z") z: Int,
-                 @Arg(value = "block", requirements = arrayOf(
-                         Require(subject = Id(Player::class, "player"), data = "world.modify.block", testerType = PermissionRequirementTest::class)
-                 )) block: Block): Any = "setted block $block at $x, $y, $z"
+                 @Arg(value = "block")
+                 @Require(subject = Id(Player::class, "player"),
+                         data = "world.modify.block",
+                         testerType = PermissionRequirementTest::class
+                 )
+                 block: Block): Any = "setted block $block at $x, $y, $z"
 
     @Cmd(name = "tpto", description = "Teleport [players] to [target] player")
     fun tpTo(@Arg("target") target: String, @Arg("players") players: List<SimplePlayer>): Any =
@@ -247,8 +248,21 @@ object Player {
 data class SimplePlayer(val name: String)
 
 enum class Block {
-    STONE,
-    DIRT
+    STONE {
+        override val solid: Boolean = true
+        override val fluid: Boolean = false
+    },
+    DIRT {
+        override val solid: Boolean = true
+        override val fluid: Boolean = false
+    },
+    WATER {
+        override val solid: Boolean = false
+        override val fluid: Boolean = true
+    };
+
+    abstract val solid: Boolean
+    abstract val fluid: Boolean
 }
 
 class TpCommand {
@@ -266,6 +280,15 @@ val permissionRequirement = Requirement.create("world.modify", informationId { t
 object PermissionRequirementTest : RequirementTester<Player, String> {
     override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean =
             information.value.hasPermission(requirement.required)
+}
+
+object BlockParamTest : RequirementTester<Block, String> {
+    override fun test(requirement: Requirement<Block, String>, information: Information<Block>): Boolean =
+            when (requirement.required) {
+                "solid" -> information.value.solid
+                "fluid" -> information.value.fluid
+                else -> false
+            }
 }
 
 

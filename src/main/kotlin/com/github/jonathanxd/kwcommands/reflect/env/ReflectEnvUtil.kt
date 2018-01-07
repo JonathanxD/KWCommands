@@ -40,6 +40,7 @@ import com.github.jonathanxd.kwcommands.reflect.annotation.createId
 import com.github.jonathanxd.kwcommands.reflect.element.ElementParameter
 import com.github.jonathanxd.kwcommands.reflect.util.get
 import com.github.jonathanxd.kwcommands.reflect.util.getHandlerOrNull
+import com.github.jonathanxd.kwcommands.reflect.util.getRequirements
 import com.github.jonathanxd.kwcommands.reflect.util.toSpecs
 import com.github.jonathanxd.kwcommands.util.*
 import java.lang.reflect.AnnotatedElement
@@ -122,7 +123,7 @@ fun AnnotatedElement.createArg(reflectionEnvironment: ReflectionEnvironment,
             isOptional = isOptional,
             argumentType = argumentType,
             requiredInfo = emptySet(),
-            requirements = argumentAnnotation?.requirements.orEmpty().toSpecs(),
+            requirements = argumentAnnotation?.getRequirements(this).orEmpty(),
             handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
     )
 }

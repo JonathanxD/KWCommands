@@ -46,6 +46,9 @@ annotation class Id(val value: KClass<*> = Default::class,
                     val typeLiter: String = "",
                     vararg val tags: String = [])
 
+val Id.isDefault: Boolean
+    get() = this.value == Default::class.java && this.typeLiter.isEmpty() && this.tags.isEmpty()
+
 fun Id.idTypeInfo(inferred: TypeInfo<*>): TypeInfo<*> =
         this.typeInfoOrNull ?: inferred
 

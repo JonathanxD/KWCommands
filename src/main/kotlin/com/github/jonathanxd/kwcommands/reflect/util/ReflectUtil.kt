@@ -30,9 +30,9 @@ package com.github.jonathanxd.kwcommands.reflect.util
 import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
+import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.argument.Arguments
 import com.github.jonathanxd.kwcommands.argument.StaticListArguments
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.Handler
@@ -49,6 +49,7 @@ import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.lang.reflect.Parameter
 import kotlin.reflect.KClass
 
 /**
@@ -157,7 +158,7 @@ fun Cmd.toKCommand(manager: CommandManager,
             description = TextUtil.parse(description),
             handler = handler,
             arguments = argumentsInstance,
-            requirements = this.getRequirements(),
+            requirements = this.getRequirements(annotatedElement),
             requiredInfo = reqInfo,
             alias = alias.toList())
 
@@ -168,19 +169,74 @@ fun Cmd.toKCommand(manager: CommandManager,
 /**
  * Convert [Require] annotation to [Requirement] specification.
  */
-fun Array<out Require>.toSpecs(): List<Requirement<*, *>> =
-        this.map {
-            @Suppress("UNCHECKED_CAST")
-            Requirement(it.data,
-                    it.subject.let { Information.Id(it.typeInfo, it.tags) },
-                    TypeInfo.of(String::class.java),
-                    it.testerType.get() as RequirementTester<Any, String>)
+fun Array<out Require>.toSpecs(elem: AnnotatedElement? = null): List<Requirement<*, *>> =
+        when (elem) {
+            is Field -> this.map { it.toSpec(elem) }
+            is Parameter -> this.map { it.toSpec(elem) }
+            else -> this.map { it.toSpec() }
         }
+
+
+/**
+ * Creates [Information.Id] for [Require] annotated elements.
+ */
+fun Id.createForReq(annotatedElement: AnnotatedElement? = null, genType: TypeInfo<*>? = null): Information.Id<*> =
+        if (this.isDefault && annotatedElement?.isAnnotationPresent(Info::class.java) == true)
+            annotatedElement.getDeclaredAnnotation(Info::class.java)
+                    .createId(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo)
+        else
+            Information.Id(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo, this.tags)
+
+
+
+fun AnnotatedElement.getType(): TypeInfo<*>? =
+        when (this) {
+            is Field -> this.genericType
+            is Parameter -> this.parameterizedType
+            else -> null
+        }?.let { TypeUtil.toTypeInfo(it) }
+
+/**
+ * Convert [Require] annotation to [Requirement] specification.
+ */
+@Suppress("UNCHECKED_CAST")
+fun Require.toSpec(f: AnnotatedElement? = null): Requirement<*, *> =
+        Requirement(this.data,
+                this.subject.createForReq(f, f?.getType()) as Information.Id<Any>,
+                TypeInfo.of(String::class.java),
+                this.testerType.get() as RequirementTester<Any, String>)
 
 /**
  * Gets requirements of [Cmd].
  */
-fun Cmd.getRequirements(): List<Requirement<*, *>> = this.requirements.toSpecs()
+fun AnnotatedElement.getRequirementsAnnotation(): List<Requirement<*, *>> =
+        if (this.isAnnotationPresent(Requires::class.java))
+            this.getDeclaredAnnotation(Requires::class.java)?.value.orEmpty().toSpecs(this)
+        else
+            this.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(this)
+
+
+/**
+ * Gets requirements of [Cmd].
+ */
+fun Cmd.getRequirements(annotatedElement: AnnotatedElement): List<Requirement<*, *>> =
+        this.requirements.toSpecs(annotatedElement) + annotatedElement.getRequirementsAnnotation()
+
+/**
+ * Gets requirements of [Arg].
+ */
+fun Arg.getRequirements(annotatedElement: AnnotatedElement): List<Requirement<*, *>> =
+        (this.getRequirementsOfAnnotation(annotatedElement)) + annotatedElement.getRequirementsAnnotation()
+
+/**
+ * Gets requirements of [Arg] annotation.
+ */
+fun Arg.getRequirementsOfAnnotation(annotatedElement: AnnotatedElement): List<Requirement<*, *>> =
+        when (annotatedElement) {
+            is Field -> this.requirements.map { it.toSpec(annotatedElement) }
+            is Parameter -> this.requirements.map { it.toSpec(annotatedElement) }
+            else -> this.requirements.toSpecs(annotatedElement)
+        }
 
 /**
  * Gets handler of [Cmd] (or null if default)

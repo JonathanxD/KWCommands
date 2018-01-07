@@ -27,22 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.annotation
 
-import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.requirement.RequirementTester
-import kotlin.reflect.KClass
-
-/**
- * Requires a [subject information][subject] [value][Information.value] to match [data] according to
- * [data tester][testerType].
- *
- * @property subject Subject information id.
- * @property testerType Type of the [RequirementTester] (must be a singleton class).
- * @property data Requirement data, annotation requirements only supports String type.
- */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.VALUE_PARAMETER)
-@Suppress("DEPRECATED_JAVA_ANNOTATION")
-@java.lang.annotation.Repeatable(Requires::class)
-annotation class Require(val subject: Id = Id(),
-                         val testerType: KClass<out RequirementTester<*, String>>,
-                         val data: String)
+annotation class Requires(vararg val value: Require)
