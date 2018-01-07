@@ -237,9 +237,14 @@ class World {
                  @Arg("y") y: Int,
                  @Arg("z") z: Int,
                  @Arg(value = "block")
-                 @Require(subject = Id(Player::class, "player"),
-                         required = "world.modify.block",
-                         testerType = PermissionRequirementTest::class
+                 @Requires(
+                         Require(subject = Id(Player::class, "player"),
+                                 required = "world.modify.block",
+                                 testerType = PermissionRequirementTest::class
+                         ),
+                         Require(required = "solid",
+                                 testerType = BlockParamTest::class
+                         )
                  )
                  block: Block): Any = "setted block $block at $x, $y, $z"
 
@@ -286,13 +291,13 @@ val permissionRequirement = Requirement.create("world.modify", informationId { t
 
 
 object PermissionRequirementTest : RequirementTester<Player, String> {
-    override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean =
-            information.value.hasPermission(requirement.required)
+    override fun test(requirement: Requirement<Player, String>, value: Player): Boolean =
+            value.hasPermission(requirement.required)
 }
 
 object PermissionProvidedRequirementTest : RequirementTester<Player, Permission> {
-    override fun test(requirement: Requirement<Player, Permission>, information: Information<Player>): Boolean =
-            information.value.hasPermission(requirement.required.permission)
+    override fun test(requirement: Requirement<Player, Permission>, value: Player): Boolean =
+            value.hasPermission(requirement.required.permission)
 }
 
 object PermProvider : Supplier<Permission> {
@@ -302,10 +307,10 @@ object PermProvider : Supplier<Permission> {
 data class Permission(val permission: String)
 
 object BlockParamTest : RequirementTester<Block, String> {
-    override fun test(requirement: Requirement<Block, String>, information: Information<Block>): Boolean =
+    override fun test(requirement: Requirement<Block, String>, value: Block): Boolean =
             when (requirement.required) {
-                "solid" -> information.value.solid
-                "fluid" -> information.value.fluid
+                "solid" -> value.solid
+                "fluid" -> value.fluid
                 else -> false
             }
 }

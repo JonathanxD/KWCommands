@@ -35,9 +35,7 @@ import com.github.jonathanxd.kwcommands.command.CommandBuilder
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.requirement.Requirement
-import com.github.jonathanxd.kwcommands.requirement.RequirementBuilder
+import com.github.jonathanxd.kwcommands.requirement.*
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
 import org.json.simple.parser.JSONParser
@@ -76,6 +74,11 @@ interface JsonCommandParser {
      * Parses [Information] from [jsonObject]
      */
     fun parseInfo(jsonObject: JSONObject): Information<*>
+
+    /**
+     * Parses [Information] from [jsonObject].
+     */
+    fun parseRequirementSubject(jsonObject: JSONObject): RequirementSubject<*>
 
     /**
      * Parses [RequiredInformation] from [jsonObject]
@@ -117,6 +120,12 @@ interface JsonCommandParser {
      * Parses [Information] from [json text][json].
      */
     fun parseInfo(json: String): Information<*> = this.parseInfo(JSONParser().parse(json) as JSONObject)
+
+    /**
+     * Parses [Information] from [json text][json].
+     */
+    fun parseRequirementSubject(json: String): RequirementSubject<*> =
+            this.parseRequirementSubject(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [RequiredInformation] from [json text][json].
@@ -206,7 +215,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
 
         @Suppress("UNCHECKED_CAST")
         return ArgumentBuilder<Any?>()
-                .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String}.orEmpty())
+                .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
                 .name(jsonObject.getRequired(NAME_KEY))
                 .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
                 .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
@@ -220,9 +229,10 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
     }
 
     override fun parseReq(jsonObject: JSONObject): Requirement<*, *> =
+            @Suppress("UNCHECKED_CAST")
             RequirementBuilder<Any?, String>()
                     .type(TypeInfo.of(String::class.java))
-                    .subject(this.parseId(jsonObject.getRequired<JSONObject>(INFO_KEY)))
+                    .subject(this.parseRequirementSubject(jsonObject) as RequirementSubject<Any?>)
                     .tester(jsonObject.getAsSingletonReq(TESTER_KEY, this.typeResolver))
                     .required(jsonObject.getRequired(DATA_KEY))
                     .build()
@@ -244,6 +254,12 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
             jsonObject.getAsSingletonReq<() -> Any?>(PROVIDER_KEY, this.typeResolver).invoke(),
             jsonObject.getRequired<String>(DESCRIPTION_KEY)
     )
+
+    override fun parseRequirementSubject(jsonObject: JSONObject): RequirementSubject<*> =
+            if (jsonObject.containsKey(ARGUMENTS_KEY))
+                ArgumentRequirementSubject<Any?>(jsonObject.getRequired(ARGUMENTS_KEY))
+            else
+                InformationRequirementSubject(this.parseId(jsonObject.getRequired<JSONObject>(INFO_KEY)))
 
     override fun parseCommand(json: String): Command =
             this.parseCommand(this.parser.parse(json) as JSONObject)

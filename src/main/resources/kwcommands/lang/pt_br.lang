@@ -62,6 +62,7 @@ help.footer.2=-------- Comandos --------
 
 help.argument_description=Descrição do argumento
 help.requires_value=** Requer valor '$required_value' do sujeito '$subject_type' (rótulos: $subject_tags) (Testador: $tester)
+help.requires_argument_value=** Requer valor '$required_value' do argument '$argument_name' (Testador: $tester)
 help.requires_info=* Requer a informação '$information_id' do tipo '$information_type'.
 help.no_commands=Sem comandos
 

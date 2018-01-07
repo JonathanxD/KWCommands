@@ -202,6 +202,11 @@ interface TextsStub {
                             @Named(SUBJECT_TAGS) subjectTags: String,
                             @Named(TESTER) tester: TextComponent): TextComponent
 
+    @Section("help", "requires_argument_value")
+    fun getRequiresArgumentValueText(@Named(REQUIRED_VALUE) value: String,
+                                     @Named(ARGUMENT_NAME) argumentName: String,
+                                     @Named(TESTER) tester: TextComponent): TextComponent
+
     @Section("help", "requires_info")
     fun getRequiresInfoText(@Named(INFORMATION_ID) id: String,
                             @Named(INFORMATION_TYPE) infoType: String): TextComponent

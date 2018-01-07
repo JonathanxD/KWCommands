@@ -56,7 +56,6 @@ data class Command(val parent: Command?,
                    val arguments: Arguments,
                    val requirements: List<Requirement<*, *>>,
                    val requiredInfo: Set<RequiredInformation>) : Comparable<Command> {
-
     /**
      * Sub commands
      */

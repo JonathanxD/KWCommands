@@ -70,7 +70,7 @@ class MapTest2 {
             requirements {
                 +requirement<DslTest.Group, DslTest.Group>(DslTest.Group.ADMIN) {
                     subject(informationId { tags { +"group" } })
-                    tester(textOf("GroupTester")) { (required1), (_, value) ->
+                    tester(textOf("GroupTester")) { (required1), value ->
                         value == required1
                     }
                 }

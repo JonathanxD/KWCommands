@@ -25,28 +25,11 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.test.welcome;
+package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.iutils.text.Text;
-import com.github.jonathanxd.iutils.text.TextComponent;
-import com.github.jonathanxd.kwcommands.requirement.Requirement;
-import com.github.jonathanxd.kwcommands.requirement.RequirementTester;
+import com.github.jonathanxd.kwcommands.information.Information
 
-import org.jetbrains.annotations.NotNull;
+sealed class RequirementSubject<T>
 
-public class PermissionTester implements RequirementTester<User, String> {
-
-    public static final PermissionTester INSTANCE = new PermissionTester();
-
-    @NotNull
-    @Override
-    public TextComponent getName() {
-        return Text.of("RequirementTester");
-    }
-
-    @Override
-    public boolean test(@NotNull Requirement<User, String> requirement,
-                        User value) {
-        return value != null && value.hasPermission(requirement.getRequired());
-    }
-}
+data class InformationRequirementSubject<T>(val id: Information.Id<T>) : RequirementSubject<T>()
+data class ArgumentRequirementSubject<T>(val name: String) : RequirementSubject<T>()

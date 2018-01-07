@@ -204,9 +204,8 @@ public class JsonTest {
         }
 
         @Override
-        public boolean test(@NotNull Requirement<Player, String> requirement,
-                            @NotNull Information<? extends Player> information) {
-            return information.getValue().hasPermission(requirement.getRequired());
+        public boolean test(@NotNull Requirement<Player, String> requirement, Player value) {
+            return value != null && value.hasPermission(requirement.getRequired());
         }
     }
 

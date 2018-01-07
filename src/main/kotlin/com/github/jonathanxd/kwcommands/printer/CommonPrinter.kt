@@ -35,6 +35,8 @@ import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.dsl.command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
+import com.github.jonathanxd.kwcommands.requirement.ArgumentRequirementSubject
+import com.github.jonathanxd.kwcommands.requirement.InformationRequirementSubject
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.util.append
 import com.github.jonathanxd.kwcommands.util.level
@@ -287,15 +289,24 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                             builder.append(' ', to + 3)
 
-                            val tags=
-                                    if (it.subject.tags.isNotEmpty()) it.subject.tags.joinToString(separator = " ")
-                                    else "[]"
-                            builder.append(localize.localize(Texts.getRequiresValueText(
-                                    it.required.toString(),
-                                    it.subject.type.toString(),
-                                    tags,
-                                    it.tester.name
-                            )))
+                            if (it.subject is InformationRequirementSubject<*>) {
+                                val tags =
+                                        if (it.subject.id.tags.isNotEmpty()) it.subject.id.tags.joinToString(separator = " ")
+                                        else "[]"
+                                builder.append(localize.localize(Texts.getRequiresValueText(
+                                        it.required.toString(),
+                                        it.subject.id.type.toString(),
+                                        tags,
+                                        it.tester.name
+                                )))
+                            } else if (it.subject is ArgumentRequirementSubject<*>) {
+                                builder.append(localize.localize(Texts.getRequiresArgumentValueText(
+                                        it.required.toString(),
+                                        it.subject.name,
+                                        it.tester.name
+                                )))
+
+                            }
 
                             out.flushAndClean(builder)
                         }

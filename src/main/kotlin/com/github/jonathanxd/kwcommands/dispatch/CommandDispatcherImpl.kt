@@ -75,8 +75,8 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
             }
 
             container?.let {
-                val argWithReq = it.arguments.map {
-                    it to it.argument.requirements.checkRequirements(informationProviders)
+                val argWithReq = it.arguments.map { arg ->
+                    arg to arg.argument.requirements.checkRequirements(it, informationProviders)
                 }
 
                 val argWithInfoReq = it.arguments.map {
@@ -84,7 +84,7 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                 }
 
                 val commandReq =
-                        command.command.requirements.checkRequirements(informationProviders)
+                        command.command.requirements.checkRequirements(it, informationProviders)
 
                 val commandInfoReq =
                         command.command.requiredInfo.checkRequiredInfo(informationProviders)

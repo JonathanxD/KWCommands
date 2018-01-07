@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.util
 
+import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
@@ -44,8 +45,8 @@ import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
-import com.github.jonathanxd.kwcommands.requirement.Requirement
-import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.reflect.env.createArg
+import com.github.jonathanxd.kwcommands.requirement.*
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -180,12 +181,20 @@ fun Array<out Require>.toSpecs(elem: AnnotatedElement? = null): List<Requirement
 /**
  * Creates [Information.Id] for [Require] annotated elements.
  */
-fun Id.createForReq(annotatedElement: AnnotatedElement? = null, genType: TypeInfo<*>? = null): Information.Id<*> =
+fun Id.createForReq(annotatedElement: AnnotatedElement? = null, genType: TypeInfo<*>? = null): RequirementSubject<*> =
         if (this.isDefault && annotatedElement?.isAnnotationPresent(Info::class.java) == true)
-            annotatedElement.getDeclaredAnnotation(Info::class.java)
-                    .createId(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo)
+            InformationRequirementSubject(annotatedElement.getDeclaredAnnotation(Info::class.java)
+                    .createId(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo))
+        else if (this.isDefault && annotatedElement?.isAnnotationPresent(Arg::class.java) == true)
+            annotatedElement.getDeclaredAnnotation(Arg::class.java).let {
+                val name = it.value.let {
+                    if (it.isEmpty()) (annotatedElement as? Field)?.name ?: (annotatedElement as Parameter).name
+                    else it
+                }
+                ArgumentRequirementSubject<Any?>(name)
+            }
         else
-            Information.Id(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo, this.tags)
+            InformationRequirementSubject(Information.Id(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo, this.tags))
 
 
 
@@ -215,7 +224,7 @@ val Require.requiredValue: Any?
 @Suppress("UNCHECKED_CAST")
 fun Require.toSpec(f: AnnotatedElement? = null): Requirement<*, *> =
         Requirement(this.requiredValue,
-                this.subject.createForReq(f, f?.getType()) as Information.Id<Any?>,
+                this.subject.createForReq(f, f?.getType()) as RequirementSubject<Any?>,
                 TypeInfo.of(String::class.java),
                 this.testerType.get() as RequirementTester<Any?, Any?>)
 

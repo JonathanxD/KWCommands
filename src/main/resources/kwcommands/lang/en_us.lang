@@ -62,6 +62,7 @@ help.footer.2=-------- Commands --------
 
 help.argument_description=Argument description
 help.requires_value=** Requires value '$required_value' of subject '$subject_type' (tags: $subject_tags) (Tester: $tester)
+help.requires_argument_value=** Requires value '$required_value' of argument '$argument_name' (Tester: $tester)
 help.requires_info=* Requires information '$information_id' of type '$information_type'.
 help.no_commands=No commands
 

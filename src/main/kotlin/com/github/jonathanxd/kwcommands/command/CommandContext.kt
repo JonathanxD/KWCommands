@@ -36,6 +36,8 @@ import com.github.jonathanxd.kwcommands.exception.InfoMissingException
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
+import com.github.jonathanxd.kwcommands.requirement.ArgumentRequirementSubject
+import com.github.jonathanxd.kwcommands.requirement.InformationRequirementSubject
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
@@ -92,7 +94,11 @@ data class CommandContext(val commandContainer: CommandContainer,
 
     @Suppress("UNCHECKED_CAST")
     fun <T> satisfyReq(req: Requirement<T, *>): Boolean =
-            getOptInfo(req.subject)?.let { req.test(it) } ?: false
+            (req.subject as? InformationRequirementSubject<*>)?.let {
+                getOptInfo(it.id)?.value?.let { req.test(it as T) }
+            } ?: (req.subject as? ArgumentRequirementSubject<*>)?.let {
+                getOptArg<Any?>(it.name)?.let { req.test(it as T) }
+            } ?: false
 
     // inline
 
@@ -121,5 +127,9 @@ data class CommandContext(val commandContainer: CommandContainer,
             this.getOptInfo<T>(tags)?.value
 
     inline fun <reified T> inlineSatisfyReq(req: Requirement<T, *>): Boolean =
-            getOptInfo<T>(req.subject)?.let { req.test(it) } ?: false
+            (req.subject as? InformationRequirementSubject<*>)?.let {
+                getOptInfo(it.id)?.value?.let { req.test(it as T) }
+            } ?: (req.subject as? ArgumentRequirementSubject<*>)?.let {
+                getOptArg<T>(it.name)?.let { req.test(it) }
+            } ?: false
 }

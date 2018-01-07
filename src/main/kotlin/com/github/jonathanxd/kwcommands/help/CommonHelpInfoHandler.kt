@@ -41,6 +41,8 @@ import com.github.jonathanxd.kwcommands.printer.Printer
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.MissingInformationResult
 import com.github.jonathanxd.kwcommands.processor.UnsatisfiedRequirementsResult
+import com.github.jonathanxd.kwcommands.requirement.ArgumentRequirementSubject
+import com.github.jonathanxd.kwcommands.requirement.InformationRequirementSubject
 import com.github.jonathanxd.kwcommands.util.*
 
 class CommonHelpInfoHandler : HelpInfoHandler {
@@ -361,19 +363,26 @@ class CommonHelpInfoHandler : HelpInfoHandler {
 
                 if (unsatisfied.isNotEmpty())
                     unsatisfied.forEach {
-                        val tags =
-                                if (it.informationId.tags.isNotEmpty())
-                                    Text.of(" ", Texts.getTagsText(), ": ", it.informationId.tags.joinToString(), ".")
-                                else
-                                    Text.of(".")
+                        if (it.subject is InformationRequirementSubject<*>) {
+                            val informationId = it.subject.id
 
-                        printer.printPlain(Text.of("  ", Texts.getInformationIdentificationText(), ":",
-                                " ", Texts.getTypeText(), ": ", it.informationId.type, tags
-                        ))
+                            val tags =
+                                    if (informationId.tags.isNotEmpty())
+                                        Text.of(" ", Texts.getTagsText(), ": ", informationId.tags.joinToString(), ".")
+                                    else
+                                        Text.of(".")
+
+                            printer.printPlain(Text.of("  ", Texts.getInformationIdentificationText(), ":",
+                                    " ", Texts.getTypeText(), ": ", informationId.type, tags
+                            ))
+
+                        } else if (it.subject is ArgumentRequirementSubject<*>) {
+                            printer.printPlain(Text.of("  ", Texts.getArgumentText(), ":", " ", it.subject.name))
+                        }
 
                         printer.printPlain(Text.of("  ",
-                                Texts.getPresentText(), ": ", "${it.information != null}. ",
-                                if (it.information != null) Text.of(Texts.getValueText(), ": ", it.information.value)
+                                Texts.getPresentText(), ": ", "${it.value != null}. ",
+                                if (it.value != null) Text.of(Texts.getValueText(), ": ", it.value)
                                 else Text.of()))
 
                         printer.printPlain(Text.of("  ", Texts.getRequiredText(), ": ", it.requirement.required))

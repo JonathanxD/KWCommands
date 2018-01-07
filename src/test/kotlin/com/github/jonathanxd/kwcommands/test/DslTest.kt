@@ -70,7 +70,7 @@ class DslTest {
             requirements {
                 +requirement<Group, Group>(Group.ADMIN) {
                     subject(informationId { tags { +"group" } })
-                    tester(textOf("GroupTester")) { (required1), (_, value) ->
+                    tester(textOf("GroupTester")) { (required1), value ->
                         value == required1
                     }
                 }

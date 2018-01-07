@@ -37,7 +37,7 @@ import com.github.jonathanxd.kwcommands.information.Information
 class RequirementBuilder<T, R> {
 
     private var required = Opt.none<R>()
-    private lateinit var subject: Information.Id<T>
+    private lateinit var subject: RequirementSubject<T>
     private lateinit var type: TypeInfo<out R>
     private lateinit var tester: RequirementTester<T, R>
 
@@ -52,7 +52,7 @@ class RequirementBuilder<T, R> {
     /**
      * Sets [Requirement.subject]
      */
-    fun subject(subject: Information.Id<T>): RequirementBuilder<T, R> {
+    fun subject(subject: RequirementSubject<T>): RequirementBuilder<T, R> {
         this.subject = subject
         return this
     }

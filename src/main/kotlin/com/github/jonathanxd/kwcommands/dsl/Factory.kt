@@ -27,19 +27,24 @@
  */
 package com.github.jonathanxd.kwcommands.dsl
 
-import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.asText
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.*
-import com.github.jonathanxd.kwcommands.command.*
+import com.github.jonathanxd.kwcommands.command.Command
+import com.github.jonathanxd.kwcommands.command.CommandContainer
+import com.github.jonathanxd.kwcommands.command.CommandContext
+import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.manager.InformationProviders
-import com.github.jonathanxd.kwcommands.parser.*
+import com.github.jonathanxd.kwcommands.parser.ArgumentParser
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.ListInput
+import com.github.jonathanxd.kwcommands.parser.SingleInput
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
-import com.github.jonathanxd.kwcommands.requirement.Requirement
-import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import com.github.jonathanxd.kwcommands.requirement.*
 import com.github.jonathanxd.kwcommands.util.*
 
 class BuildingArgument<I : Input, T> {
@@ -123,41 +128,50 @@ class BuildingArgument<I : Input, T> {
 }
 
 class BuildingRequirement<T, R>(var required: R) {
-    val subject = BuildingInfoId<T>()
+    lateinit var subject: RequirementSubject<T>
     lateinit var type: TypeInfo<out R>
     lateinit var tester: RequirementTester<T, R>
 
-    inline fun subject(f: BuildingInfoId<T>.() -> Unit) = f(this.subject)
+    inline fun subject(f: BuildingInfoId<T>.() -> Unit) {
+        val info = BuildingInfoId<T>()
+        f(info)
+        subject = InformationRequirementSubject(info.toId())
+    }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun subject(id: Information.Id<T>) = subject { from(id) }
+
+    inline fun subjectArgument(f: () -> String) {
+        subject = ArgumentRequirementSubject(f())
+    }
 
     inline fun type(f: () -> TypeInfo<out R>) {
         this.type = f()
     }
 
-    inline fun tester(crossinline f: (requirement: Requirement<T, R>, information: Information<T>) -> Boolean) {
+    inline fun tester(crossinline f: (requirement: Requirement<T, R>, value: T) -> Boolean) {
         this.tester = object : RequirementTester<T, R> {
-            override fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean =
-                    f(requirement, information)
+            override fun test(requirement: Requirement<T, R>, value: T): Boolean =
+                    f(requirement, value)
         }
     }
 
     inline fun tester(testerName: TextComponent,
-                      crossinline f: (requirement: Requirement<T, R>, information: Information<T>) -> Boolean) {
+                      crossinline f: (requirement: Requirement<T, R>, value: T) -> Boolean) {
         this.tester = object : RequirementTester<T, R> {
             override val name: TextComponent
                 get() = testerName
 
-            override fun test(requirement: Requirement<T, R>, information: Information<T>): Boolean =
-                    f(requirement, information)
+            override fun test(requirement: Requirement<T, R>, value: T): Boolean =
+                    f(requirement, value)
+
         }
     }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun toRequirement(): Requirement<T, R> = Requirement(
             required = this.required,
-            subject = this.subject.toId(),
+            subject = this.subject,
             type = this.type,
             tester = this.tester
     )

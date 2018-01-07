@@ -27,6 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.manager.InformationProviders
 
@@ -36,23 +38,38 @@ import com.github.jonathanxd.kwcommands.manager.InformationProviders
  * @return Empty list if all requirements was satisfied or a list with unsatisfied requirements.
  */
 @Suppress("UNCHECKED_CAST")
-fun List<Requirement<*, *>>.checkRequirements(manager: InformationProviders): List<UnsatisfiedRequirement<*>> {
+fun List<Requirement<*, *>>.checkRequirements(commandContainer: CommandContainer,
+                                              manager: InformationProviders): List<UnsatisfiedRequirement<*>> {
     val fails = mutableListOf<UnsatisfiedRequirement<*>>()
 
     this.forEach {
-        val find = manager.findErased<Any?>(it.subject)
+        if (it.subject is InformationRequirementSubject<*>) {
 
-        if (find == null) {
-            fails.add(UnsatisfiedRequirement(it as Requirement<Any?, *>, it.subject, null, Reason.MISSING_INFORMATION))
-        } else {
-            @Suppress("UNCHECKED_CAST")
-            it as Requirement<Any, *>
-            @Suppress("UNCHECKED_CAST")
-            find as Information<Any>
+            val info = it.subject.id
 
-            if (!it.test(find))
-                fails.add(UnsatisfiedRequirement(it, it.subject, find, Reason.UNSATISFIED_REQUIREMENT))
+            val find = manager.findErased<Any?>(info)
 
+            if (find == null) {
+                fails.add(UnsatisfiedRequirement(it as Requirement<Any?, *>, it.subject, null, Reason.MISSING_INFORMATION))
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                it as Requirement<Any, *>
+                @Suppress("UNCHECKED_CAST")
+                find as Information<Any>
+
+                if (!it.test(find.value))
+                    fails.add(UnsatisfiedRequirement(it, it.subject, find, Reason.UNSATISFIED_REQUIREMENT))
+            }
+        } else if (it.subject is ArgumentRequirementSubject<*>) {
+            val arg = commandContainer.getArgument<Any?>(it.subject.name)
+
+            if (arg != null) {
+                @Suppress("UNCHECKED_CAST")
+                it as Requirement<Any?, *>
+
+                if (!it.test(arg.value))
+                    fails.add(UnsatisfiedRequirement(it, it.subject, arg.value, Reason.UNSATISFIED_REQUIREMENT))
+            }
         }
 
         Unit
@@ -63,8 +80,8 @@ fun List<Requirement<*, *>>.checkRequirements(manager: InformationProviders): Li
 }
 
 data class UnsatisfiedRequirement<T>(val requirement: Requirement<T, *>,
-                                     val informationId: Information.Id<T>,
-                                     val information: Information<T>?,
+                                     val subject: RequirementSubject<T>,
+                                     val value: T?,
                                      val reason: Reason)
 
 enum class Reason {
