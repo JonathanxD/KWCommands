@@ -29,20 +29,28 @@ package com.github.jonathanxd.kwcommands.reflect.annotation
 
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
+import java.util.function.Supplier
 import kotlin.reflect.KClass
 
 /**
- * Requires a [subject information][subject] [value][Information.value] to match [data] according to
- * [data tester][testerType].
+ * Requires a [subject information][subject] [value][Information.value] to match [required] (or required provided
+ * by [requiredProvider]) according to [data tester][testerType].
  *
  * @property subject Subject information id.
  * @property testerType Type of the [RequirementTester] (must be a singleton class).
- * @property data Requirement data, annotation requirements only supports String type.
+ * @property required Requirement, for string requirements.
+ * @property requiredProvider Provider of required value.
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.VALUE_PARAMETER)
 @Suppress("DEPRECATED_JAVA_ANNOTATION")
 @java.lang.annotation.Repeatable(Requires::class)
 annotation class Require(val subject: Id = Id(),
-                         val testerType: KClass<out RequirementTester<*, String>>,
-                         val data: String)
+                         val testerType: KClass<out RequirementTester<*, *>>,
+                         val required: String = "",
+                         val requiredProvider: KClass<out Supplier<*>> = DefaultRequiredProvider::class)
+
+object DefaultRequiredProvider : Supplier<Any> {
+    override fun get(): Any = throw IllegalStateException("Default provider")
+
+}

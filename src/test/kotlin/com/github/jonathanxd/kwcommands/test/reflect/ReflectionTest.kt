@@ -49,6 +49,7 @@ import com.github.jonathanxd.kwcommands.test.assertAll
 import com.github.jonathanxd.kwcommands.util.*
 import org.junit.Assert
 import org.junit.Test
+import java.util.function.Supplier
 
 class ReflectionTest {
 
@@ -212,7 +213,7 @@ class ReflectionTest {
 class Download {
 
     @Arg(value = "url", requirements = arrayOf(
-            Require(subject = Id(Player::class, "player"), data = "remote.download", testerType = PermissionRequirementTest::class)
+            Require(subject = Id(Player::class, "player"), required = "remote.download", testerType = PermissionRequirementTest::class)
     ))
     lateinit var url: String
 
@@ -224,13 +225,20 @@ class Download {
 class World {
 
     @Cmd(name = "setblock", description = "Sets the block in position x, y, z")
-    @Require(subject = Id(Player::class, "player"), data = "world.modify", testerType = PermissionRequirementTest::class)
+    @Requires(
+            Require(subject = Id(Player::class, "player"),
+                    required = "world.modify",
+                    testerType = PermissionRequirementTest::class),
+            Require(subject = Id(Player::class, "player"),
+                    requiredProvider = PermProvider::class,
+                    testerType = PermissionProvidedRequirementTest::class)
+    )
     fun setBlock(@Arg("x") x: Int,
                  @Arg("y") y: Int,
                  @Arg("z") z: Int,
                  @Arg(value = "block")
                  @Require(subject = Id(Player::class, "player"),
-                         data = "world.modify.block",
+                         required = "world.modify.block",
                          testerType = PermissionRequirementTest::class
                  )
                  block: Block): Any = "setted block $block at $x, $y, $z"
@@ -242,7 +250,7 @@ class World {
 
 
 object Player {
-    fun hasPermission(perm: String) = perm == "world.modify" || perm == "world.modify.block"
+    fun hasPermission(perm: String) = perm == "world.modify" || perm == "world.modify.block" || perm == "level.master"
 }
 
 data class SimplePlayer(val name: String)
@@ -281,6 +289,17 @@ object PermissionRequirementTest : RequirementTester<Player, String> {
     override fun test(requirement: Requirement<Player, String>, information: Information<Player>): Boolean =
             information.value.hasPermission(requirement.required)
 }
+
+object PermissionProvidedRequirementTest : RequirementTester<Player, Permission> {
+    override fun test(requirement: Requirement<Player, Permission>, information: Information<Player>): Boolean =
+            information.value.hasPermission(requirement.required.permission)
+}
+
+object PermProvider : Supplier<Permission> {
+    override fun get(): Permission = Permission("level.master")
+}
+
+data class Permission(val permission: String)
 
 object BlockParamTest : RequirementTester<Block, String> {
     override fun test(requirement: Requirement<Block, String>, information: Information<Block>): Boolean =

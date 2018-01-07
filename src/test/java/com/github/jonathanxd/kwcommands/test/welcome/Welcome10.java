@@ -39,7 +39,7 @@ public class Welcome10 {
     @Cmd(description = "Welcome to KWCommands", requirements =
     @Require(
             subject = @Id(User.class),
-            data = "repo.kwcommands.access",
+            required = "repo.kwcommands.access",
             testerType = PermissionTester.class)
     )
     public void welcome(@Info Logger logger, @Info User user) {

@@ -197,14 +197,28 @@ fun AnnotatedElement.getType(): TypeInfo<*>? =
         }?.let { TypeUtil.toTypeInfo(it) }
 
 /**
+ * Gets [Requirement.required] value from [Require].
+ */
+val Require.requiredValue: Any?
+    get() =
+        if (this.required.isEmpty() && this.requiredProvider.java == DefaultRequiredProvider::class.java)
+            throw IllegalArgumentException("Either '@Require.required' or '@Require.requiredProvider' must be specified.")
+        else
+            if (this.required.isNotEmpty())
+                this.required
+            else
+                this.requiredProvider.get()?.get()
+
+/**
  * Convert [Require] annotation to [Requirement] specification.
  */
 @Suppress("UNCHECKED_CAST")
 fun Require.toSpec(f: AnnotatedElement? = null): Requirement<*, *> =
-        Requirement(this.data,
-                this.subject.createForReq(f, f?.getType()) as Information.Id<Any>,
+        Requirement(this.requiredValue,
+                this.subject.createForReq(f, f?.getType()) as Information.Id<Any?>,
                 TypeInfo.of(String::class.java),
-                this.testerType.get() as RequirementTester<Any, String>)
+                this.testerType.get() as RequirementTester<Any?, Any?>)
+
 
 /**
  * Gets requirements of [Cmd].
