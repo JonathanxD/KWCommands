@@ -31,7 +31,7 @@ import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
-import com.github.jonathanxd.kwcommands.manager.InformationProvidersVoid;
+import com.github.jonathanxd.kwcommands.information.InformationProvidersVoid;
 import com.github.jonathanxd.kwcommands.printer.Printers;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.processor.ValueResult;

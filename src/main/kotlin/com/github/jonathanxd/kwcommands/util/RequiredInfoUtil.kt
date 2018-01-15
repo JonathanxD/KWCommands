@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
+import com.github.jonathanxd.kwcommands.information.InformationProviders
 
 fun Set<RequiredInformation>.checkRequiredInfo(manager: InformationProviders): List<MissingInformation> =
     this.filter { manager.find(it.id, it.useProviders) == null }.map(::MissingInformation)

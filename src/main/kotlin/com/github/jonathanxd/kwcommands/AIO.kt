@@ -32,7 +32,7 @@ import com.github.jonathanxd.kwcommands.completion.CompletionImpl
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
+import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.instanceProvider
 import com.github.jonathanxd.kwcommands.parser.CommandParserImpl

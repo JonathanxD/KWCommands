@@ -25,13 +25,12 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.manager
+package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
-import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.information.InformationProvider
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 
 @JvmField

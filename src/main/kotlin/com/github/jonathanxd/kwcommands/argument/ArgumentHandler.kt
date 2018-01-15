@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.argument
 
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
+import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
 /**

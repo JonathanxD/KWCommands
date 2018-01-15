@@ -28,7 +28,6 @@
 package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
 import java.util.*
 
 /**

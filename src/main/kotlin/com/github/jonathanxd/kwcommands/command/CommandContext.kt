@@ -34,7 +34,7 @@ import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.exception.ArgumentMissingException
 import com.github.jonathanxd.kwcommands.exception.InfoMissingException
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
+import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.requirement.ArgumentRequirementSubject
 import com.github.jonathanxd.kwcommands.requirement.InformationRequirementSubject

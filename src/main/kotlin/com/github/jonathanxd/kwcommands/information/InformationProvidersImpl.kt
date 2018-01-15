@@ -25,14 +25,12 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.manager
+package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.collection.Comparators3
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoSortComparator
-import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.information.InformationProvider
 import java.util.*
 import java.util.function.Function
 

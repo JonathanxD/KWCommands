@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.test;
 import com.github.jonathanxd.kwcommands.AIO;
 import com.github.jonathanxd.kwcommands.KWCommands;
 import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler;
-import com.github.jonathanxd.kwcommands.manager.InformationProvidersImpl;
+import com.github.jonathanxd.kwcommands.information.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
 import com.github.jonathanxd.kwcommands.reflect.annotation.AfterDispatch;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;

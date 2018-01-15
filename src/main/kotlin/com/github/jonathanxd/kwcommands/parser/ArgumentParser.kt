@@ -35,9 +35,34 @@ interface ArgumentParser<in I : Input, out T> {
 }
 
 interface ValueOrValidationFactory {
+    /**
+     * Returns a [ValueOrValidation] of [validation] representing that input value is invalid.
+     */
     fun <T> invalid(): ValueOrValidation<T>
+
+    /**
+     * Returns a [ValueOrValidation] of [validation] representing validation result of this parse.
+     */
     fun <T> invalid(validation: Validation): ValueOrValidation<T>
+
+    /**
+     * Returns a [ValueOrValidation] of [value] representing success of validation and the result value.
+     */
     fun <T> value(value: T): ValueOrValidation<T>
+
+    /**
+     * Returns a [ValueOrValidation] that holds [Validation] if [value] is `null` or that holds
+     * the [value] if not.
+     */
+    fun <T> valueOrValidation(value: @UnsafeVariance T?): ValueOrValidation<T> =
+            value?.let(::value) ?: invalid()
+
+    /**
+     * Returns a [ValueOrValidation] that holds [Validation] if [value] is `null` or that holds
+     * the [value] if not.
+     */
+    fun <T> valueOrValidation(value: @UnsafeVariance T?, validation: Validation): ValueOrValidation<T> =
+            value?.let(::value) ?: invalid(validation)
 }
 
 class ValueOrValidationFactoryImpl(val input: Input,

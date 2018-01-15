@@ -28,7 +28,6 @@
 package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
 
 /**
  * Information provider, a provider is able to provide different types of information,
@@ -48,7 +47,7 @@ interface InformationProvider {
      * @param tags Tags of requested information.
      * @return Information or null if this provider cannot provide a information for provided [type] and [args].
      */
-    fun <T> provide(type: TypeInfo<out T>, tags: Array<out String>, manager: InformationProviders): Information<T>?
+    fun <T> provide(type: TypeInfo<out T>, tags: Array<out String>, providers: InformationProviders): Information<T>?
 
     /**
      * Provides information for [id].
@@ -56,8 +55,8 @@ interface InformationProvider {
      * @param id Id of requested information
      * @return Information or null if this provider cannot provide a information of [id].
      */
-    fun <T> provide(id: Information.Id<T>, manager: InformationProviders): Information<T>? =
-            this.provide(id.type, id.tags, manager)
+    fun <T> provide(id: Information.Id<T>, providers: InformationProviders): Information<T>? =
+            this.provide(id.type, id.tags, providers)
 
     companion object {
         /**
@@ -69,8 +68,8 @@ interface InformationProvider {
                               manager: InformationProviders) -> Information<*>?): InformationProvider =
                 object : InformationProvider {
                     override fun <T> provide(type: TypeInfo<out T>,
-                                             tags: Array<out String>, manager: InformationProviders): Information<T>? =
-                            provider(Information.Id(type, tags), manager) as Information<T>?
+                                             tags: Array<out String>, providers: InformationProviders): Information<T>? =
+                            provider(Information.Id(type, tags), providers) as Information<T>?
 
                 }
 
@@ -84,8 +83,8 @@ interface InformationProvider {
                 object : InformationProvider {
                     override fun <T> provide(type: TypeInfo<out T>,
                                              tags: Array<out String>,
-                                             manager: InformationProviders): Information<T>? =
-                            provider(type, tags, manager) as Information<T>?
+                                             providers: InformationProviders): Information<T>? =
+                            provider(type, tags, providers) as Information<T>?
                 }
 
         /**
@@ -98,9 +97,9 @@ interface InformationProvider {
                 object : InformationProvider {
                     override fun <T> provide(type: TypeInfo<out T>,
                                              tags: Array<out String>,
-                                             manager: InformationProviders): Information<T>? {
+                                             providers: InformationProviders): Information<T>? {
                         if (stype == type)
-                            return provider(Information.Id(type, tags) as Information.Id<U>, manager) as Information<T>?
+                            return provider(Information.Id(type, tags) as Information.Id<U>, providers) as Information<T>?
 
                         return null
                     }
@@ -117,9 +116,9 @@ interface InformationProvider {
                 object : InformationProvider {
                     override fun <T> provide(type: TypeInfo<out T>,
                                              tags: Array<out String>,
-                                             manager: InformationProviders): Information<T>? {
+                                             providers: InformationProviders): Information<T>? {
                         if (stype == type)
-                            return provider(type as TypeInfo<out U>, tags, manager) as Information<T>?
+                            return provider(type as TypeInfo<out U>, tags, providers) as Information<T>?
 
                         return null
                     }

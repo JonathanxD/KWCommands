@@ -28,11 +28,19 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.`object`.Default
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 
 /**
  * Utility method to check if [Information.Id] matches the [required] information id.
  */
 fun <T> Information.Id<T>.matches(required: Information.Id<*>): Boolean =
-        (this.type == Default::class.java || this.type == required.type || this.type.isAssignableFrom(required.type))
-                && (this.tags.isEmpty() || this.tags.all { required.tags.contains(it) })
+        matches(this.type, this.tags, required.type, required.tags)
+
+/**
+ * Utility method to check if [type] and [tags] of [Information.Id] matches [requiredType] and [requiredTags].
+ */
+fun <T> matches(type: TypeInfo<T>, tags: Array<out String>,
+                requiredType: TypeInfo<*>, requiredTags: Array<out String>): Boolean =
+        (type == Default::class.java || type == requiredType || type.isAssignableFrom(requiredType))
+                && (tags.isEmpty() || tags.all { requiredTags.contains(it) })

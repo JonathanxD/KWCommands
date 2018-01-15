@@ -27,10 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.manager.InformationProviders
+import com.github.jonathanxd.kwcommands.information.InformationProviders
 
 /**
  * Check if all [Information] matches the [requirements][Requirement].

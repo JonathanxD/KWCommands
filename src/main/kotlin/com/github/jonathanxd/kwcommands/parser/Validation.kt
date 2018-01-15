@@ -42,7 +42,6 @@ data class InvalidElement(val input: Input,
                           val argumentType: ArgumentType<*, *>,
                           val parser: ArgumentParser<*, *>)
 
-fun valid(): Validation = VALID
 fun validation(invalid: InvalidElement): Validation =
         Validation(listOf(invalid))
 
@@ -60,5 +59,3 @@ fun invalidElement(input: Input,
                    argumentType: ArgumentType<*, *>,
                    parser: ArgumentParser<*, *>): InvalidElement =
         InvalidElement(input, argumentType, parser)
-
-val VALID = Validation(emptyList())
