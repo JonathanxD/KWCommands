@@ -35,28 +35,49 @@ interface Arguments {
     val all: List<Argument<*>>
 
     /**
-     * Gets all remaining arguments. Commonly returns the same as [all].
+     * Gets all remaining arguments.
+     *
+     * Commonly returns a list with next arguments to input before dynamic
+     * argument handling starts.
+     *
+     * Example, if first argument is `Type`, and second is `Int`, and the third argument
+     * resolution depends on both `Type` and `Int`, this function should return a list with only `Type` and `Int`
+     * arguments. Also if second argument depends on the first, only the first should be returned.
+     *
+     * Unless the command have no arguments, this function must always returns at least one constant argument.
+     *
+     * If there is no argument that should be dynamic resolved (in other words, if this is a provider of static arguments
+     * like [StaticListArguments]), all arguments must be returned.
      */
-    fun getArguments(): List<Argument<*>>
+    fun getRemainingArguments(): List<Argument<*>>
 
     /**
-     * Gets remaining arguments based on [current].
+     * Gets remaining arguments based on [current]. If [current] is empty, the behavior
+     * must be the same as [getRemainingArguments()][getRemainingArguments].
+     *
+     * Even if this is a provider of static arguments (like [StaticListArguments]), this should always
+     * return only remaining arguments.
+     *
+     * Note that [current] **must** only contains arguments that are present in [all] and **always**
+     * in the same order as in [all], also the size of [current] **must** be less or equal to size
+     * of [all]. Implementations of this function **never** checks if [current] follow these rules, so
+     * the caller of the function should always check them.
      */
-    fun getArguments(current: List<ArgumentContainer<*>>): List<Argument<*>>
+    fun getRemainingArguments(current: List<ArgumentContainer<*>>): List<Argument<*>>
 
 }
 
 class StaticListArguments(val argumentList: List<Argument<*>>) : Arguments {
 
-    constructor(): this(emptyList())
-    constructor(argument: Argument<*>): this(listOf(argument))
+    constructor() : this(emptyList())
+    constructor(argument: Argument<*>) : this(listOf(argument))
 
     override val all: List<Argument<*>>
         get() = this.argumentList
 
-    override fun getArguments(): List<Argument<*>> = this.argumentList
-    override fun getArguments(current: List<ArgumentContainer<*>>): List<Argument<*>> =
-            if (current.isEmpty()) this.getArguments()
+    override fun getRemainingArguments(): List<Argument<*>> = this.argumentList
+    override fun getRemainingArguments(current: List<ArgumentContainer<*>>): List<Argument<*>> =
+            if (current.isEmpty()) this.getRemainingArguments()
             else this.argumentList.filter { curr -> current.none { it.argument == curr } }
 }
 
@@ -84,7 +105,7 @@ class StaticListArgumentsBuilder {
     }
 
     fun setArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilder =
-        this.clear().addArguments(arguments)
+            this.clear().addArguments(arguments)
 
     fun clear(): StaticListArgumentsBuilder {
         this.arguments.clear()

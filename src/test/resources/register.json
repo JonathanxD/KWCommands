@@ -25,5 +25,5 @@
       "data": "perm.register"
     }
   ],
-  "subCommands": ["any.json"]
+  "subCommands": ["any.json", "dyn.json"]
 }

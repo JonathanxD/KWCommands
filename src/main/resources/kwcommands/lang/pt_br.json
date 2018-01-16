@@ -1,0 +1,85 @@
+{
+    "error": {
+        "argument_not_found": "Nenhum argument encontrado com o nome '$input' para o comando '$command_name'",
+        "command_arguments_missing": "Alguns arguments do comando '$command_name' não estão presentes:",
+        "command_provided_arguments": "Fornecido",
+        "command_missing_arguments": "Ausente",
+        "command_not_found": "O comando com nome '$command_name' não foi encontrado.",
+        "invalid_input_value": "Entrada '$input' invalida para o argumento '$argument_name' do comando '$command_name'.",
+        "invalid_inputs": "Entradas invalidas",
+        "no_input_for_argument": "Nenhuma entrada fornecida para o argumento nomeado '$argument_name' do comando '$command_name'",
+        "unsatisfied_requirement": "Requisitos unsatisfeitos para '$result_string'",
+        "missing_information": "Informações faltando para '$result_string'",
+        "malformed_input": "Entrada mal formada para o tipo '$input_type'"
+    },
+    "info": {
+        "parsed_arguments": "Argumentos analisados com sucesso",
+        "available_commands": "Comandos disponiveis",
+        "message": "Mensagem",
+        "range": "[$range_start..$range_end]",
+        "input": "Entrada",
+        "input_type": "Tipo do valor inserido",
+        "valid_input_types": "Tipos de entrada validos",
+        "parser": "Analisador",
+        "processed_commands": "Comandos processados",
+        "argument_type": "Tipo do argumento",
+        "argument_possibilities": "Possibilidades de entrada",
+        "command_specification": "Especificação do comando",
+        "argument": "Argumento",
+        "command": "Comando",
+        "req": {
+            "continuation": "Do $container_string"
+        },
+        "information_identification": "Identificação da informação",
+        "type": "Tipo",
+        "tags": "Rótulos",
+        "present": "Presente",
+        "required": "Obrigatorio",
+        "tester": "Testador",
+        "reason": "Motivo",
+        "include_provided": "Incluir fornecido",
+        "key": "Chave",
+        "value": "Valor",
+        "true": "Verdadeiro",
+        "false": "Falso",
+        "requirements": "Requisitos",
+        "expected_tokens": "Símbolo(s) esperado(s)",
+        "found_token": "Símbolo encontrado",
+        "parsed_map": "Entradas do mapa analisadas com sucesso",
+        "parsed_list": "Entradas da lista analisadas com sucesso",
+        "dynamic_arg_tag": "!"
+    },
+    "help": {
+        "header": [
+            "-------- Comandos --------",
+            "",
+            "--------  Rótulos --------",
+            " [ ]  = Argumento obrigatório",
+            " < >  = Argumento opcional",
+            "  !   = Argumento dinamico (depende de outros argumentos)",
+            "  ->  = Comando principal",
+            " -'>  = Sub comando",
+            "  -   = Descrição",
+            " - x: = Descrição do argumento x",
+            "  *   = Requisito de informação",
+            "  **  = Requisito de valor",
+            "--------  Rótulos --------",
+            ""
+        ],
+        "footer": [
+            "",
+            "-------- Comandos --------"
+        ],
+        "argument_description": "Descrição do argumento",
+        "requires_value": "** Requer valor '$required_value' do sujeito '$subject_type' (rótulos: $subject_tags) (Testador: $tester)",
+        "requires_argument_value": "** Requer valor '$required_value' do argument '$argument_name' (Testador: $tester)",
+        "requires_info": "* Requer a informação '$information_id'.",
+        "no_commands": "Sem comandos"
+    },
+    "type": {
+        "single": "Valor unico",
+        "list": "Lista de valores",
+        "map": "Mapa de valores",
+        "empty": "Vazio"
+    }
+}

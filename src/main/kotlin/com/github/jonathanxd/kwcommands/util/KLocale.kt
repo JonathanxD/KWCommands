@@ -31,6 +31,7 @@ import com.github.jonathanxd.iutils.localization.Locale
 import com.github.jonathanxd.iutils.localization.LocaleManager
 import com.github.jonathanxd.iutils.localization.Locales
 import com.github.jonathanxd.iutils.localization.MapLocaleManager
+import com.github.jonathanxd.iutils.localization.json.JsonLocaleLoader
 import com.github.jonathanxd.iutils.text.localizer.DefaultTextLocalizer
 import com.github.jonathanxd.iutils.text.localizer.FastTextLocalizer
 import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
@@ -52,8 +53,10 @@ object KLocale {
     }
 
     private fun Locale.load() {
-        this.load(Paths.get("kwcommands", "lang"), null, Printers::class.java.classLoader)
-        this.load(Paths.get("kwcommands", "lang"), "validation", Printers::class.java.classLoader)
+        val path = Paths.get("kwcommands", "lang")
+        val loader = JsonLocaleLoader.JSON_LOCALE_LOADER
+
+        loader.loadFromResource(this, path, Printers::class.java.classLoader)
     }
 
     var localizer: TextLocalizer = FastTextLocalizer(localeManager, defaultLocale)

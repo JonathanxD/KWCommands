@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeInfoUtil
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.argument.Arguments
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 import java.util.function.Function
@@ -62,6 +63,13 @@ interface TypeResolver {
      * this commonly resolves the singleton instance using [getSingletonInstance].
      */
     fun resolveCommandHandler(input: String): Handler?
+
+    /**
+     * Resolves [Arguments] based on [input].
+     *
+     * @see [resolveCommandHandler]
+     */
+    fun resolveArguments(input: String): Arguments?
 
     /**
      * Resolves the [ArgumentHandler] based on [input].
@@ -110,6 +118,7 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
     val singletonInstances = mutableMapOf<Class<*>, Any?>()
     val commandHandlerResolvers = mutableSetOf<(input: String) -> Handler?>()
     val argumentHandlerResolvers = mutableSetOf<(input: String) -> ArgumentHandler<*>?>()
+    val argumentsResolvers = mutableSetOf<(type: String) -> Arguments?>()
     val argumentTypeResolvers = mutableSetOf<(type: TypeInfo<*>) -> ArgumentType<*, *>?>()
     /*val possibilitiesResolvers = mutableSetOf<(type: TypeInfo<*>) -> Possibilities?>()
     val transformerResolvers = mutableSetOf<(type: TypeInfo<*>) -> Transformer<*, Any?>?>()
@@ -156,6 +165,16 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
         }
 
         return this.apply(input)?.let { this.getSingletonInstance(it) as Handler }
+    }
+
+    override fun resolveArguments(input: String): Arguments? {
+        this.argumentsResolvers.forEach {
+            it(input)?.let {
+                return it
+            }
+        }
+
+        return this.apply(input)?.let { this.getSingletonInstance(it) as Arguments }
     }
 
     override fun resolveArgumentHandler(input: String): ArgumentHandler<*>? {

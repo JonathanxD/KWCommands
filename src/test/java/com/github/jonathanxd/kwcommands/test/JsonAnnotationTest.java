@@ -29,6 +29,9 @@ package com.github.jonathanxd.kwcommands.test;
 
 import com.github.jonathanxd.iutils.object.Either;
 import com.github.jonathanxd.iutils.type.TypeInfo;
+import com.github.jonathanxd.kwcommands.argument.Argument;
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer;
+import com.github.jonathanxd.kwcommands.argument.Arguments;
 import com.github.jonathanxd.kwcommands.command.Command;
 import com.github.jonathanxd.kwcommands.fail.ParseFail;
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler;
@@ -51,6 +54,7 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment;
 import com.github.jonathanxd.kwcommands.util.KLocale;
 import com.github.jonathanxd.kwcommands.util.PrinterKt;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 

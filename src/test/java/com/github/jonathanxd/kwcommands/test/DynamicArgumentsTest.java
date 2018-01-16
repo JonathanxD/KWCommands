@@ -225,10 +225,10 @@ public class DynamicArgumentsTest {
 
         @NotNull
         @Override
-        public List<Argument<?>> getArguments(@NotNull List<? extends ArgumentContainer<?>> current) {
+        public List<Argument<?>> getRemainingArguments(@NotNull List<? extends ArgumentContainer<?>> current) {
 
             if (current.isEmpty())
-                return this.getArguments();
+                return this.getRemainingArguments();
 
             if (current.size() > 1)
                 return Collections.emptyList();
@@ -249,7 +249,7 @@ public class DynamicArgumentsTest {
 
         @NotNull
         @Override
-        public List<Argument<?>> getArguments() {
+        public List<Argument<?>> getRemainingArguments() {
             return Collections3.listOf(this.typeArgument);
         }
 

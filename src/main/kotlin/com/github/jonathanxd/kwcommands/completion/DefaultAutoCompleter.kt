@@ -64,7 +64,7 @@ class DefaultAutoCompleter : AutoCompleter {
                                       arguments: List<ArgumentContainer<*>>,
                                       completions: Completions,
                                       informationProviders: InformationProviders) {
-        completions.addAll(command.arguments.getArguments(arguments).flatMap { listOf(it.name) + it.alias })
+        completions.addAll(command.arguments.getRemainingArguments(arguments).flatMap { listOf(it.name) + it.alias })
     }
 
     override fun completeArgumentInput(command: Command,

@@ -100,25 +100,6 @@ class CommonPrinter(override val localizer: TextLocalizer,
             order = -1
         }
 
-        private val header = listOf(
-                Texts.header1(),
-                Texts.header2(),
-                Texts.header3(),
-                Texts.header4(),
-                Texts.header5(),
-                Texts.header6(),
-                Texts.header7(),
-                Texts.header8(),
-                Texts.header9(),
-                Texts.header10(),
-                Texts.header11(),
-                Texts.header12())
-
-        private val footer = listOf(
-                Texts.footer1(),
-                Texts.footer2()
-        )
-
         fun printPlain(text: TextComponent,
                        commands: MutableList<Command>,
                        buffer: MutableList<TextComponent>) {
@@ -132,15 +113,11 @@ class CommonPrinter(override val localizer: TextLocalizer,
         }
 
         fun printHeader(commands: MutableList<Command>, buffer: MutableList<TextComponent>) {
-            header.forEach {
-                printPlain(it, commands, buffer)
-            }
+            printPlain(Texts.header(), commands, buffer)
         }
 
         fun printFooter(commands: MutableList<Command>, buffer: MutableList<TextComponent>) {
-            footer.forEach {
-                printPlain(it, commands, buffer)
-            }
+            printPlain(Texts.footer(), commands, buffer)
         }
 
         /**
@@ -197,11 +174,42 @@ class CommonPrinter(override val localizer: TextLocalizer,
             components += Text.single(" ")
             components += Text.single(command.name)
 
-            command.arguments.all.forEach {
+            val remaining = command.arguments.getRemainingArguments()
+            val all = command.arguments.all
+            val hasDynamic = remaining.size != all.size
+
+            if (hasDynamic) {
+                remaining.forEach {
+                    components += Text.single(" ")
+
+                    components.apply {
+                        this.add(Text.single(if (it.isOptional) "<" else "["))
+
+                        this.add(Text.single(it.name))
+
+                        this.add(Text.single(": ")
+                                .append(Text.single(
+                                        if (it.argumentType.type.canResolve()) it.argumentType.type.toString()
+                                        else it.argumentType.type.classLiteral)))
+
+                        this.add(Text.single(if (it.isOptional) ">" else "]"))
+                    }
+                }
+
+                components += Text.single("...")
+            }
+
+            all.forEachIndexed { index, it ->
+                if (hasDynamic && index < remaining.size)
+                    return@forEachIndexed
+
                 components += Text.single(" ")
 
                 components.apply {
                     this.add(Text.single(if (it.isOptional) "<" else "["))
+
+                    if (index >= remaining.size)
+                        components += Text.single("!")
 
                     this.add(Text.single(it.name))
 

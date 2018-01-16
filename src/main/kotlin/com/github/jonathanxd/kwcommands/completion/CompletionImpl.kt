@@ -145,7 +145,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
             completions.merge(completions2)
         }
 
-        val next: Argument<*>? = command.arguments.getArguments(parsedArgs).let {
+        val next: Argument<*>? = command.arguments.getRemainingArguments(parsedArgs).let {
             if (it.isNotEmpty())
                 it.first()
             else null
@@ -210,7 +210,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     suggestion += " "
                 } else {
                     if (parsedArgs.isEmpty()
-                            || parsedArgs.size >= command.arguments.getArguments(parsedArgs).count { !it.isOptional }) {
+                            || parsedArgs.size >= command.arguments.getRemainingArguments(parsedArgs).count { !it.isOptional }) {
                         this.autoCompleters.completeCommand(command,
                                 parseFail.parsedCommands,
                                 completions,

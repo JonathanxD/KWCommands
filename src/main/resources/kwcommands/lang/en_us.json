@@ -1,0 +1,85 @@
+{
+    "error": {
+        "argument_not_found": "No argument found with name '$input' in command '$command_name'",
+        "command_arguments_missing": "Some arguments of command '$command_name' is missing:",
+        "command_provided_arguments": "Provided",
+        "command_missing_arguments": "Missing",
+        "command_not_found": "Command with name '$command_name' was not found.",
+        "invalid_input_value": "Invalid input value '$input' provided for argument '$argument_name' of command '$command_name'.",
+        "invalid_inputs": "Invalid inputs",
+        "no_input_for_argument": "No input value provided for named argument '$argument_name' of command '$command_name'",
+        "unsatisfied_requirement": "Unsatisfied requirements of '$result_string'",
+        "missing_information": "Missing information of '$result_string'",
+        "malformed_input": "Malformed input for type '$input_type'"
+    },
+    "info": {
+        "parsed_arguments": "Successfully parsed args",
+        "available_commands": "Available Commands",
+        "message": "Message",
+        "range": "[$range_start..$range_end]",
+        "input": "Input",
+        "input_type": "Type of inserted value",
+        "valid_input_types": "Valid input types",
+        "parser": "Parser",
+        "processed_commands": "Processed commands",
+        "argument_type": "Argument type",
+        "argument_possibilities": "Argument possibilities",
+        "command_specification": "Command specification",
+        "argument": "Argument",
+        "command": "Command",
+        "req": {
+            "continuation": "Of $container_string"
+        },
+        "information_identification": "Information identification",
+        "type": "Type",
+        "tags": "Tags",
+        "present": "Present",
+        "required": "Required",
+        "tester": "Tester",
+        "reason": "Reason",
+        "include_provided": "Include provided",
+        "key": "Key",
+        "value": "Value",
+        "true": "True",
+        "false": "False",
+        "requirements": "Requirements",
+        "expected_tokens": "Expected tokens",
+        "found_token": "Found token",
+        "parsed_map": "Successfully parsed map entries",
+        "parsed_list": "Successfully parsed list elements",
+        "dynamic_arg_tag": "!"
+    },
+    "help": {
+        "header": [
+            "-------- Commands --------",
+            "",
+            "--------   Label  --------",
+            " [ ]  = Required argument",
+            " < >  = Optional argument",
+            "  !   = Dynamic argument (depends on others arguments)",
+            "  ->  = Main command",
+            " -'>  = Sub command",
+            "  -   = Description",
+            " - x: = Description of argument x",
+            "  *   = Information Requirement",
+            "  **  = Requirement",
+            "--------   Label  --------",
+            ""
+        ],
+        "footer": [
+            "",
+            "-------- Commands --------"
+        ],
+        "argument_description": "Argument description",
+        "requires_value": "** Requires value '$required_value' of subject '$subject_type' (tags: $subject_tags) (Tester: $tester)",
+        "requires_argument_value": "* Requires information '$information_id' of type '$information_type'.",
+        "requires_info": "* Requires information '$information_id'.",
+        "no_commands": "No commands"
+    },
+    "type": {
+        "single": "Single value",
+        "list": "Value list",
+        "map": "Map of values",
+        "empty": "Empty"
+    }
+}

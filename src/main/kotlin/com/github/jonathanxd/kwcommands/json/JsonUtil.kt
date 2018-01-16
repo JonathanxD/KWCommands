@@ -28,6 +28,8 @@
 package com.github.jonathanxd.kwcommands.json
 
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
+import com.github.jonathanxd.kwcommands.argument.Arguments
+import com.github.jonathanxd.kwcommands.argument.StaticListArguments
 import com.github.jonathanxd.kwcommands.command.Handler
 import org.json.simple.JSONArray
 import org.json.simple.JSONObject
@@ -40,11 +42,15 @@ inline fun <reified T> Any?.asJSON(keyRef: String): T =
         }
 
 
-
 @Suppress("NOTHING_TO_INLINE")
 inline fun resolveCommandHandler(input: String, typeResolver: TypeResolver): Handler? =
         typeResolver.resolveCommandHandler(input)
                 ?: typeResolver.resolve(input)?.typeClass?.let { typeResolver.getSingletonInstance(it) as Handler }
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun resolveArguments(input: String, typeResolver: TypeResolver): Arguments? =
+        typeResolver.resolveArguments(input)
+                ?: typeResolver.resolve(input)?.typeClass?.let { typeResolver.getSingletonInstance(it) as Arguments }
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun resolveArgumentHandler(input: String, typeResolver: TypeResolver): ArgumentHandler<*>? =
@@ -55,6 +61,17 @@ inline fun resolveArgumentHandler(input: String, typeResolver: TypeResolver): Ar
 inline fun JSONObject.getCommandHandler(key: String,
                                         jsonCommandParser: JsonCommandParser): Handler? =
         this.getAs<String>(key)?.let { jsonCommandParser.parseCommandHandler(it) }
+
+@Suppress("NOTHING_TO_INLINE")
+inline fun JSONObject.getArguments(key: String,
+                                   jsonCommandParser: JsonCommandParser): Arguments? =
+        this[key].let {
+            when (it) {
+                is String -> jsonCommandParser.parseArguments(it)
+                is JSONArray -> StaticListArguments(this.getAsArrayOfObj(key) { jsonCommandParser.parseArgument(it) })
+                else -> null
+            }
+        }
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun JSONObject.getArgumentHandler(key: String,

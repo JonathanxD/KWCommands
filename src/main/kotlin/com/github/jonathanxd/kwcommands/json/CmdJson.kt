@@ -40,7 +40,7 @@ import kotlin.reflect.KClass
  *
  * Obs: this annotation is converted to a [CmdJsonObj].
  *
- *
+ * @see JsonCommandParser
  * @property type Type of the json localization, may be a resource of the annotation enclosing class.
  * @property value Value of the type, if is a resource, the path to resource, if a string, the json string, if a class,
  * the full class name.

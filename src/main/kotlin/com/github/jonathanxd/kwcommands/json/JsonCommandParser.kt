@@ -138,6 +138,11 @@ interface JsonCommandParser {
     fun parseReq(json: String): Requirement<*, *> = this.parseReq(JSONParser().parse(json) as JSONObject)
 
     /**
+     * Parses [Arguments] from input text [input].
+     */
+    fun parseArguments(input: String): Arguments?
+
+    /**
      * Parses [Command handler][Handler] from input text [input].
      */
     fun parseCommandHandler(input: String): Handler?
@@ -184,8 +189,7 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
                     .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
                     .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
                     .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
-                    // TODO: Support dynamic arguments
-                    .arguments(StaticListArguments(jsonObject.getAsArrayOfObj(ARGUMENTS_KEY) { this.parseArgument(it) }))
+                    .arguments(jsonObject.getArguments(ARGUMENTS_KEY, this) ?: StaticListArguments(emptyList()))
                     .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
                     .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
                     .build()
@@ -278,6 +282,9 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
 
     override fun parseCommandHandler(input: String): Handler? =
             resolveCommandHandler(input, this.typeResolver)
+
+    override fun parseArguments(input: String): Arguments? =
+            resolveArguments(input, this.typeResolver)
 
     override fun parseArgumentHandler(input: String): ArgumentHandler<*>? =
             resolveArgumentHandler(input, this.typeResolver)

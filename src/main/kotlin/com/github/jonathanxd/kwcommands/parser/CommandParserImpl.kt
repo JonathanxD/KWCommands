@@ -129,7 +129,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val commandInput = input.rightOrNull() as? SingleInput ?: return right(false)
 
         if (commandInput.content == "&") {
-            if (last.arguments.getArguments().isNotEmpty())
+            if (last.arguments.getRemainingArguments().isNotEmpty())
                 return leftBooleanObj(createFailAME(last, emptyList(), containers, commandInput.source, inputIter))
 
             containers += CommandContainer(last, emptyList(), last.handler)
@@ -159,7 +159,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                                source: String,
                                command: Command,
                                parsedCommands: List<CommandContainer>): Either<ParseFail, List<ArgumentContainer<*>>> {
-        if (command.arguments.getArguments().isEmpty()) {
+        if (command.arguments.getRemainingArguments().isEmpty()) {
             return right(emptyList())
         }
 
@@ -218,7 +218,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             }
         }
 
-        val commandArgumentsList = command.arguments.getArguments(args)
+        val commandArgumentsList = command.arguments.getRemainingArguments(args)
         val required = commandArgumentsList.count { !it.isOptional }
 
         if (required != 0) {
@@ -572,7 +572,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 }
                 return cmd
             } else {
-                if (last.arguments.getArguments().all { it.isOptional }) {
+                if (last.arguments.getRemainingArguments().all { it.isOptional }) {
                     list += last
                 } else {
                     return null
@@ -676,7 +676,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val argumentList = ParsingBackedList(this, argumentList_)
 
         private var pos = 0
-        private var args: List<Argument<*>> = this.arguments.getArguments()
+        private var args: List<Argument<*>> = this.arguments.getRemainingArguments()
 
         fun hasNext(): Boolean {
             return args.isNotEmpty() && pos < args.size
@@ -689,7 +689,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
 
         internal fun reset() {
-            args = this.arguments.getArguments(this.argumentList_)
+            args = this.arguments.getRemainingArguments(this.argumentList_)
             pos = 0
         }
 

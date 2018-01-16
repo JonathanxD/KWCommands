@@ -163,44 +163,23 @@ interface TextsStub {
     @Section("info", "parsed_list")
     fun getParsedListText(): TextComponent
 
-    @Section("help", "header", "1")
-    fun header1(): TextComponent
-    @Section("help", "header", "2")
-    fun header2(): TextComponent
-    @Section("help", "header", "3")
-    fun header3(): TextComponent
-    @Section("help", "header", "4")
-    fun header4(): TextComponent
-    @Section("help", "header", "5")
-    fun header5(): TextComponent
-    @Section("help", "header", "6")
-    fun header6(): TextComponent
-    @Section("help", "header", "7")
-    fun header7(): TextComponent
-    @Section("help", "header", "8")
-    fun header8(): TextComponent
-    @Section("help", "header", "9")
-    fun header9(): TextComponent
-    @Section("help", "header", "10")
-    fun header10(): TextComponent
-    @Section("help", "header", "11")
-    fun header11(): TextComponent
-    @Section("help", "header", "12")
-    fun header12(): TextComponent
+    @Section("info", "dynamic_args_tag")
+    fun getDynamicArgsTag(): TextComponent
 
-    @Section("help", "footer", "1")
-    fun footer1(): TextComponent
-    @Section("help", "footer", "2")
-    fun footer2(): TextComponent
+    @Section("help", "header")
+    fun header(): TextComponent
+
+    @Section("help", "footer")
+    fun footer(): TextComponent
 
     @Section("help", "argument_description")
     fun getArgumentDescriptionText(): TextComponent
 
     @Section("help", "requires_value")
     fun getRequiresValueText(@Named(REQUIRED_VALUE) value: String,
-                            @Named(SUBJECT_TYPE) subjectType: String,
-                            @Named(SUBJECT_TAGS) subjectTags: String,
-                            @Named(TESTER) tester: TextComponent): TextComponent
+                             @Named(SUBJECT_TYPE) subjectType: String,
+                             @Named(SUBJECT_TAGS) subjectTags: String,
+                             @Named(TESTER) tester: TextComponent): TextComponent
 
     @Section("help", "requires_argument_value")
     fun getRequiresArgumentValueText(@Named(REQUIRED_VALUE) value: String,
