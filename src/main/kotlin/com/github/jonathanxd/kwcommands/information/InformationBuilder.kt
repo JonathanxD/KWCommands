@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.information
 
 import com.github.jonathanxd.iutils.opt.Opt
+import com.github.jonathanxd.iutils.opt.specialized.None
 import com.github.jonathanxd.iutils.opt.specialized.OptObject
 import com.github.jonathanxd.iutils.type.TypeInfo
 
@@ -68,7 +69,7 @@ class InformationBuilder<T> {
      * Build [Information]
      */
     fun build(): Information<T> {
-        if(value.isPresent)
+        if(value is None)
             throw IllegalStateException("Property 'value' was not initialized")
 
         return Information(

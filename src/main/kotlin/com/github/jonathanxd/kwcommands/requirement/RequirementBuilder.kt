@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.requirement
 
 import com.github.jonathanxd.iutils.opt.Opt
+import com.github.jonathanxd.iutils.opt.specialized.None
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 
@@ -77,7 +78,7 @@ class RequirementBuilder<T, R> {
      * Build [Requirement]
      */
     fun build(): Requirement<T, R> {
-        if (!this.required.isPresent)
+        if (this.required is None)
             throw IllegalStateException("Property 'required' should be initialized.")
 
         return Requirement(
