@@ -27,9 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
-import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.kwcommands.command.Command
-import com.github.jonathanxd.kwcommands.information.Information
 
 /**
  * Manages and register commands. Only top-level commands can be registered.
@@ -41,9 +39,14 @@ import com.github.jonathanxd.kwcommands.information.Information
 interface CommandManager {
 
     /**
-     * Registered commands. The returned list cannot be modified
+     * View of registered commands. The returned list cannot be modified.
      */
     val registeredCommands: Set<Command>
+
+    /**
+     * View of registered commands with owners. The returned list cannot be modified.
+     */
+    val commandsWithOwner: Set<Pair<Command, Any>>
 
     /**
      * Register [command].

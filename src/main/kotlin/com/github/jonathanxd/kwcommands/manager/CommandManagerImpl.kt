@@ -28,10 +28,11 @@
 package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.iutils.collection.view.ViewCollections
-import com.github.jonathanxd.iutils.iterator.IteratorUtil
+import com.github.jonathanxd.iutils.collection.view.ViewUtils
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
+import java.util.function.Function
 
 /**
  * Command manager implementation.
@@ -39,12 +40,22 @@ import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
 class CommandManagerImpl : CommandManager {
 
     private val commands = mutableSetOf<RegisteredCommand>()
-    private val commands_ = ViewCollections.setMapped(commands,
-            { e, i -> IteratorUtil.mapped(e, i, { it.command }) },
-            { throw UnsupportedOperationException() },
-            { throw UnsupportedOperationException() })
 
-    override val registeredCommands: Set<Command> = this.commands_
+    override val registeredCommands: Set<Command> =
+        ViewCollections.setMapped<RegisteredCommand, Command>(
+            this.commands,
+            Function { it.command },
+            ViewUtils.unmodifiable(),
+            ViewUtils.unmodifiable()
+        )
+
+    override val commandsWithOwner: Set<Pair<Command, Any>> =
+        ViewCollections.setMapped<RegisteredCommand, Pair<Command, Any>>(
+            this.commands,
+            Function { it.command to it.owner },
+            ViewUtils.unmodifiable(),
+            ViewUtils.unmodifiable()
+        )
 
     override fun registerCommand(command: Command, owner: Any): Boolean {
 
@@ -66,10 +77,11 @@ class CommandManagerImpl : CommandManager {
     }
 
     override fun unregisterAllCommandsOfOwner(owner: Any): Boolean =
-            commands.removeIf { it.owner == owner }
+        commands.removeIf { it.owner == owner }
 
 
-    override fun isRegistered(command: Command, owner: Any?) = this.commands.any { (owner == null || it.owner == owner) && it.command == command }
+    override fun isRegistered(command: Command, owner: Any?) =
+        this.commands.any { (owner == null || it.owner == owner) && it.command == command }
 
     override fun findCommand(name: String, owner: Any?): Command? {
         this.commands.forEach {
@@ -90,13 +102,14 @@ class CommandManagerImpl : CommandManager {
 
     override fun getCommand(path: Array<String>, owner: Any?): Command = path.let {
 
-        var cmd = this.getCommand(it.first(), owner) ?:
-                throw NoCommandException("Specified parent command ${it.first()} was not found.")
+        var cmd = this.getCommand(it.first(), owner)
+                ?: throw NoCommandException("Specified parent command ${it.first()} was not found.")
 
         if (it.size > 1) {
             for (x in it.copyOfRange(1, it.size)) {
                 cmd = this.getSubCommand(cmd, x)
-                        ?: throw NoCommandException("Specified parent command $x was not found in command $cmd.")
+                        ?:
+                        throw NoCommandException("Specified parent command $x was not found in command $cmd.")
             }
         }
 
@@ -114,15 +127,16 @@ class CommandManagerImpl : CommandManager {
     }
 
     override fun getOwners(command: Command): Set<Any> =
-            this.commands.filter { it.command == command }.toSet()
+        this.commands.filter { it.command == command }.toSet()
 
     override fun getSubCommand(command: Command, name: String): Command? =
-            command.getSubCommand(name)
+        command.getSubCommand(name)
 
     override fun createCommandsPair(): List<Pair<Command, Any>> =
-            this.commands.map { it.command to it.owner }
+        this.commands.map { it.command to it.owner }
 
-    override fun createListWithCommands(): List<Command> = this.commands.map { (command, _) -> command }
+    override fun createListWithCommands(): List<Command> =
+        this.commands.map { (command, _) -> command }
 
     override fun createListWithAllCommands(): List<Command> {
         val list = mutableListOf<Command>()

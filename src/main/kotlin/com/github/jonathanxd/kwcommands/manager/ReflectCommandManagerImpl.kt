@@ -42,6 +42,9 @@ class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl
     override val registeredCommands: Set<Command>
         get() = this.manager.registeredCommands
 
+    override val commandsWithOwner: Set<Pair<Command, Any>>
+        get() = this.manager.commandsWithOwner
+
     private val environment: ReflectionEnvironment = ReflectionEnvironment(this)
     override val argumentTypeStorage: ArgumentTypeStorage = object : ArgumentTypeStorage {
 
