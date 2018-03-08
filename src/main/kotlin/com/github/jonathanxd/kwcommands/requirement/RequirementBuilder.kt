@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -30,7 +30,6 @@ package com.github.jonathanxd.kwcommands.requirement
 import com.github.jonathanxd.iutils.opt.Opt
 import com.github.jonathanxd.iutils.opt.specialized.None
 import com.github.jonathanxd.iutils.type.TypeInfo
-import com.github.jonathanxd.kwcommands.information.Information
 
 /**
  * Builder of requirements.
@@ -82,10 +81,10 @@ class RequirementBuilder<T, R> {
             throw IllegalStateException("Property 'required' should be initialized.")
 
         return Requirement(
-                required = this.required.value,
-                subject = this.subject,
-                type = this.type,
-                tester = this.tester
+            required = this.required.value,
+            subject = this.subject,
+            type = this.type,
+            tester = this.tester
         )
     }
 

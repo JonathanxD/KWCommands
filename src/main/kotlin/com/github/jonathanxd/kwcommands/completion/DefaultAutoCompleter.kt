@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -32,17 +32,19 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.*
 
 class DefaultAutoCompleter : AutoCompleter {
 
-    override fun completeCommand(command: Command?,
-                                 commandContainers: List<CommandContainer>,
-                                 completions: Completions,
-                                 commandManager: CommandManager,
-                                 informationProviders: InformationProviders) {
+    override fun completeCommand(
+        command: Command?,
+        commandContainers: List<CommandContainer>,
+        completions: Completions,
+        commandManager: CommandManager,
+        informationProviders: InformationProviders
+    ) {
         val commands = mutableListOf<Command>()
         val last = commandContainers.lastOrNull()
         val root = if (command?.parent == null) command else command.superCommand
@@ -60,20 +62,24 @@ class DefaultAutoCompleter : AutoCompleter {
         completions.addAll(commands.flatMap { listOf(it.name) + it.alias })
     }
 
-    override fun completeArgumentName(command: Command,
-                                      arguments: List<ArgumentContainer<*>>,
-                                      completions: Completions,
-                                      informationProviders: InformationProviders) {
+    override fun completeArgumentName(
+        command: Command,
+        arguments: List<ArgumentContainer<*>>,
+        completions: Completions,
+        informationProviders: InformationProviders
+    ) {
         completions.addAll(command.arguments.getRemainingArguments(arguments).flatMap { listOf(it.name) + it.alias })
     }
 
-    override fun completeArgumentInput(command: Command,
-                                       arguments: List<ArgumentContainer<*>>,
-                                       argument: Argument<*>,
-                                       argumentType: ArgumentType<*, *>,
-                                       input: Input?,
-                                       completions: Completions,
-                                       informationProviders: InformationProviders) {
+    override fun completeArgumentInput(
+        command: Command,
+        arguments: List<ArgumentContainer<*>>,
+        argument: Argument<*>,
+        argumentType: ArgumentType<*, *>,
+        input: Input?,
+        completions: Completions,
+        informationProviders: InformationProviders
+    ) {
 
         when (argumentType.inputType) {
             is SingleInputType -> {
@@ -89,7 +95,8 @@ class DefaultAutoCompleter : AutoCompleter {
 
                 if (input is MapInput
                         && input.input.isNotEmpty()
-                        && input.input.last().second is EmptyInput) {
+                        && input.input.last().second is EmptyInput
+                ) {
                     argumentType.getMapValueType(last)
                 } else {
                     argumentType.getMapKeyType(last)

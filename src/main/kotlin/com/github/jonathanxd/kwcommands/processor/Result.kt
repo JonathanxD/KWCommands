@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,9 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.processor
 
+import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
-import com.github.jonathanxd.kwcommands.util.MissingInformation
 import com.github.jonathanxd.kwcommands.requirement.UnsatisfiedRequirement
+import com.github.jonathanxd.kwcommands.util.MissingInformation
 
 /**
  * Result of command handling.
@@ -49,24 +50,30 @@ interface CommandResult {
 /**
  * When [container] returns an object value.
  */
-data class ValueResult(val value: Any?,
-                       override val rootContainer: Container?,
-                       override val container: Container): CommandResult
+data class ValueResult(
+    val value: Any?,
+    override val rootContainer: Container?,
+    override val container: Container
+) : CommandResult
 
 /**
  * When requirement processor reports missing requirements.
  */
-data class UnsatisfiedRequirementsResult(val unsatisfiedRequirements: List<UnsatisfiedRequirement<*>>,
-                                         override val rootContainer: Container?,
-                                         override val container: Container): CommandResult
+data class UnsatisfiedRequirementsResult(
+    val unsatisfiedRequirements: List<UnsatisfiedRequirement<*>>,
+    override val rootContainer: Container?,
+    override val container: Container
+) : CommandResult
 
 /**
  * When [container] reports missing information list.
  */
-data class MissingInformationResult(val missingInformationList: List<MissingInformation>,
-                                    val requester: Any,
-                                    override val rootContainer: Container?,
-                                    override val container: Container): CommandResult
+data class MissingInformationResult(
+    val missingInformationList: List<MissingInformation>,
+    val requester: Any,
+    override val rootContainer: Container?,
+    override val container: Container
+) : CommandResult
 
 /**
  * A particular result handler which allows command handler to add more [CommandResults][CommandResult]
@@ -82,7 +89,11 @@ interface ResultHandler {
      * @param cancel True if the command execution should be cancelled. Obs: Only for argument handlers, this
      * does not have effects in command handlers.
      */
-    fun informationMissing(missingInformationList: List<MissingInformation>, requester: Any, cancel: Boolean)
+    fun informationMissing(
+        missingInformationList: List<MissingInformation>,
+        requester: Any,
+        cancel: Boolean
+    )
 
     /**
      * Adds a [ValueResult] to the result list.
@@ -94,3 +105,10 @@ interface ResultHandler {
      */
     fun shouldCancel(): Boolean
 }
+
+/**
+ * Gets command from result.
+ */
+fun CommandResult.getCommand(): CommandContainer? =
+    this.rootContainer as? CommandContainer
+            ?: this.container as? CommandContainer

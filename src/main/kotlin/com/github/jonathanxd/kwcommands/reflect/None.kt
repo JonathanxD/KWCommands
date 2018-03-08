@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -39,30 +39,37 @@ import com.github.jonathanxd.kwcommands.processor.ResultHandler
 sealed class None
 
 object NoneParser : None(), ArgumentParser<Input, Any> {
-    override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any> =
-            valueOrValidationFactory.value(input.toPlain())
+    override fun parse(
+        input: Input,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Any> =
+        valueOrValidationFactory.value(input.toPlain())
 
 }
 
 object NonePossibilities : None(), Possibilities {
     override fun invoke(): List<Input> =
-            emptyList()
+        emptyList()
 }
 
 object NoneHandler : None(), Handler {
-    override fun handle(commandContainer: CommandContainer, informationProviders: InformationProviders,
-                        resultHandler: ResultHandler): Any =
-            Unit
+    override fun handle(
+        commandContainer: CommandContainer, informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any =
+        Unit
 }
 
 object NoneArgumentHandler : None(), ArgumentHandler<Any?> {
-    override fun handle(argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer,
-                        informationProviders: InformationProviders, resultHandler: ResultHandler): Any =
-            Unit
+    override fun handle(
+        argumentContainer: ArgumentContainer<Any?>, commandContainer: CommandContainer,
+        informationProviders: InformationProviders, resultHandler: ResultHandler
+    ): Any =
+        Unit
 }
 
 
-class NoneArgumentType: None(), () -> ArgumentType<*, *> {
+class NoneArgumentType : None(), () -> ArgumentType<*, *> {
     override fun invoke(): ArgumentType<*, *> {
         throw IllegalStateException("none")
     }

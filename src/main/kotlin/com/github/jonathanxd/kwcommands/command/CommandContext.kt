@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -29,8 +29,8 @@
 
 package com.github.jonathanxd.kwcommands.command
 
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.exception.ArgumentMissingException
 import com.github.jonathanxd.kwcommands.exception.InfoMissingException
 import com.github.jonathanxd.kwcommands.information.Information
@@ -47,89 +47,91 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * @property informationProviders Providers of information.
  * @property resultHandler Handler of command result.
  */
-data class CommandContext(val commandContainer: CommandContainer,
-                          val informationProviders: InformationProviders,
-                          val resultHandler: ResultHandler) {
+data class CommandContext(
+    val commandContainer: CommandContainer,
+    val informationProviders: InformationProviders,
+    val resultHandler: ResultHandler
+) {
 
     fun <T> getArgById(name: String): T =
-            this.getOptArgById<T>(name)
-                    ?: throw ArgumentMissingException("Argument with name '$name' is missing!")
+        this.getOptArgById<T>(name)
+                ?: throw ArgumentMissingException("Argument with name '$name' is missing!")
 
     fun <T> getOptArgById(name: String): T? =
-            this.commandContainer.getArgument<T>(name)?.value
+        this.commandContainer.getArgument<T>(name)?.value
 
     fun <T> getArg(name: String, type: TypeInfo<T>): T =
-            this.getOptArg(name, type)
-                    ?: throw ArgumentMissingException("Argument with name '$name' is missing!")
+        this.getOptArg(name, type)
+                ?: throw ArgumentMissingException("Argument with name '$name' is missing!")
 
     fun <T> getOptArg(name: String, type: TypeInfo<T>): T? =
-            this.commandContainer.getArgument(name, type)?.value
+        this.commandContainer.getArgument(name, type)?.value
 
     fun <T> getInfo(infoId: Information.Id<T>): Information<T> =
-            this.getOptInfo(infoId)
-                    ?: throw InfoMissingException("Information with id '$infoId' is missing!")
+        this.getOptInfo(infoId)
+                ?: throw InfoMissingException("Information with id '$infoId' is missing!")
 
     fun <T> getOptInfo(infoId: Information.Id<T>): Information<T>? =
-            this.informationProviders.find(infoId)
+        this.informationProviders.find(infoId)
 
     fun <T> getInfoErased(infoId: Information.Id<*>): Information<T> =
-            this.informationProviders.findErased(infoId)
-                    ?: throw InfoMissingException("Information with id '$infoId' is missing!")
+        this.informationProviders.findErased(infoId)
+                ?: throw InfoMissingException("Information with id '$infoId' is missing!")
 
 
     fun <T> getOptInfoErased(infoId: Information.Id<*>): Information<T>? =
-            this.informationProviders.findErased(infoId)
+        this.informationProviders.findErased(infoId)
 
     fun <T> getInfoValue(infoId: Information.Id<T>): T =
-            this.getInfo(infoId).value
+        this.getInfo(infoId).value
 
     fun <T> getInfoErasedValue(infoId: Information.Id<*>): T =
-            this.getInfoErased<T>(infoId).value
+        this.getInfoErased<T>(infoId).value
 
     fun <T> getOptInfoValue(infoId: Information.Id<T>): T? =
-            this.getOptInfo(infoId)?.value
+        this.getOptInfo(infoId)?.value
 
     fun <T> getOptInfoErasedValue(infoId: Information.Id<*>): T? =
-            this.getOptInfoErased<T>(infoId)?.value
+        this.getOptInfoErased<T>(infoId)?.value
 
     @Suppress("UNCHECKED_CAST")
     fun <T> satisfyReq(req: Requirement<T, *>): Boolean =
-            (req.subject as? InformationRequirementSubject<*>)?.let {
-                getOptInfo(it.id)?.value?.let { req.test(it as T) }
-            } ?: (req.subject as? ArgumentRequirementSubject<*>)?.let {
-                getOptArg<Any?>(it.name)?.let { req.test(it as T) }
-            } ?: false
+        (req.subject as? InformationRequirementSubject<*>)?.let {
+            getOptInfo(it.id)?.value?.let { req.test(it as T) }
+        } ?: (req.subject as? ArgumentRequirementSubject<*>)?.let {
+            getOptArg<Any?>(it.name)?.let { req.test(it as T) }
+        } ?: false
 
     // inline
 
     inline fun <reified T> getArg(name: String): T =
-            typeInfo<T>().let { type ->
-                commandContainer.getArgument(name, type)?.value
-                        ?: throw ArgumentMissingException("Argument with name '$name' of type '$type' is missing!")
-            }
+        typeInfo<T>().let { type ->
+            commandContainer.getArgument(name, type)?.value
+                    ?: throw ArgumentMissingException("Argument with name '$name' of type '$type' is missing!")
+        }
 
     inline fun <reified T> getOptArg(name: String): T? =
-            commandContainer.getArgument(name, typeInfo<T>())?.value
+        commandContainer.getArgument(name, typeInfo<T>())?.value
 
     inline fun <reified T> getInfo(tags: Array<String>): Information<T> =
-            Information.Id(typeInfo<T>(), tags).let { infoId ->
-                this.informationProviders.find(infoId)
-                        ?: throw InfoMissingException("Information with id '$infoId' is missing!")
-            }
+        Information.Id(typeInfo<T>(), tags).let { infoId ->
+            this.informationProviders.find(infoId)
+                    ?: throw InfoMissingException("Information with id '$infoId' is missing!")
+        }
 
     inline fun <reified T> getOptInfo(tags: Array<String>): Information<T>? =
-            this.informationProviders.find(Information.Id(typeInfo(), tags))
+        this.informationProviders.find(Information.Id(typeInfo(), tags))
 
     inline fun <reified T> getInfoValue(tags: Array<String>): T =
-            this.getInfo<T>(tags).value
+        this.getInfo<T>(tags).value
 
     inline fun <reified T> getOptInfoValue(tags: Array<String>): T? =
-            this.getOptInfo<T>(tags)?.value
+        this.getOptInfo<T>(tags)?.value
 
     inline fun <reified T> inlineSatisfyReq(req: Requirement<T, *>): Boolean =
-            (req.subject as? InformationRequirementSubject<*>)?.let {
-                getOptInfo(it.id)?.value?.let { req.test(it as T) }
-            } ?: (req.subject as? ArgumentRequirementSubject<*>)?.let {
-                getOptArg<T>(it.name)?.let { req.test(it) }
-            } ?: false
+        (req.subject as? InformationRequirementSubject<*>)?.let {
+            getOptInfo(it.id)?.value?.let { req.test(it as T) }
+        } ?: (req.subject as? ArgumentRequirementSubject<*>)?.let {
+            getOptArg<T>(it.name)?.let { req.test(it) }
+        } ?: false
 }

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -44,12 +44,15 @@ fun Command.allSubCommandsTo(list: MutableList<Command>) {
 fun Command.consumeAllSubCommands(consumer: (command: Command, level: Int) -> Unit) =
     this.consumeAllSubCommands(consumer, 1)
 
-private fun Command.consumeAllSubCommands(consumer: (command: Command, level: Int) -> Unit, level: Int) {
+private fun Command.consumeAllSubCommands(
+    consumer: (command: Command, level: Int) -> Unit,
+    level: Int
+) {
     //consumer(this, level)
 
     this.subCommands.forEach {
         consumer(it, level)
         it.consumeAllSubCommands(consumer, level + 1)
     }
-    
+
 }

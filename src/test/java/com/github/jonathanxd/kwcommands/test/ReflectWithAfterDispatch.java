@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -32,6 +32,7 @@ import com.github.jonathanxd.kwcommands.KWCommands;
 import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler;
 import com.github.jonathanxd.kwcommands.information.InformationProvidersImpl;
 import com.github.jonathanxd.kwcommands.processor.CommandResult;
+import com.github.jonathanxd.kwcommands.processor.ValueResult;
 import com.github.jonathanxd.kwcommands.reflect.annotation.AfterDispatch;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Arg;
 import com.github.jonathanxd.kwcommands.reflect.annotation.Cmd;
@@ -41,6 +42,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;
+
+import kotlin.Unit;
 
 public class ReflectWithAfterDispatch {
 
@@ -59,7 +62,8 @@ public class ReflectWithAfterDispatch {
         reflectionEnvironment.registerCommands(
                 reflectionEnvironment.fromClass(Calc.class, c -> calc, this), this);
 
-        List<DispatchHandler> dispatchHandlers = reflectionEnvironment.dispatchHandlersFrom(Say.class, c -> say);
+        List<DispatchHandler> dispatchHandlers = reflectionEnvironment.dispatchHandlersFrom(
+                Say.class, c -> say);
 
         aio.getDispatcher()
                 .registerDispatchHandlers(dispatchHandlers);
@@ -81,12 +85,16 @@ public class ReflectWithAfterDispatch {
 
         @AfterDispatch
         public void all(List<CommandResult> results) {
-            handled = results.size();
+            handled = (int) results.stream()
+                    .filter(i -> !(i instanceof ValueResult) || ((ValueResult) i).getValue() != Unit.INSTANCE)
+                    .count();
         }
 
         @AfterDispatch(filter = Say.class)
         public void onlySay(List<CommandResult> results) {
-            handled2 = results.size();
+            handled2 = (int) results.stream()
+                    .filter(i -> !(i instanceof ValueResult) || ((ValueResult) i).getValue() != Unit.INSTANCE)
+                    .count();
         }
     }
 
@@ -94,7 +102,7 @@ public class ReflectWithAfterDispatch {
     public static class Calc {
         @Cmd
         public int plus(@Arg("a") int a,
-                         @Arg("b") int b) {
+                        @Arg("b") int b) {
             return a + b;
         }
     }

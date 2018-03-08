@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,26 +27,36 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProviders
 
-inline fun <reified T> InformationProviders.registerInformation(tags: Array<String>, value: T, description: String? = null)
-        = this.registerInformation(Information.Id(typeInfo(), tags), value, description)
+inline fun <reified T> InformationProviders.registerInformation(
+    tags: Array<String>,
+    value: T,
+    description: String? = null
+) = this.registerInformation(Information.Id(typeInfo(), tags), value, description)
 
-inline fun <reified T> Information(tags: Array<String>, value: T, description: String?): Information<T> =
-        Information(Information.Id(typeInfo(), tags), value, description)
+inline fun <reified T> Information(
+    tags: Array<String>,
+    value: T,
+    description: String?
+): Information<T> =
+    Information(Information.Id(typeInfo(), tags), value, description)
 
 inline fun <reified T> InformationId(tags: Array<String>): Information.Id<T> =
-        Information.Id(typeInfo(), tags)
+    Information.Id(typeInfo(), tags)
 
 
 /**
  * Return `this` for chaining call.
  */
 @Suppress("UNCHECKED_CAST")
-inline fun <reified T> TypeInfo<*>.whenIs(type: TypeInfo<T>, exec: (TypeInfo<T>) -> Unit): TypeInfo<*> {
+inline fun <reified T> TypeInfo<*>.whenIs(
+    type: TypeInfo<T>,
+    exec: (TypeInfo<T>) -> Unit
+): TypeInfo<*> {
     if (this == type)
         exec(this as TypeInfo<T>)
 
@@ -54,4 +64,3 @@ inline fun <reified T> TypeInfo<*>.whenIs(type: TypeInfo<T>, exec: (TypeInfo<T>)
 }
 
 
-inline fun <reified T> type(): TypeInfo<T> = typeInfo()

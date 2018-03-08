@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -61,6 +61,6 @@ val Argument<*>.typeStr: String
     get() = if (this.argumentType.type.canResolve()) this.argumentType.type.toString() else this.argumentType.type.classLiteral
 
 fun Argument<*>.isBoolean(): Boolean =
-        this.argumentType is SingleArgumentType<*>
-                && this.argumentType.type.toFullString().let { it == "boolean" || it == "java.lang.Boolean" }
-                && this.argumentType.parse(SingleInput("true", "true", 0, 4)).isValue
+    this.argumentType is SingleArgumentType<*>
+            && this.argumentType.type.toFullString().let { it == "boolean" || it == "java.lang.Boolean" }
+            && this.argumentType.parse(SingleInput("true", "true", 0, 4)).isValue

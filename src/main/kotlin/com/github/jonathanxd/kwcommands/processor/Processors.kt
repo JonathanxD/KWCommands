@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -38,21 +38,24 @@ object Processors {
 
     @JvmStatic
     fun createCommonProcessor(): CommandProcessor =
-            CommonCommandProcessor(CommandManagerImpl())
+        CommonCommandProcessor(CommandManagerImpl())
 
     @JvmStatic
     fun createCommonProcessor(manager: CommandManager): CommandProcessor =
-            CommonCommandProcessor(manager, CommandParserImpl(manager))
+        CommonCommandProcessor(manager, CommandParserImpl(manager))
 
     @JvmStatic
-    fun createCommonProcessor(manager: CommandManager,
-                              commandParser: CommandParser,
-                              commandDispatcher: CommandDispatcher): CommandProcessor =
-            CommonCommandProcessor(manager, commandParser, commandDispatcher)
+    fun createCommonProcessor(
+        manager: CommandManager,
+        commandParser: CommandParser,
+        commandDispatcher: CommandDispatcher
+    ): CommandProcessor =
+        CommonCommandProcessor(manager, commandParser, commandDispatcher)
 
     private class CommonCommandProcessor(
-            manager: CommandManager,
-            override val parser: CommandParser = CommandParserImpl(manager),
-            override val dispatcher: CommandDispatcher = CommandDispatcherImpl(manager)) : CommandProcessor
+        manager: CommandManager,
+        override val parser: CommandParser = CommandParserImpl(manager),
+        override val dispatcher: CommandDispatcher = CommandDispatcherImpl(manager)
+    ) : CommandProcessor
 
 }

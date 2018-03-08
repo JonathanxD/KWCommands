@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -45,8 +45,10 @@ interface Handler {
      * @param resultHandler Particular result handler.
      * @return Value result of command handling ([Unit] if none)
      */
-    fun handle(commandContainer: CommandContainer,
-               informationProviders: InformationProviders,
-               resultHandler: ResultHandler): Any
+    fun handle(
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any
 
 }

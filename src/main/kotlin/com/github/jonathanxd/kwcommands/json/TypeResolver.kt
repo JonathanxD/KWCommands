@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -111,7 +111,7 @@ fun MapTypeResolver.registerDefaults() {
  * The resolution of resource is made through [loaders].
  */
 class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = true) :
-        TypeResolver, Function<String, Class<*>?> {
+    TypeResolver, Function<String, Class<*>?> {
 
     private val loaderResolver = TypeInfoUtil.ClassLoaderClassResolver()
     private val map = mutableMapOf<String, Class<*>>()
@@ -150,12 +150,12 @@ class MapTypeResolver @JvmOverloads constructor(val appendJavaLang: Boolean = tr
     }
 
     override fun resolve(input: String): TypeInfo<*>? =
-            TypeInfoUtil.fromFullString(input, this).firstOrNull()
+        TypeInfoUtil.fromFullString(input, this).firstOrNull()
 
     override fun apply(t: String): Class<*>? =
-            this.map[t]
-                    ?: this.loaderResolver.apply(t)
-                    ?: (if (this.appendJavaLang && !t.contains(".")) this.loaderResolver.apply("java.lang.$t") else null)
+        this.map[t]
+                ?: this.loaderResolver.apply(t)
+                ?: (if (this.appendJavaLang && !t.contains(".")) this.loaderResolver.apply("java.lang.$t") else null)
 
     override fun resolveCommandHandler(input: String): Handler? {
         this.commandHandlerResolvers.forEach {

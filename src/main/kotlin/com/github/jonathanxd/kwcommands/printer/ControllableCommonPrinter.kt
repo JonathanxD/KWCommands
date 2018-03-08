@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -34,8 +34,10 @@ import com.github.jonathanxd.kwcommands.command.Command
 /**
  * Common implementation of command printer backing to a print function
  */
-class ControllableCommonPrinter(val printer: Printer,
-                                var enabled: Boolean = true) : Printer {
+class ControllableCommonPrinter(
+    val printer: Printer,
+    var enabled: Boolean = true
+) : Printer {
     override val localizer: TextLocalizer
         get() = this.printer.localizer
 

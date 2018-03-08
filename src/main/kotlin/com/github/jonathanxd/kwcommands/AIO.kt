@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -31,8 +31,8 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.completion.CompletionImpl
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
-import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.instanceProvider
 import com.github.jonathanxd.kwcommands.parser.CommandParserImpl
@@ -65,7 +65,13 @@ class AIO(val owner: Any) {
      * registered later with [registerLoaded].
      */
     fun loadObj(obj: Any): AIO {
-        this.reflectionEnvironment.fromClass(obj::class.java, instanceProvider { obj }, owner, queue, false)
+        this.reflectionEnvironment.fromClass(
+            obj::class.java,
+            instanceProvider { obj },
+            owner,
+            queue,
+            false
+        )
         return this
     }
 
@@ -100,11 +106,11 @@ class AIO(val owner: Any) {
      * Complete commands of this [owner].
      */
     fun complete(commandString: String, informationProviders: InformationProviders) =
-            this.completion.complete(commandString, this.owner, informationProviders)
+        this.completion.complete(commandString, this.owner, informationProviders)
 
     /**
      * Parse and dispatch commands of this [owner].
      */
     fun parseAndDispatch(commandString: String, informationProviders: InformationProviders) =
-            this.processor.parseAndDispatch(commandString, owner, informationProviders)
+        this.processor.parseAndDispatch(commandString, owner, informationProviders)
 }

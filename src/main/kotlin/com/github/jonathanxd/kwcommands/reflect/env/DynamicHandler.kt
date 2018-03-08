@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,9 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.env
 
-import com.github.jonathanxd.iutils.opt.specialized.OptObject
 import com.github.jonathanxd.iutils.kt.none
 import com.github.jonathanxd.iutils.kt.some
+import com.github.jonathanxd.iutils.opt.specialized.OptObject
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
@@ -40,27 +40,31 @@ import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
-import com.github.jonathanxd.kwcommands.reflect.element.FieldElement
 import com.github.jonathanxd.kwcommands.reflect.element.ElementParameter
+import com.github.jonathanxd.kwcommands.reflect.element.FieldElement
 import java.lang.reflect.Method
 
 /**
  * Dynamic command and argument handler that can resolve the handler lazily, when it is called at the first time. The resolution
  * can also be triggered through [resolve] method.
  */
-class DynamicHandler(val name: String,
-                     val handlerType: Type,
-                     val instanceProvider: InstanceProvider,
-                     val type: Class<*>,
-                     val reflectionEnvironment: ReflectionEnvironment) : Handler, ArgumentHandler<Any?> {
+class DynamicHandler(
+    val name: String,
+    val handlerType: Type,
+    val instanceProvider: InstanceProvider,
+    val type: Class<*>,
+    val reflectionEnvironment: ReflectionEnvironment
+) : Handler, ArgumentHandler<Any?> {
 
     private val checkedInstanceProvider: InstanceProvider = instanceProvider.checked
     private var handler: OptObject<Handler> = none()
     private var argumentHandler: OptObject<ArgumentHandler<Any?>> = none()
 
-    override fun handle(commandContainer: CommandContainer,
-                        informationProviders: InformationProviders,
-                        resultHandler: ResultHandler): Any {
+    override fun handle(
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any {
 
         if (!handler.isPresent)
             this.resolveHandlers(commandContainer.command)
@@ -74,7 +78,7 @@ class DynamicHandler(val name: String,
             return
 
         fun fail(): Nothing =
-                throw IllegalArgumentException("Cannot resolve element '$name' of type '$handlerType' in '$type' specified in json of command '$command'.")
+            throw IllegalArgumentException("Cannot resolve element '$name' of type '$handlerType' in '$type' specified in json of command '$command'.")
 
         this.handler = some(resolveHandler(command, ::fail) as Handler)
     }
@@ -85,11 +89,13 @@ class DynamicHandler(val name: String,
             return
 
         fun fail(): Nothing =
-                throw IllegalArgumentException("Cannot resolve element '$name' of type '$handlerType' in '$type' specified in json of command '$command' and argument '$argument'.")
+            throw IllegalArgumentException("Cannot resolve element '$name' of type '$handlerType' in '$type' specified in json of command '$command' and argument '$argument'.")
 
         val hnd = resolveHandler(command, ::fail) as ReflectionHandler
 
-        val arg = (hnd.element.parameters.filterIsInstance<ElementParameter.ArgumentParameter<*>>().singleOrNull() ?: fail()).argument
+        val arg =
+            (hnd.element.parameters.filterIsInstance<ElementParameter.ArgumentParameter<*>>().singleOrNull()
+                    ?: fail()).argument
 
         if (arg.name != argument.name)
             throw IllegalArgumentException("Handler for argument specified in json for argument '$argument' must have one argument parameter with the same name as argument. (Command: $command).")
@@ -105,7 +111,7 @@ class DynamicHandler(val name: String,
             val instance = this.checkedInstanceProvider(requestType)
 
             this.reflectionEnvironment
-                    .resolveHandler(FieldElement(field, instance, emptyList(), field.declaringClass))
+                .resolveHandler(FieldElement(field, instance, emptyList(), field.declaringClass))
         } else {
             val sameName = type.declaredMethods.filter { it.name == name }
 
@@ -117,32 +123,41 @@ class DynamicHandler(val name: String,
                 sameName.firstOrNull { it.parameterCount >= command.arguments.all.size } ?: fail()
             }
 
-            validate(command,
-                    this.reflectionEnvironment.createHandler(this.checkedInstanceProvider(method.declaringClass), method))
+            validate(
+                command,
+                this.reflectionEnvironment.createHandler(
+                    this.checkedInstanceProvider(method.declaringClass),
+                    method
+                )
+            )
         }
     }
 
     private fun validate(command: Command, handler: Handler): Handler {
         if (handler is ReflectionHandler) {
             val names = handler.element.parameters
-                    .filterIsInstance<ElementParameter.ArgumentParameter<*>>()
-                    .joinToString { it.argument.name }
+                .filterIsInstance<ElementParameter.ArgumentParameter<*>>()
+                .joinToString { it.argument.name }
 
             handler.element.parameters.forEach {
                 when (it) {
                     is ElementParameter.ArgumentParameter<*> -> {
                         if (!it.argument.isOptional
-                                && command.arguments.all.none { arg -> arg.name == it.argument.name }) {
-                            throw IllegalArgumentException("Argument '${it.argument.name}' of method" +
-                                    " '${type.simpleName}.$name'" +
-                                    " wasn't specified in json of command '${command.fullname}'." +
-                                    " Json arguments:" +
-                                    " ${command.arguments.all.joinToString { it.name }}." +
-                                    " Method arguments:" +
-                                    " $names.")
+                                && command.arguments.all.none { arg -> arg.name == it.argument.name }
+                        ) {
+                            throw IllegalArgumentException(
+                                "Argument '${it.argument.name}' of method" +
+                                        " '${type.simpleName}.$name'" +
+                                        " wasn't specified in json of command '${command.fullname}'." +
+                                        " Json arguments:" +
+                                        " ${command.arguments.all.joinToString { it.name }}." +
+                                        " Method arguments:" +
+                                        " $names."
+                            )
                         }
                     }
-                    else -> {}
+                    else -> {
+                    }
                 }
             }
         }
@@ -150,14 +165,21 @@ class DynamicHandler(val name: String,
         return handler
     }
 
-    override fun handle(argumentContainer: ArgumentContainer<Any?>,
-                        commandContainer: CommandContainer,
-                        informationProviders: InformationProviders,
-                        resultHandler: ResultHandler): Any {
+    override fun handle(
+        argumentContainer: ArgumentContainer<Any?>,
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any {
         if (!argumentHandler.isPresent)
             this.resolveHandlers(argumentContainer.argument, commandContainer.command)
 
-        return this.argumentHandler.value.handle(argumentContainer, commandContainer, informationProviders, resultHandler)
+        return this.argumentHandler.value.handle(
+            argumentContainer,
+            commandContainer,
+            informationProviders,
+            resultHandler
+        )
     }
 
     enum class Type {

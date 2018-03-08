@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -55,10 +55,12 @@ import kotlin.reflect.KClass
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class Cmd(val order: Int = 0,
-                     val name: String = "",
-                     val description: String = "",
-                     val alias: Array<String> = [],
-                     val parents: Array<String> = [],
-                     val requirements: Array<Require> = [],
-                     val handler: KClass<out Handler> = NoneHandler::class)
+annotation class Cmd(
+    val order: Int = 0,
+    val name: String = "",
+    val description: String = "",
+    val alias: Array<String> = [],
+    val parents: Array<String> = [],
+    val requirements: Array<Require> = [],
+    val handler: KClass<out Handler> = NoneHandler::class
+)

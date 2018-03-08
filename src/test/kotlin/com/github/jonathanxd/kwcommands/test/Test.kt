@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -239,10 +239,10 @@ fun Either<ParseFail, List<CommandResult>>.assertAll(expected: List<Any?>) {
 
 fun List<CommandResult>.assertAll(expected: List<Any?>) {
 
-    if (this.count { it is ValueResult } != expected.size)
+    if (this.count { it is ValueResult && it.value != Unit } != expected.size)
         throw ComparisonFailure("List is not equal.", expected.toString(), this.map { it.toString() }.toString())
 
-    this.forEachIndexed { index, result ->
+    this.filter { it !is ValueResult || it.value != Unit }.forEachIndexed { index, result ->
         (result as? ValueResult)?.assert(expected[index])
     }
 

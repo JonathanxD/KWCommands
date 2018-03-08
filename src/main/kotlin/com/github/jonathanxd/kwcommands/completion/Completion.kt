@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -33,8 +33,8 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.ParseFail
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.OwnerProvider
@@ -51,17 +51,21 @@ interface Completion {
     /**
      * Gets suggestions to complete [input].
      */
-    fun complete(input: String,
-                 owner: Any?,
-                 informationProviders: InformationProviders): List<String> =
-            this.completeWithOwnerFunc(input, {owner}, informationProviders)
+    fun complete(
+        input: String,
+        owner: Any?,
+        informationProviders: InformationProviders
+    ): List<String> =
+        this.completeWithOwnerFunc(input, { owner }, informationProviders)
 
     /**
      * Gets suggestions to complete [input].
      */
-    fun completeWithOwnerFunc(input: String,
-                              ownerProvider: OwnerProvider,
-                              informationProviders: InformationProviders): List<String>
+    fun completeWithOwnerFunc(
+        input: String,
+        ownerProvider: OwnerProvider,
+        informationProviders: InformationProviders
+    ): List<String>
 
 }
 
@@ -75,13 +79,13 @@ interface Completions {
      * Add all [completions]
      */
     fun addAll(completions: Iterable<String>) =
-            completions.forEach { add(it) }
+        completions.forEach { add(it) }
 
     /**
      * Add all [completions]
      */
     fun addAll(completions: Array<String>) =
-            completions.forEach { add(it) }
+        completions.forEach { add(it) }
 }
 
 /**
@@ -105,37 +109,44 @@ interface AutoCompleter {
      * cannot be finished because of a fail at the mid of it (example, trying to complete
      * an invalid input).
      */
-    fun handleNonCompletable(fail: ParseFail,
-                             informationProviders: InformationProviders) = Unit
+    fun handleNonCompletable(
+        fail: ParseFail,
+        informationProviders: InformationProviders
+    ) = Unit
 
     /**
      * Gets sub-command completion for [command].
      */
-    fun completeCommand(command: Command?,
-                        commandContainers: List<CommandContainer>,
-                        completions: Completions,
-                        commandManager: CommandManager,
-                        informationProviders: InformationProviders) = Unit
+    fun completeCommand(
+        command: Command?,
+        commandContainers: List<CommandContainer>,
+        completions: Completions,
+        commandManager: CommandManager,
+        informationProviders: InformationProviders
+    ) = Unit
 
     /**
      * Gets completions for argument name (without `--`).
      */
-    fun completeArgumentName(command: Command,
-                             arguments: List<ArgumentContainer<*>>,
-                             completions: Completions,
-                             informationProviders: InformationProviders) = Unit
+    fun completeArgumentName(
+        command: Command,
+        arguments: List<ArgumentContainer<*>>,
+        completions: Completions,
+        informationProviders: InformationProviders
+    ) = Unit
 
     /**
      * Gets completions for [argument].
      */
-    fun completeArgumentInput(command: Command,
-                              arguments: List<ArgumentContainer<*>>,
-                              argument: Argument<*>,
-                              argumentType: ArgumentType<*, *>,
-                              input: Input?,
-                              completions: Completions,
-                              informationProviders: InformationProviders) = Unit
-
+    fun completeArgumentInput(
+        command: Command,
+        arguments: List<ArgumentContainer<*>>,
+        argument: Argument<*>,
+        argumentType: ArgumentType<*, *>,
+        input: Input?,
+        completions: Completions,
+        informationProviders: InformationProviders
+    ) = Unit
 
 
 }

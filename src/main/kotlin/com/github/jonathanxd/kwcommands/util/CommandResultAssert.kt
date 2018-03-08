@@ -25,24 +25,34 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.test
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.printer.CommonPrinter
-import com.github.jonathanxd.kwcommands.printer.ControllableCommonPrinter
-import com.github.jonathanxd.kwcommands.util.KLocale
+import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
+import com.github.jonathanxd.kwcommands.processor.CommandResult
+import com.github.jonathanxd.kwcommands.processor.ValueResult
+import com.github.jonathanxd.kwcommands.processor.getCommand
 
-object ControlledPrinters {
-    val sysOut = ControllableCommonPrinter(
-            CommonPrinter(KLocale.localizer, System.out::println, true))
+inline fun CommandResult.assertArguments(
+    tester: (ArgumentContainer<*>) -> Boolean,
+    backend: (message: String) -> Nothing
+) {
+    listOf(this).assertArguments(tester, backend)
+}
 
-    val sysOutWHF = ControllableCommonPrinter(
-            CommonPrinter(KLocale.localizer, System.out::println, false))
-
-    init {
-        val enable = System.getProperty("kwcommands.test.print", "false").toBoolean()
-
-        sysOut.enabled = enable
-        sysOutWHF.enabled = enable
+inline fun List<CommandResult>.assertArguments(
+    tester: (ArgumentContainer<*>) -> Boolean,
+    backend: (message: String) -> Nothing
+) {
+    this.forEach {
+        if (it !is ValueResult) {
+            this.thrown(backend = backend)
+        } else {
+            val command = it.getCommand() ?: this.thrown(backend = backend)
+            command.arguments.forEach {
+                if (!tester(it))
+                    backend("Argument '${it.argument.nameWithType}' does not matched tester!")
+            }
+        }
     }
 
 }

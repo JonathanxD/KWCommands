@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -40,8 +40,10 @@ class ReflectDispatchHandler(private val link: Link<Any?>) : DispatchHandler {
     }
 }
 
-class ReflectFilterDispatchHandler(private val link: Link<Any?>,
-                                   private val filter: List<Class<*>>) : DispatchHandler {
+class ReflectFilterDispatchHandler(
+    private val link: Link<Any?>,
+    private val filter: List<Class<*>>
+) : DispatchHandler {
     override fun handle(result: List<CommandResult>) {
         val filtered = result.filter {
             val container = it.container

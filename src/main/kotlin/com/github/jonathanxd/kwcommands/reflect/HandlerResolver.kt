@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -33,5 +33,9 @@ import java.lang.reflect.Method
 
 interface HandlerResolver {
     fun resolve(element: Element): Any?
-    fun resolveDispatchHandler(instance: Any?, method: Method, filter: List<Class<*>>): DispatchHandler?
+    fun resolveDispatchHandler(
+        instance: Any?,
+        method: Method,
+        filter: List<Class<*>>
+    ): DispatchHandler?
 }

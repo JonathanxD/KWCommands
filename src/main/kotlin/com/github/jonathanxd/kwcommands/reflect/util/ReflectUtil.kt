@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,7 +27,6 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.util
 
-import com.github.jonathanxd.iutils.`object`.Default
 import com.github.jonathanxd.iutils.reflection.Reflection
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
@@ -45,7 +44,6 @@ import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.Element
 import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
-import com.github.jonathanxd.kwcommands.reflect.env.createArg
 import com.github.jonathanxd.kwcommands.requirement.*
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
@@ -58,34 +56,37 @@ import kotlin.reflect.KClass
  */
 @Suppress("UNCHECKED_CAST")
 fun <T : Any> KClass<T>.get(): T? =
-        if (None::class.java.isAssignableFrom(this.java)) null
-        else this.objectInstance ?: try {
-            this.java.getDeclaredField("INSTANCE").get(null) as T
-        } catch (e: Throwable) {
-            Reflection.getInstance(this.java)
-                    ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.", e)
-        }
+    if (None::class.java.isAssignableFrom(this.java)) null
+    else this.objectInstance ?: try {
+        this.java.getDeclaredField("INSTANCE").get(null) as T
+    } catch (e: Throwable) {
+        Reflection.getInstance(this.java)
+                ?: throw IllegalStateException(
+                    "Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.",
+                    e
+                )
+    }
 
 /**
  * Gets singleton instance of a [KClass]
  */
 @Suppress("UNCHECKED_CAST")
 fun <T : Any> KClass<out T>.get(base: Class<T>, baseValue: () -> T?): T? =
-        if (None::class.java.isAssignableFrom(this.java)) null
-        else this.objectInstance ?: try {
-            val ctr = this.java.getDeclaredConstructor(base)
-            val value = baseValue()
-            if (value != null) {
-                ctr.newInstance(value)
-            } else null
-        } catch (e: Throwable) {
-            null
-        } ?: try {
-            this.java.getDeclaredConstructor().newInstance()
-        } catch (e: Throwable) {
-            null
-        } ?: Reflection.getInstance(this.java)
-                ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.")
+    if (None::class.java.isAssignableFrom(this.java)) null
+    else this.objectInstance ?: try {
+        val ctr = this.java.getDeclaredConstructor(base)
+        val value = baseValue()
+        if (value != null) {
+            ctr.newInstance(value)
+        } else null
+    } catch (e: Throwable) {
+        null
+    } ?: try {
+        this.java.getDeclaredConstructor().newInstance()
+    } catch (e: Throwable) {
+        null
+    } ?: Reflection.getInstance(this.java)
+    ?: throw IllegalStateException("Provided class is not a valid singleton class: $this. A Singleton class must be a Kotlin object or a class with a static non-null 'INSTANCE' field.")
 
 /**
  * Resolve parent commands.
@@ -94,20 +95,20 @@ fun <T : Any> KClass<out T>.get(base: Class<T>, baseValue: () -> T?): T? =
  * @param owner Owner of owner commands.
  */
 fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
-        this.parents.let {
-            if (it.isEmpty()) null else {
-                var cmd = manager.getCommand(it.first(), owner)
-                        ?: return null
+    this.parents.let {
+        if (it.isEmpty()) null else {
+            var cmd = manager.getCommand(it.first(), owner)
+                    ?: return null
 
-                if (it.size > 1) {
-                    for (x in it.copyOfRange(1, it.size)) {
-                        cmd = manager.getSubCommand(cmd, x) ?: return null
-                    }
+            if (it.size > 1) {
+                for (x in it.copyOfRange(1, it.size)) {
+                    cmd = manager.getSubCommand(cmd, x) ?: return null
                 }
-
-                cmd
             }
+
+            cmd
         }
+    }
 
 /**
  * Resolve parent commands.
@@ -117,51 +118,55 @@ fun Cmd.resolveParents(manager: CommandManager, owner: Any?) =
  * @param other List to lookup for parent commands if it is not registered in [manager].
  */
 fun Cmd.resolveParents(manager: CommandManager, owner: Any?, other: List<Command>) =
-        this.parents.let {
-            if (it.isEmpty()) null else {
-                var cmd = manager.getCommand(it.first(), owner)
-                        ?: other.find { (_, _, cmdName) -> cmdName == it.first() }
-                        ?: return null
+    this.parents.let {
+        if (it.isEmpty()) null else {
+            var cmd = manager.getCommand(it.first(), owner)
+                    ?: other.find { (_, _, cmdName) -> cmdName == it.first() }
+                    ?: return null
 
-                if (it.size > 1) {
-                    for (x in it.copyOfRange(1, it.size)) {
-                        cmd = manager.getSubCommand(cmd, x)
-                                ?: return null
-                    }
+            if (it.size > 1) {
+                for (x in it.copyOfRange(1, it.size)) {
+                    cmd = manager.getSubCommand(cmd, x)
+                            ?: return null
                 }
-
-                cmd
             }
+
+            cmd
         }
+    }
 
 /**
  * Create commands instance from [Cmd] annotation.
  */
-fun Cmd.toKCommand(manager: CommandManager,
-                   handler: Handler?,
-                   superCommand: Command?,
-                   arguments: List<Argument<*>>,
-                   reqInfo: Set<RequiredInformation>,
-                   owner: Any?,
-                   annotatedElement: AnnotatedElement): Command {
+fun Cmd.toKCommand(
+    manager: CommandManager,
+    handler: Handler?,
+    superCommand: Command?,
+    arguments: List<Argument<*>>,
+    reqInfo: Set<RequiredInformation>,
+    owner: Any?,
+    annotatedElement: AnnotatedElement
+): Command {
     val order = this.order
     val name = this.getName(annotatedElement)
     val alias = this.alias
     val description = this.description
     val parent = this.resolveParents(manager, owner)
     val argumentsInstance =
-            annotatedElement.getDeclaredAnnotation(DynamicArgs::class.java)?.value?.get()
-                    ?: StaticListArguments(arguments)
+        annotatedElement.getDeclaredAnnotation(DynamicArgs::class.java)?.value?.get()
+                ?: StaticListArguments(arguments)
 
-    val cmd = Command(parent = parent ?: superCommand,
-            order = order,
-            name = name,
-            description = TextUtil.parse(description),
-            handler = handler,
-            arguments = argumentsInstance,
-            requirements = this.getRequirements(annotatedElement),
-            requiredInfo = reqInfo,
-            alias = alias.toList())
+    val cmd = Command(
+        parent = parent ?: superCommand,
+        order = order,
+        name = name,
+        description = TextUtil.parse(description),
+        handler = handler,
+        arguments = argumentsInstance,
+        requirements = this.getRequirements(annotatedElement),
+        requiredInfo = reqInfo,
+        alias = alias.toList()
+    )
 
     cmd.parent?.addSubCommand(cmd)
     return cmd
@@ -171,39 +176,43 @@ fun Cmd.toKCommand(manager: CommandManager,
  * Convert [Require] annotation to [Requirement] specification.
  */
 fun Array<out Require>.toSpecs(elem: AnnotatedElement? = null): List<Requirement<*, *>> =
-        when (elem) {
-            is Field -> this.map { it.toSpec(elem) }
-            is Parameter -> this.map { it.toSpec(elem) }
-            else -> this.map { it.toSpec() }
-        }
+    when (elem) {
+        is Field -> this.map { it.toSpec(elem) }
+        is Parameter -> this.map { it.toSpec(elem) }
+        else -> this.map { it.toSpec() }
+    }
 
 
 /**
  * Creates [Information.Id] for [Require] annotated elements.
  */
-fun Id.createForReq(annotatedElement: AnnotatedElement? = null, genType: TypeInfo<*>? = null): RequirementSubject<*> =
-        if (this.isDefault && annotatedElement?.isAnnotationPresent(Info::class.java) == true)
-            InformationRequirementSubject(annotatedElement.getDeclaredAnnotation(Info::class.java)
-                    .createId(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo))
-        else if (this.isDefault && annotatedElement?.isAnnotationPresent(Arg::class.java) == true)
-            annotatedElement.getDeclaredAnnotation(Arg::class.java).let {
-                val name = it.value.let {
-                    if (it.isEmpty()) (annotatedElement as? Field)?.name ?: (annotatedElement as Parameter).name
-                    else it
-                }
-                ArgumentRequirementSubject<Any?>(name)
+fun Id.createForReq(
+    annotatedElement: AnnotatedElement? = null,
+    genType: TypeInfo<*>? = null
+): RequirementSubject<*> =
+    if (this.isDefault && annotatedElement?.isAnnotationPresent(Info::class.java) == true)
+        InformationRequirementSubject(annotatedElement.getDeclaredAnnotation(Info::class.java)
+            .createId(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo))
+    else if (this.isDefault && annotatedElement?.isAnnotationPresent(Arg::class.java) == true)
+        annotatedElement.getDeclaredAnnotation(Arg::class.java).let {
+            val name = it.value.let {
+                if (it.isEmpty()) (annotatedElement as? Field)?.name
+                        ?: (annotatedElement as Parameter).name
+                else it
             }
-        else
-            InformationRequirementSubject(Information.Id(genType?.let { this.idTypeInfo(genType) } ?: this.typeInfo, this.tags))
-
+            ArgumentRequirementSubject<Any?>(name)
+        }
+    else
+        InformationRequirementSubject(Information.Id(genType?.let { this.idTypeInfo(genType) }
+                ?: this.typeInfo, this.tags))
 
 
 fun AnnotatedElement.getType(): TypeInfo<*>? =
-        when (this) {
-            is Field -> this.genericType
-            is Parameter -> this.parameterizedType
-            else -> null
-        }?.let { TypeUtil.toTypeInfo(it) }
+    when (this) {
+        is Field -> this.genericType
+        is Parameter -> this.parameterizedType
+        else -> null
+    }?.let { TypeUtil.toTypeInfo(it) }
 
 /**
  * Gets [Requirement.required] value from [Require].
@@ -223,77 +232,85 @@ val Require.requiredValue: Any?
  */
 @Suppress("UNCHECKED_CAST")
 fun Require.toSpec(f: AnnotatedElement? = null): Requirement<*, *> =
-        Requirement(this.requiredValue,
-                this.subject.createForReq(f, f?.getType()) as RequirementSubject<Any?>,
-                TypeInfo.of(String::class.java),
-                this.testerType.get() as RequirementTester<Any?, Any?>)
+    Requirement(
+        this.requiredValue,
+        this.subject.createForReq(f, f?.getType()) as RequirementSubject<Any?>,
+        TypeInfo.of(String::class.java),
+        this.testerType.get() as RequirementTester<Any?, Any?>
+    )
 
 
 /**
  * Gets requirements of [Cmd].
  */
 fun AnnotatedElement.getRequirementsAnnotation(): List<Requirement<*, *>> =
-        if (this.isAnnotationPresent(Requires::class.java))
-            this.getDeclaredAnnotation(Requires::class.java)?.value.orEmpty().toSpecs(this)
-        else
-            this.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(this)
+    if (this.isAnnotationPresent(Requires::class.java))
+        this.getDeclaredAnnotation(Requires::class.java)?.value.orEmpty().toSpecs(this)
+    else
+        this.getDeclaredAnnotationsByType(Require::class.java).orEmpty().toSpecs(this)
 
 
 /**
  * Gets requirements of [Cmd].
  */
 fun Cmd.getRequirements(annotatedElement: AnnotatedElement): List<Requirement<*, *>> =
-        this.requirements.toSpecs(annotatedElement) + annotatedElement.getRequirementsAnnotation()
+    this.requirements.toSpecs(annotatedElement) + annotatedElement.getRequirementsAnnotation()
 
 /**
  * Gets requirements of [Arg].
  */
 fun Arg.getRequirements(annotatedElement: AnnotatedElement): List<Requirement<*, *>> =
-        (this.getRequirementsOfAnnotation(annotatedElement)) + annotatedElement.getRequirementsAnnotation()
+    (this.getRequirementsOfAnnotation(annotatedElement)) + annotatedElement.getRequirementsAnnotation()
 
 /**
  * Gets requirements of [Arg] annotation.
  */
 fun Arg.getRequirementsOfAnnotation(annotatedElement: AnnotatedElement): List<Requirement<*, *>> =
-        when (annotatedElement) {
-            is Field -> this.requirements.map { it.toSpec(annotatedElement) }
-            is Parameter -> this.requirements.map { it.toSpec(annotatedElement) }
-            else -> this.requirements.toSpecs(annotatedElement)
-        }
+    when (annotatedElement) {
+        is Field -> this.requirements.map { it.toSpec(annotatedElement) }
+        is Parameter -> this.requirements.map { it.toSpec(annotatedElement) }
+        else -> this.requirements.toSpecs(annotatedElement)
+    }
 
 /**
  * Gets handler of [Cmd] (or null if default)
  */
 fun Cmd.getHandlerOrNull(): Handler? =
-        this.handler.get()
+    this.handler.get()
 
 /**
  * Gets handler of [Cmd] (or null if default)
  */
-fun Cmd.getClassHandlerOrNull(klass: Class<*>,
-                              reflectionEnvironment: ReflectionEnvironment,
-                              elementFactory: (method: Method) -> Element): Handler? =
-        this.getHandlerOrNull() ?: klass.methods.firstOrNull { it.isAnnotationPresent(CmdHandler::class.java) }?.let {
-            reflectionEnvironment.resolveHandler(elementFactory(it)) as Handler
-        }
+fun Cmd.getClassHandlerOrNull(
+    klass: Class<*>,
+    reflectionEnvironment: ReflectionEnvironment,
+    elementFactory: (method: Method) -> Element
+): Handler? =
+    this.getHandlerOrNull()
+            ?: klass.methods.firstOrNull { it.isAnnotationPresent(CmdHandler::class.java) }?.let {
+                reflectionEnvironment.resolveHandler(elementFactory(it)) as Handler
+            }
 
 /**
  * Gets handler of [Cmd] or create a [ReflectionHandler] if not present.
  */
 fun Cmd.getHandler(element: Element, reflectionEnvironment: ReflectionEnvironment): Handler =
-        this.handler.get() ?: reflectionEnvironment.resolveHandler(element) as Handler
+    this.handler.get() ?: reflectionEnvironment.resolveHandler(element) as Handler
 
 /**
  * Gets handler of [Arg] (or null if default)
  */
 fun Arg.getHandlerOrNull(): ArgumentHandler<*>? =
-        this.handler.get()
+    this.handler.get()
 
 /**
  * Gets handler of [Arg] or create a [ReflectionHandler] if not present.
  */
-fun Arg.getHandler(element: Element, reflectionEnvironment: ReflectionEnvironment): ArgumentHandler<*> =
-        this.handler.get() ?: reflectionEnvironment.resolveHandler(element) as ArgumentHandler<*>
+fun Arg.getHandler(
+    element: Element,
+    reflectionEnvironment: ReflectionEnvironment
+): ArgumentHandler<*> =
+    this.handler.get() ?: reflectionEnvironment.resolveHandler(element) as ArgumentHandler<*>
 
 /**
  * Prepare commands to registration.
@@ -311,15 +328,15 @@ fun Arg.getHandler(element: Element, reflectionEnvironment: ReflectionEnvironmen
  * @return A list with main commands only.
  */
 fun List<Command>.prepareCommands(): List<Command> =
-        this.filter {
-            // We can split it in a onEach operation, but I want to avoid the overhead.
-            // if this code becomes bigger and complex, move it to onEach operation (before filter operation).
-            val parent = it.parent
-            if (parent != null && !parent.subCommands.contains(it))
-                parent.addSubCommand(it)
-            // /onEach
-            it.parent == null
-        }
+    this.filter {
+        // We can split it in a onEach operation, but I want to avoid the overhead.
+        // if this code becomes bigger and complex, move it to onEach operation (before filter operation).
+        val parent = it.parent
+        if (parent != null && !parent.subCommands.contains(it))
+            parent.addSubCommand(it)
+        // /onEach
+        it.parent == null
+    }
 
 /**
  * Gets path of command.
@@ -329,10 +346,10 @@ fun Cmd.getPath(annotatedElement: AnnotatedElement): Array<String> {
 }
 
 fun Cmd.getName(annotatedElement: AnnotatedElement) =
-        if (this.name.isNotEmpty()) this.name else
-            when (annotatedElement) {
-                is Class<*> -> annotatedElement.simpleName.decapitalize()
-                is Field -> annotatedElement.name
-                is Method -> annotatedElement.name
-                else -> throw IllegalArgumentException("@Cmd requires a name if the annotated element is not a class, field or method.")
-            }
+    if (this.name.isNotEmpty()) this.name else
+        when (annotatedElement) {
+            is Class<*> -> annotatedElement.simpleName.decapitalize()
+            is Field -> annotatedElement.name
+            is Method -> annotatedElement.name
+            else -> throw IllegalArgumentException("@Cmd requires a name if the annotated element is not a class, field or method.")
+        }

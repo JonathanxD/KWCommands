@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -54,7 +54,11 @@ interface ReflectCommandManager : CommandManager {
      * Registers commands in [klass] including its inner classes for [owner] and returns true if commands was
      * registered with success.
      */
-    fun <T> registerClassWithInner(klass: Class<T>, instanceProvider: InstanceProvider, owner: Any): Boolean
+    fun <T> registerClassWithInner(
+        klass: Class<T>,
+        instanceProvider: InstanceProvider,
+        owner: Any
+    ): Boolean
 
     /**
      * Unregisters commands in [klass] of [owner] and returns true if command was removed with success.
@@ -76,7 +80,7 @@ interface InstanceProvider {
 }
 
 inline fun instanceProvider(crossinline resolver: (Class<*>) -> Any?): InstanceProvider =
-        object : InstanceProvider {
-            override fun invoke(type: Class<*>): Any? = resolver(type)
+    object : InstanceProvider {
+        override fun invoke(type: Class<*>): Any? = resolver(type)
 
-        }
+    }

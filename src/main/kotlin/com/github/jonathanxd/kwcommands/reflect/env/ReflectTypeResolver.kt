@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -47,15 +47,17 @@ import com.github.jonathanxd.kwcommands.manager.InstanceProvider
  *
  * @see [DynamicHandler]
  */
-internal class ReflectTypeResolver(val type: Class<*>,
-                                   val instanceProvider: InstanceProvider,
-                                   val reflectionEnvironment: ReflectionEnvironment,
-                                   delegate: TypeResolver) : DelegatedTypeResolver(delegate) {
+internal class ReflectTypeResolver(
+    val type: Class<*>,
+    val instanceProvider: InstanceProvider,
+    val reflectionEnvironment: ReflectionEnvironment,
+    delegate: TypeResolver
+) : DelegatedTypeResolver(delegate) {
 
     override fun resolveResource(resource: String): String? =
-            type.getResourceAsStream(resource)?.let {
-                it.readBytes().toString(Charsets.UTF_8)
-            } ?: super.resolveResource(resource)
+        type.getResourceAsStream(resource)?.let {
+            it.readBytes().toString(Charsets.UTF_8)
+        } ?: super.resolveResource(resource)
 
     override fun resolveCommandHandler(input: String): Handler? {
         val (handlerType, sub) = this.getSub(input)
@@ -76,24 +78,24 @@ internal class ReflectTypeResolver(val type: Class<*>,
     }
 
     override fun resolveArgumentType(type: TypeInfo<*>): ArgumentType<*, *> =
-            this.reflectionEnvironment.getOrNull(type)
-                    ?: super.resolveArgumentType(type)
+        this.reflectionEnvironment.getOrNull(type)
+                ?: super.resolveArgumentType(type)
 
     private fun getSub(input: String): Pair<DynamicHandler.Type?, String> {
         val handlerType: DynamicHandler.Type? =
-                if (input.startsWith(METHOD_PREFIX) && input.length > METHOD_PREFIX.length)
-                    DynamicHandler.Type.METHOD
-                else if (input.startsWith(FIELD_PREFIX) && input.length > FIELD_PREFIX.length)
-                    DynamicHandler.Type.FIELD_SETTER
-                else null
+            if (input.startsWith(METHOD_PREFIX) && input.length > METHOD_PREFIX.length)
+                DynamicHandler.Type.METHOD
+            else if (input.startsWith(FIELD_PREFIX) && input.length > FIELD_PREFIX.length)
+                DynamicHandler.Type.FIELD_SETTER
+            else null
 
 
         val sub =
-                when (handlerType) {
-                    DynamicHandler.Type.METHOD -> input.substring(METHOD_PREFIX.length)
-                    DynamicHandler.Type.FIELD_SETTER -> input.substring(FIELD_PREFIX.length)
-                    else -> ""
-                }
+            when (handlerType) {
+                DynamicHandler.Type.METHOD -> input.substring(METHOD_PREFIX.length)
+                DynamicHandler.Type.FIELD_SETTER -> input.substring(FIELD_PREFIX.length)
+                else -> ""
+            }
 
         return handlerType to sub
     }

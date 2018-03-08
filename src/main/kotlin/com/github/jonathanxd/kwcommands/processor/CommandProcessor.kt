@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -31,10 +31,10 @@ import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.fail.ParseFail
-import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.information.InformationProvidersVoid
+import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.CommandParser
 
 interface CommandProcessor {
@@ -59,13 +59,13 @@ interface CommandProcessor {
      * Register a [command interceptor][CommandInterceptor].
      */
     fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
-            this.dispatcher.registerInterceptor(commandInterceptor)
+        this.dispatcher.registerInterceptor(commandInterceptor)
 
     /**
      * Unregister a [command interceptor][CommandInterceptor].
      */
     fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean =
-            this.dispatcher.unregisterInterceptor(commandInterceptor)
+        this.dispatcher.unregisterInterceptor(commandInterceptor)
 
     /**
      * Parse command string.
@@ -75,7 +75,7 @@ interface CommandProcessor {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun parse(commandString: String, owner: Any?): Either<ParseFail, List<CommandContainer>> =
-            this.parser.parse(commandString, owner)
+        this.parser.parse(commandString, owner)
 
     /**
      * Dispatch command string.
@@ -87,9 +87,11 @@ interface CommandProcessor {
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parseWithOwnerFunction(commandString: String,
-                               ownerProvider: (commandName: String) -> Any?): Either<ParseFail, List<CommandContainer>> =
-            this.parser.parseWithOwnerFunction(commandString, ownerProvider)
+    fun parseWithOwnerFunction(
+        commandString: String,
+        ownerProvider: (commandName: String) -> Any?
+    ): Either<ParseFail, List<CommandContainer>> =
+        this.parser.parseWithOwnerFunction(commandString, ownerProvider)
 
     /**
      * Dispatch [commands] and returns [result list][CommandResult] of command executions.
@@ -102,25 +104,36 @@ interface CommandProcessor {
      * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
      * each command.
      */
-    fun dispatch(commands: List<CommandContainer>,
-                 informationProviders: InformationProviders = InformationProvidersVoid): List<CommandResult> =
-            this.dispatcher.dispatch(commands, informationProviders)
+    fun dispatch(
+        commands: List<CommandContainer>,
+        informationProviders: InformationProviders = InformationProvidersVoid
+    ): List<CommandResult> =
+        this.dispatcher.dispatch(commands, informationProviders)
 
     /**
      * Calls [parse] and then [dispatch] to dispatch result of [parse].
      */
-    fun parseAndDispatch(commandString: String,
-                         owner: Any?,
-                         informationProviders: InformationProviders = InformationProvidersVoid)
+    fun parseAndDispatch(
+        commandString: String,
+        owner: Any?,
+        informationProviders: InformationProviders = InformationProvidersVoid
+    )
             : Either<ParseFail, List<CommandResult>> =
-            parseAndDispatchWithOwnerFunc(commandString, { owner }, informationProviders)
+        parseAndDispatchWithOwnerFunc(commandString, { owner }, informationProviders)
 
     /**
      * Calls [parseWithOwnerFunction] and then [dispatch] to dispatch result of [parse].
      */
-    fun parseAndDispatchWithOwnerFunc(commandString: String,
-                                      ownerProvider: (commandName: String) -> Any?,
-                                      informationProviders: InformationProviders = InformationProvidersVoid)
+    fun parseAndDispatchWithOwnerFunc(
+        commandString: String,
+        ownerProvider: (commandName: String) -> Any?,
+        informationProviders: InformationProviders = InformationProvidersVoid
+    )
             : Either<ParseFail, List<CommandResult>> =
-            parseWithOwnerFunction(commandString, ownerProvider).mapRight { this.dispatch(it, informationProviders) }
+        parseWithOwnerFunction(commandString, ownerProvider).mapRight {
+            this.dispatch(
+                it,
+                informationProviders
+            )
+        }
 }

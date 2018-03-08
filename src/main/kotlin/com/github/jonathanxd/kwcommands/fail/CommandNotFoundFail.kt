@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -30,10 +30,11 @@ package com.github.jonathanxd.kwcommands.fail
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 import com.github.jonathanxd.kwcommands.util.StatedIterator
 
-class CommandNotFoundFail(val commandStr: Input,
-                          parsedCommands: List<CommandContainer>,
-                          manager: CommandManager,
-                          iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, commandStr, iter)
+class CommandNotFoundFail(
+    val commandStr: Input,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, commandStr, iter)

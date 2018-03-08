@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -64,7 +64,7 @@ class CommandFactoryQueue {
      * Adds a command to resolved command list.
      */
     fun add(command: Command) {
-        if(!this.created_.contains(command))
+        if (!this.created_.contains(command))
             this.created_.add(command)
     }
 
@@ -80,11 +80,25 @@ class CommandFactoryQueue {
      * @param dependencyCheck    Dependency checker. (first argument is a immutable version of `created commands list`.
      * @param dependencyProvider Dependency path provider.
      */
-    fun queueCommand(location: Any, name: String, factory: (createdCommands: List<Command>) -> Command, dependencyCheck: Checker, dependencyProvider: () -> String) {
+    fun queueCommand(
+        location: Any,
+        name: String,
+        factory: (createdCommands: List<Command>) -> Command,
+        dependencyCheck: Checker,
+        dependencyProvider: () -> String
+    ) {
         if (dependencyCheck(this.createdUnmod))
             this.created_.add(factory(this.createdUnmod))
         else
-            this.queued_.add(QueuedCommand(location, name, factory, dependencyCheck, dependencyProvider))
+            this.queued_.add(
+                QueuedCommand(
+                    location,
+                    name,
+                    factory,
+                    dependencyCheck,
+                    dependencyProvider
+                )
+            )
 
     }
 
@@ -97,9 +111,16 @@ class CommandFactoryQueue {
         while (queued_.isNotEmpty()) {
             if (!modified)
                 throw IllegalStateException("Recursive dependency found or dependency missing. Queued commands:" +
-                        " ${this.queued_.joinToString(prefix = "[", postfix = "]") { it.name }}." +
+                        " ${this.queued_.joinToString(
+                            prefix = "[",
+                            postfix = "]"
+                        ) { it.name }}." +
                         " Created commands:" +
-                        " ${this.created_.joinToString(prefix = "[", postfix = "]") { it.name }}")
+                        " ${this.created_.joinToString(
+                            prefix = "[",
+                            postfix = "]"
+                        ) { it.name }}"
+                )
 
             modified = false
 
@@ -141,4 +162,10 @@ class CommandFactoryQueue {
 
 }
 
-internal data class QueuedCommand(val location: Any, val name: String, val factory: (List<Command>) -> Command, val dependencyCheck: Checker, val dependencyProvider: () -> String)
+internal data class QueuedCommand(
+    val location: Any,
+    val name: String,
+    val factory: (List<Command>) -> Command,
+    val dependencyCheck: Checker,
+    val dependencyProvider: () -> String
+)

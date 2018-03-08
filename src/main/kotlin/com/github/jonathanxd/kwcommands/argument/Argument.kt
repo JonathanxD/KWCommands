@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -43,14 +43,16 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * @property requirements Requirements of this argument.
  * @property requiredInfo Identifications of required information for this argument work.
  */
-data class Argument<out T>(val name: String,
-                           val alias: List<String>,
-                           val description: TextComponent,
-                           val isOptional: Boolean,
-                           val argumentType: ArgumentType<*, T>,
-                           val requirements: List<Requirement<*, *>>,
-                           val requiredInfo: Set<RequiredInformation>,
-                           val handler: ArgumentHandler<out T>? = null) {
+data class Argument<out T>(
+    val name: String,
+    val alias: List<String>,
+    val description: TextComponent,
+    val isOptional: Boolean,
+    val argumentType: ArgumentType<*, T>,
+    val requirements: List<Requirement<*, *>>,
+    val requiredInfo: Set<RequiredInformation>,
+    val handler: ArgumentHandler<out T>? = null
+) {
 
     fun parse(input: Input) = this.argumentType.parse(input)
 

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -31,7 +31,6 @@ import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
 /**
@@ -206,14 +205,14 @@ class ArgumentBuilder<T> {
      * Builds argument.
      */
     fun build(): Argument<T> = Argument(
-            name = this.name,
-            alias = this.alias,
-            description = this.description,
-            isOptional = this.isOptional,
-            argumentType = this.argumentType,
-            requirements = this.requirements.toList(),
-            requiredInfo = this.requiredInfo.toSet(),
-            handler = this.handler
+        name = this.name,
+        alias = this.alias,
+        description = this.description,
+        isOptional = this.isOptional,
+        argumentType = this.argumentType,
+        requirements = this.requirements.toList(),
+        requiredInfo = this.requiredInfo.toSet(),
+        handler = this.handler
     )
 
 }

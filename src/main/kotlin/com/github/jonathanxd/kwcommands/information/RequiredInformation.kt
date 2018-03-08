@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -28,5 +28,6 @@
 package com.github.jonathanxd.kwcommands.information
 
 data class RequiredInformation @JvmOverloads constructor(
-        val id: Information.Id<*>,
-        val useProviders: Boolean = true)
+    val id: Information.Id<*>,
+    val useProviders: Boolean = true
+)

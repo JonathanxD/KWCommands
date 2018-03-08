@@ -25,24 +25,13 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.test
+package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.printer.CommonPrinter
-import com.github.jonathanxd.kwcommands.printer.ControllableCommonPrinter
-import com.github.jonathanxd.kwcommands.util.KLocale
+inline fun <R : Any> CharArray.mapNotNull(mapper: (Char) -> R?): List<R> =
+    mapNotNullTo(ArrayList(), mapper)
 
-object ControlledPrinters {
-    val sysOut = ControllableCommonPrinter(
-            CommonPrinter(KLocale.localizer, System.out::println, true))
-
-    val sysOutWHF = ControllableCommonPrinter(
-            CommonPrinter(KLocale.localizer, System.out::println, false))
-
-    init {
-        val enable = System.getProperty("kwcommands.test.print", "false").toBoolean()
-
-        sysOut.enabled = enable
-        sysOutWHF.enabled = enable
-    }
-
-}
+inline fun <R : Any, C : MutableCollection<in R>> CharArray.mapNotNullTo(
+    destination: C,
+    mapper: (Char) -> R?
+): C =
+    destination.also { this.forEach { mapper(it)?.let(destination::add) } }

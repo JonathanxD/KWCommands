@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -42,30 +42,40 @@ class InformationProvidersImpl : InformationProviders {
     private val informationSet_ = mutableSetOf<Information<*>>()
     private val informationProviders_ = mutableSetOf<InformationProvider>()
 
-    override val informationSet: Set<Information<*>> = Collections.unmodifiableSet(this.informationSet_)
-    override val informationProviders: Set<InformationProvider> = Collections.unmodifiableSet(this.informationProviders_)
+    override val informationSet: Set<Information<*>> =
+        Collections.unmodifiableSet(this.informationSet_)
+    override val informationProviders: Set<InformationProvider> =
+        Collections.unmodifiableSet(this.informationProviders_)
 
     init {
         this.registerInformation(INFORMATION_PROVIDERS_ID, this, "Information manager")
     }
 
-    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean =
-            this.informationSet_.add(Information(id, value, description))
+    override fun <T> registerInformation(
+        id: Information.Id<T>,
+        value: T,
+        description: String?
+    ): Boolean =
+        this.informationSet_.add(Information(id, value, description))
 
     override fun registerInformation(information: Information<*>): Boolean =
-            this.informationSet_.add(information)
+        this.informationSet_.add(information)
 
     override fun unregisterInformation(id: Information.Id<*>): Boolean =
-            this.informationSet_.removeIf { it.id == id }
+        this.informationSet_.removeIf { it.id == id }
 
     override fun registerInformationProvider(informationProvider: InformationProvider): Boolean =
-            this.informationProviders_.add(informationProvider)
+        this.informationProviders_.add(informationProvider)
 
     override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean =
-            this.informationProviders_.remove(informationProvider)
+        this.informationProviders_.remove(informationProvider)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean): Information<T>? {
+    override fun <T> find(
+        type: TypeInfo<out T>,
+        tags: Array<out String>,
+        useProviders: Boolean
+    ): Information<T>? {
         val assignFound = mutableListOf<Information<*>>()
 
         informationSet_.forEach {
@@ -74,7 +84,8 @@ class InformationProvidersImpl : InformationProviders {
             val tagsMatch = tags.isEmpty() || tags.all { itId.tags.contains(it) }
 
             if ((type == Default::class.java || type == itId.type)
-                    && tagsMatch)
+                    && tagsMatch
+            )
                 return it as Information<T>
 
             if (tagsMatch && type.isAssignableFrom(itId.type))
@@ -82,7 +93,11 @@ class InformationProvidersImpl : InformationProviders {
         }
 
         if (assignFound.isNotEmpty()) {
-            return assignFound.maxWith(Comparators3.map(comparator, Function { it.id.type })) as Information<T>
+            return assignFound.maxWith(
+                Comparators3.map(
+                    comparator,
+                    Function { it.id.type })
+            ) as Information<T>
         }
 
         if (!useProviders)
@@ -119,11 +134,25 @@ object InformationProvidersVoid : InformationProviders {
 
     override val informationSet: Set<Information<*>> get() = emptySet()
     override val informationProviders: Set<InformationProvider> get() = emptySet()
-    override fun <T> registerInformation(id: Information.Id<T>, value: T, description: String?): Boolean = false
+    override fun <T> registerInformation(
+        id: Information.Id<T>,
+        value: T,
+        description: String?
+    ): Boolean = false
+
     override fun registerInformation(information: Information<*>): Boolean = true
     override fun unregisterInformation(id: Information.Id<*>): Boolean = true
-    override fun registerInformationProvider(informationProvider: InformationProvider): Boolean = true
-    override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean = true
-    override fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean): Information<T>? = null
+    override fun registerInformationProvider(informationProvider: InformationProvider): Boolean =
+        true
+
+    override fun unregisterInformationProvider(informationProvider: InformationProvider): Boolean =
+        true
+
+    override fun <T> find(
+        type: TypeInfo<out T>,
+        tags: Array<out String>,
+        useProviders: Boolean
+    ): Information<T>? = null
+
     override fun copy(): InformationProviders = this
 }

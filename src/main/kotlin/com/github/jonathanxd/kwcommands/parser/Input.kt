@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -29,8 +29,6 @@ package com.github.jonathanxd.kwcommands.parser
 
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.kwcommands.Texts
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
 
 /**
  * Holds the input of argument. When the [start] is equal to [end] and both is `0`, this means that input
@@ -62,21 +60,23 @@ sealed class Input {
 /**
  * Holds a single string input in [source].
  */
-data class SingleInput(val input: String,
-                       override val source: String,
-                       override val start: Int,
-                       override val end: Int) : Input() {
+data class SingleInput(
+    val input: String,
+    override val source: String,
+    override val start: Int,
+    override val end: Int
+) : Input() {
 
     override val type: InputType<SingleInput> = SingleInputType
 
     constructor(input: String) : this(input, "", 0, 0)
 
     override fun toString(): String =
-            "SingleInput(input='$input'" +
-                    ", source='$source'" +
-                    ", start='$start'" +
-                    ", end='$end'" +
-                    ", content='$content')"
+        "SingleInput(input='$input'" +
+                ", source='$source'" +
+                ", start='$start'" +
+                ", end='$end'" +
+                ", content='$content')"
 
     override fun toPlain(): Any = this.input
 
@@ -88,51 +88,55 @@ data class SingleInput(val input: String,
 /**
  * Holds list of inputs in [source].
  */
-data class ListInput(val input: List<Input>,
-                     override val source: String,
-                     override val start: Int,
-                     override val end: Int) : Input() {
+data class ListInput(
+    val input: List<Input>,
+    override val source: String,
+    override val start: Int,
+    override val end: Int
+) : Input() {
 
     override val type: InputType<ListInput> = ListInputType
 
     constructor(input: List<Input>) : this(input, "", 0, 0)
 
     override fun toPlain(): Any =
-            this.input.map { it.toPlain() }
+        this.input.map { it.toPlain() }
 
     override fun toString(): String =
-            "ListInput(input=$input" +
-                    ", source='$source'" +
-                    ", start='$start'" +
-                    ", end='$end'" +
-                    ", content='$content')"
+        "ListInput(input=$input" +
+                ", source='$source'" +
+                ", start='$start'" +
+                ", end='$end'" +
+                ", content='$content')"
 
     override fun toInputString(): String = "[${input.joinToString { it.toInputString() }}]"
 
-    override fun getString(): String = "[${this.input.joinToString(",") {it.getString()}}]"
+    override fun getString(): String = "[${this.input.joinToString(",") { it.getString() }}]"
 }
 
 /**
  * Holds a map of inputs in [source].
  */
-data class MapInput(val input: List<Pair<Input, Input>>,
-                    override val source: String,
-                    override val start: Int,
-                    override val end: Int) : Input() {
+data class MapInput(
+    val input: List<Pair<Input, Input>>,
+    override val source: String,
+    override val start: Int,
+    override val end: Int
+) : Input() {
 
     override val type: InputType<MapInput> = MapInputType
 
     constructor(input: List<Pair<Input, Input>>) : this(input, "", 0, 0)
 
     override fun toPlain(): Any =
-            this.input.map { it.first.toPlain() to it.second.toPlain() }
+        this.input.map { it.first.toPlain() to it.second.toPlain() }
 
     override fun toString(): String =
-            "MapInput(input=$input" +
-                    ", source='$source'" +
-                    ", start='$start'" +
-                    ", end='$end'" +
-                    ", content='$content')"
+        "MapInput(input=$input" +
+                ", source='$source'" +
+                ", start='$start'" +
+                ", end='$end'" +
+                ", content='$content')"
 
     override fun toInputString(): String = input.joinToString {
         "{${it.first.toInputString()}=${it.second.toInputString()}}"
@@ -155,7 +159,7 @@ class EmptyInput(override val source: String) : Input() {
     override fun toPlain(): Any = Empty
 
     override fun toString(): String =
-            "EmptyInput(source='$source', content='')"
+        "EmptyInput(source='$source', content='')"
 
     override fun toInputString(): String = "EMPTY[]"
 
@@ -164,7 +168,7 @@ class EmptyInput(override val source: String) : Input() {
     object Empty
 }
 
-interface InputType<I: Input> {
+interface InputType<I : Input> {
     fun getTypeString(): TextComponent
 
     /**
@@ -178,34 +182,34 @@ object AnyInputType : InputType<Input> {
     override fun getTypeString(): TextComponent = Texts.getSingleTypeText()
 
     override fun isCompatible(other: InputType<*>): Boolean =
-            other is AnyInputType
+        other is AnyInputType
 }
 
 object SingleInputType : InputType<SingleInput> {
     override fun getTypeString(): TextComponent = Texts.getSingleTypeText()
 
     override fun isCompatible(other: InputType<*>): Boolean =
-            other is SingleInputType || other is AnyInputType
+        other is SingleInputType || other is AnyInputType
 }
 
 object ListInputType : InputType<ListInput> {
     override fun getTypeString(): TextComponent = Texts.getListTypeText()
 
     override fun isCompatible(other: InputType<*>): Boolean =
-            other is ListInputType || other is AnyInputType
+        other is ListInputType || other is AnyInputType
 }
 
 object MapInputType : InputType<MapInput> {
     override fun getTypeString(): TextComponent = Texts.getMapTypeText()
 
     override fun isCompatible(other: InputType<*>): Boolean =
-            other is MapInputType || other is AnyInputType
+        other is MapInputType || other is AnyInputType
 }
 
 object EmptyInputType : InputType<EmptyInput> {
     override fun getTypeString(): TextComponent = Texts.getEmptyTypeText()
 
     override fun isCompatible(other: InputType<*>): Boolean =
-            other is EmptyInputType || other is AnyInputType
+        other is EmptyInputType || other is AnyInputType
 }
 

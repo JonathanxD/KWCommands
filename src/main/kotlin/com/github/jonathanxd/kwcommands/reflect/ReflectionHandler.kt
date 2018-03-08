@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -53,25 +53,35 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
     private val link: Link<Any?> = when (element) {
         is FieldElement -> linkField(element.field)
         is MethodElement -> Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflect(element.method)))
-        is ConstructorElement -> Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectConstructor(element.ctr)))
+        is ConstructorElement -> Links.ofInvokable(
+            Invokables.fromMethodHandle(
+                LOOKUP.unreflectConstructor(
+                    element.ctr
+                )
+            )
+        )
         is InvokableElement -> Links.ofInvokable(element.invokable)
         is EmptyElement -> Links.ofInvokable<Any?> { Unit }
     }.let { if (element.instance != null) it.bind(element.instance) else it }
 
     @Suppress("UNCHECKED_CAST")
-    override fun handle(commandContainer: CommandContainer,
-                        informationProviders: InformationProviders,
-                        resultHandler: ResultHandler): Any {
+    override fun handle(
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any {
 
         val args = mutableListOf<Any?>()
 
         element.parameters.forEach { parameter ->
             when (parameter) {
                 is ElementParameter.ArgumentParameter<*> -> {
-                    args += commandContainer.arguments.find { parameter.argument.name == it.argument.name }?.value
+                    args += commandContainer.arguments.find { parameter.argument.name == it.argument.name }
+                        ?.value
                 }
                 is ElementParameter.InformationParameter<*> -> {
-                    val information = informationProviders.find(parameter.id/*, parameter.infoComponent*/)
+                    val information =
+                        informationProviders.find(parameter.id/*, parameter.infoComponent*/)
 
                     if (!parameter.isOptional && information == null) {
                         args.add(null)
@@ -95,10 +105,12 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
         return link(*args.toTypedArray()) ?: Unit
     }
 
-    override fun handle(argumentContainer: ArgumentContainer<Any>,
-                        commandContainer: CommandContainer,
-                        informationProviders: InformationProviders,
-                        resultHandler: ResultHandler): Any {
+    override fun handle(
+        argumentContainer: ArgumentContainer<Any>,
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any {
 
         val parameter = element.parameters.first()
 
@@ -109,7 +121,8 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                 } ?: Unit
             }
             is ElementParameter.InformationParameter<*> -> {
-                val information = informationProviders.find(parameter.id/*, parameter.infoComponent*/)
+                val information =
+                    informationProviders.find(parameter.id/*, parameter.infoComponent*/)
 
                 if (!parameter.isOptional && information == null) {
                     Unit
@@ -122,7 +135,8 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                 }
             }
             is ElementParameter.CtxParameter -> {
-                link.invoke(CommandContext(commandContainer, informationProviders, resultHandler)) ?: Unit
+                link.invoke(CommandContext(commandContainer, informationProviders, resultHandler))
+                        ?: Unit
             }
         }
     }
@@ -131,17 +145,18 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
         private val LOOKUP = MethodHandles.lookup()
 
         fun linkField(field: Field): Link<Any?> =
-                if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
-                    Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectSetter(field)))
-                } else {
-                    field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type).let {
+            if (field.isAccessible || Modifier.isPublic(field.modifiers)) {
+                Links.ofInvokable(Invokables.fromMethodHandle(LOOKUP.unreflectSetter(field)))
+            } else {
+                field.declaringClass.getDeclaredMethod("set${field.name.capitalize()}", field.type)
+                    .let {
                         if (it == null || (!Modifier.isPublic(it.modifiers) && !it.isAccessible))
                             throw IllegalArgumentException("Accessible setter of field $field was not found!")
                         else {
                             Links.ofInvokable(Invokables.fromMethodHandle<Any?>(LOOKUP.unreflect(it)))
                         }
                     }
-                }
+            }
     }
 
 }

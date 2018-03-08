@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -39,20 +39,30 @@ import java.lang.reflect.Method
  * @property instance Instance.
  * @property parameters Parameter specification.
  */
-sealed class Element(val instance: Any?, val parameters: List<ElementParameter<*>>,
-                     val owner: Class<*>)
+sealed class Element(
+    val instance: Any?, val parameters: List<ElementParameter<*>>,
+    val owner: Class<*>
+)
 
-class FieldElement(val field: Field, instance: Any?, parameters: List<ElementParameter<*>>,
-                   owner: Class<*>) : Element(instance, parameters, owner)
+class FieldElement(
+    val field: Field, instance: Any?, parameters: List<ElementParameter<*>>,
+    owner: Class<*>
+) : Element(instance, parameters, owner)
 
-class MethodElement(val method: Method, instance: Any?, parameters: List<ElementParameter<*>>,
-                    owner: Class<*>) : Element(instance, parameters, owner)
+class MethodElement(
+    val method: Method, instance: Any?, parameters: List<ElementParameter<*>>,
+    owner: Class<*>
+) : Element(instance, parameters, owner)
 
-class ConstructorElement(val ctr: Constructor<*>, instance: Any?, parameters: List<ElementParameter<*>>,
-                         owner: Class<*>) : Element(instance, parameters, owner)
+class ConstructorElement(
+    val ctr: Constructor<*>, instance: Any?, parameters: List<ElementParameter<*>>,
+    owner: Class<*>
+) : Element(instance, parameters, owner)
 
-class InvokableElement(val invokable: Invokable<Any?>, instance: Any?, parameters: List<ElementParameter<*>>,
-                       owner: Class<*>) : Element(instance, parameters, owner)
+class InvokableElement(
+    val invokable: Invokable<Any?>, instance: Any?, parameters: List<ElementParameter<*>>,
+    owner: Class<*>
+) : Element(instance, parameters, owner)
 
-class EmptyElement(parameters: List<ElementParameter<*>>):
-        Element(null, parameters, EmptyElement::class.java)
+class EmptyElement(parameters: List<ElementParameter<*>>) :
+    Element(null, parameters, EmptyElement::class.java)

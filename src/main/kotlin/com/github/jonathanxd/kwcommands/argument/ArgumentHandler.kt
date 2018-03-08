@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -47,24 +47,32 @@ interface ArgumentHandler<T> {
      * @param resultHandler Result handler.
      * @return Value result of argument handling ([Unit] if none)
      */
-    fun handle(argumentContainer: ArgumentContainer<T>,
-               commandContainer: CommandContainer,
-               informationProviders: InformationProviders,
-               resultHandler: ResultHandler): Any
+    fun handle(
+        argumentContainer: ArgumentContainer<T>,
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any
 
     companion object {
         /**
          * Create argument handler from a function.
          */
-        inline fun <T> create(crossinline function: (argumentContainer: ArgumentContainer<T>,
-                                                     commandContainer: CommandContainer,
-                                                     informationProviders: InformationProviders,
-                                                     resultHandler: ResultHandler) -> Any) = object : ArgumentHandler<T> {
-            override fun handle(argumentContainer: ArgumentContainer<T>,
-                                commandContainer: CommandContainer,
-                                informationProviders: InformationProviders,
-                                resultHandler: ResultHandler): Any =
-                    function(argumentContainer, commandContainer, informationProviders, resultHandler)
+        inline fun <T> create(
+            crossinline function: (
+                argumentContainer: ArgumentContainer<T>,
+                commandContainer: CommandContainer,
+                informationProviders: InformationProviders,
+                resultHandler: ResultHandler
+            ) -> Any
+        ) = object : ArgumentHandler<T> {
+            override fun handle(
+                argumentContainer: ArgumentContainer<T>,
+                commandContainer: CommandContainer,
+                informationProviders: InformationProviders,
+                resultHandler: ResultHandler
+            ): Any =
+                function(argumentContainer, commandContainer, informationProviders, resultHandler)
         }
 
     }

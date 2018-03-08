@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 
 fun Set<RequiredInformation>.checkRequiredInfo(manager: InformationProviders): List<MissingInformation> =
     this.filter { manager.find(it.id, it.useProviders) == null }.map(::MissingInformation)

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -37,7 +37,8 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
 /**
  * Implementation of [ReflectCommandManager] which delegates calls to [manager] and [environment].
  */
-class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl()) : ReflectCommandManager {
+class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl()) :
+    ReflectCommandManager {
 
     override val registeredCommands: Set<Command>
         get() = this.manager.registeredCommands
@@ -63,12 +64,18 @@ class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl
     }
 
     override fun <T> registerClass(klass: Class<T>, instance: T, owner: Any): Boolean {
-        val commands = environment.fromClass(klass, instanceProvider { if (it == klass) instance else null },
-                owner, false)
+        val commands = environment.fromClass(
+            klass, instanceProvider { if (it == klass) instance else null },
+            owner, false
+        )
         return this.environment.registerCommands(commands, owner)
     }
 
-    override fun <T> registerClassWithInner(klass: Class<T>, instanceProvider: InstanceProvider, owner: Any): Boolean {
+    override fun <T> registerClassWithInner(
+        klass: Class<T>,
+        instanceProvider: InstanceProvider,
+        owner: Any
+    ): Boolean {
         val commands = environment.fromClass(klass, instanceProvider, owner, true)
         return this.environment.registerCommands(commands, owner)
     }

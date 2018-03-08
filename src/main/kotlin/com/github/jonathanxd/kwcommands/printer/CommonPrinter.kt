@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,10 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.printer
 
+import com.github.jonathanxd.iutils.kt.asText
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
-import com.github.jonathanxd.iutils.kt.asText
 import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.dsl.command
@@ -44,9 +44,11 @@ import com.github.jonathanxd.kwcommands.util.level
 /**
  * Common implementation of command printer backing to a print function
  */
-class CommonPrinter(override val localizer: TextLocalizer,
-                    val out: (String) -> Unit,
-                    val printHeaderAndFooter: Boolean = true) : Printer {
+class CommonPrinter(
+    override val localizer: TextLocalizer,
+    val out: (String) -> Unit,
+    val printHeaderAndFooter: Boolean = true
+) : Printer {
 
     private val buffer = mutableListOf<TextComponent>()
     private val commands = mutableListOf<Command>()
@@ -100,9 +102,11 @@ class CommonPrinter(override val localizer: TextLocalizer,
             order = -1
         }
 
-        fun printPlain(text: TextComponent,
-                       commands: MutableList<Command>,
-                       buffer: MutableList<TextComponent>) {
+        fun printPlain(
+            text: TextComponent,
+            commands: MutableList<Command>,
+            buffer: MutableList<TextComponent>
+        ) {
             commands += DummyCommand
             buffer += text
         }
@@ -136,10 +140,12 @@ class CommonPrinter(override val localizer: TextLocalizer,
             this.flushTo(out, commands, buffer, localize)
         }
 
-        fun printFromRoot(buffer: MutableList<TextComponent>,
-                          commands: MutableList<Command>,
-                          command: Command,
-                          level: Int) {
+        fun printFromRoot(
+            buffer: MutableList<TextComponent>,
+            commands: MutableList<Command>,
+            command: Command,
+            level: Int
+        ) {
             val commandsToPrint = mutableListOf<Command>()
 
             var parent: Command? = command.parent
@@ -156,10 +162,12 @@ class CommonPrinter(override val localizer: TextLocalizer,
             }
         }
 
-        fun printTo(buffer: MutableList<TextComponent>,
-                    commands: MutableList<Command>,
-                    command: Command,
-                    level: Int) {
+        fun printTo(
+            buffer: MutableList<TextComponent>,
+            commands: MutableList<Command>,
+            command: Command,
+            level: Int
+        ) {
             val components = mutableListOf<TextComponent>()
 
             components += if (level == 0)
@@ -187,10 +195,15 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                         this.add(Text.single(it.name))
 
-                        this.add(Text.single(": ")
-                                .append(Text.single(
+                        this.add(
+                            Text.single(": ")
+                                .append(
+                                    Text.single(
                                         if (it.argumentType.type.canResolve()) it.argumentType.type.toString()
-                                        else it.argumentType.type.classLiteral)))
+                                        else it.argumentType.type.classLiteral
+                                    )
+                                )
+                        )
 
                         this.add(Text.single(if (it.isOptional) ">" else "]"))
                     }
@@ -213,10 +226,15 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                     this.add(Text.single(it.name))
 
-                    this.add(Text.single(": ")
-                            .append(Text.single(
+                    this.add(
+                        Text.single(": ")
+                            .append(
+                                Text.single(
                                     if (it.argumentType.type.canResolve()) it.argumentType.type.toString()
-                                    else it.argumentType.type.classLiteral)))
+                                    else it.argumentType.type.classLiteral
+                                )
+                            )
+                    )
 
                     this.add(Text.single(if (it.isOptional) ">" else "]"))
                 }
@@ -227,19 +245,21 @@ class CommonPrinter(override val localizer: TextLocalizer,
             commands += command
         }
 
-        fun flushTo(out: (String) -> Unit, commands: List<Command>,
-                    cBuffer: List<TextComponent>,
-                    localize: TextLocalizer) {
+        fun flushTo(
+            out: (String) -> Unit, commands: List<Command>,
+            cBuffer: List<TextComponent>,
+            localize: TextLocalizer
+        ) {
             val buffer = cBuffer.map { localize.localize(it) }
 
             fun ((String) -> Unit).flushAndClean(builder: StringBuilder) =
-                    this(builder.toString().also {
-                        builder.setLength(0)
-                    })
+                this(builder.toString().also {
+                    builder.setLength(0)
+                })
 
             if (commands.any { it !== DummyCommand }) {
                 val maxSize = buffer.filterIndexed { index, _ -> commands[index] !== DummyCommand }
-                        .maxBy(String::length)!!.length + 5
+                    .maxBy(String::length)!!.length + 5
 
                 require(commands.size == buffer.size) { "Command size and buffer size is not equal. Commands: <$commands>. Buffer: <$buffer>" }
 
@@ -268,7 +288,13 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                     if (command.arguments.all.any { it.description.isNotEmpty }) {
                         builder.append(' ', to + 1)
-                        builder.append(localize.localize(Texts.getArgumentDescriptionText().append(Text.single(":"))))
+                        builder.append(
+                            localize.localize(
+                                Texts.getArgumentDescriptionText().append(
+                                    Text.single(":")
+                                )
+                            )
+                        )
                         out.flushAndClean(builder)
 
                         command.arguments.all.forEach {
@@ -299,20 +325,30 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                             if (it.subject is InformationRequirementSubject<*>) {
                                 val tags =
-                                        if (it.subject.id.tags.isNotEmpty()) it.subject.id.tags.joinToString(separator = " ")
-                                        else "[]"
-                                builder.append(localize.localize(Texts.getRequiresValueText(
-                                        it.required.toString(),
-                                        it.subject.id.type.toString(),
-                                        tags,
-                                        it.tester.name
-                                )))
+                                    if (it.subject.id.tags.isNotEmpty()) it.subject.id.tags.joinToString(
+                                        separator = " "
+                                    )
+                                    else "[]"
+                                builder.append(
+                                    localize.localize(
+                                        Texts.getRequiresValueText(
+                                            it.required.toString(),
+                                            it.subject.id.type.toString(),
+                                            tags,
+                                            it.tester.name
+                                        )
+                                    )
+                                )
                             } else if (it.subject is ArgumentRequirementSubject<*>) {
-                                builder.append(localize.localize(Texts.getRequiresArgumentValueText(
-                                        it.required.toString(),
-                                        it.subject.name,
-                                        it.tester.name
-                                )))
+                                builder.append(
+                                    localize.localize(
+                                        Texts.getRequiresArgumentValueText(
+                                            it.required.toString(),
+                                            it.subject.name,
+                                            it.tester.name
+                                        )
+                                    )
+                                )
 
                             }
 
@@ -324,10 +360,14 @@ class CommonPrinter(override val localizer: TextLocalizer,
 
                             builder.append(' ', to + 3)
 
-                            builder.append(localize.localize(Texts.getRequiresInfoText(
-                                    it.id.toString(),
-                                    it.id.type.toString())
-                            ))
+                            builder.append(
+                                localize.localize(
+                                    Texts.getRequiresInfoText(
+                                        it.id.toString(),
+                                        it.id.type.toString()
+                                    )
+                                )
+                            )
                             out.flushAndClean(builder)
                         }
 
@@ -336,12 +376,16 @@ class CommonPrinter(override val localizer: TextLocalizer,
                             if (arg.requirements.isNotEmpty() || arg.requiredInfo.isNotEmpty()) {
                                 builder.append(' ', to + 2)
 
-                                builder.append(localize.localize(Text.of(
-                                        Texts.getArgumentText(),
-                                        "(",
-                                        arg.name.toString(),
-                                        "):"
-                                )))
+                                builder.append(
+                                    localize.localize(
+                                        Text.of(
+                                            Texts.getArgumentText(),
+                                            "(",
+                                            arg.name.toString(),
+                                            "):"
+                                        )
+                                    )
+                                )
                                 out.flushAndClean(builder)
                             }
 

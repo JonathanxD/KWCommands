@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -37,8 +37,10 @@ import com.github.jonathanxd.kwcommands.information.InformationProviders
  * @return Empty list if all requirements was satisfied or a list with unsatisfied requirements.
  */
 @Suppress("UNCHECKED_CAST")
-fun List<Requirement<*, *>>.checkRequirements(commandContainer: CommandContainer,
-                                              manager: InformationProviders): List<UnsatisfiedRequirement<*>> {
+fun List<Requirement<*, *>>.checkRequirements(
+    commandContainer: CommandContainer,
+    manager: InformationProviders
+): List<UnsatisfiedRequirement<*>> {
     val fails = mutableListOf<UnsatisfiedRequirement<*>>()
 
     this.forEach {
@@ -49,7 +51,14 @@ fun List<Requirement<*, *>>.checkRequirements(commandContainer: CommandContainer
             val find = manager.findErased<Any?>(info)
 
             if (find == null) {
-                fails.add(UnsatisfiedRequirement(it as Requirement<Any?, *>, it.subject, null, Reason.MISSING_INFORMATION))
+                fails.add(
+                    UnsatisfiedRequirement(
+                        it as Requirement<Any?, *>,
+                        it.subject,
+                        null,
+                        Reason.MISSING_INFORMATION
+                    )
+                )
             } else {
                 @Suppress("UNCHECKED_CAST")
                 it as Requirement<Any, *>
@@ -57,7 +66,14 @@ fun List<Requirement<*, *>>.checkRequirements(commandContainer: CommandContainer
                 find as Information<Any>
 
                 if (!it.test(find.value))
-                    fails.add(UnsatisfiedRequirement(it, it.subject, find, Reason.UNSATISFIED_REQUIREMENT))
+                    fails.add(
+                        UnsatisfiedRequirement(
+                            it,
+                            it.subject,
+                            find,
+                            Reason.UNSATISFIED_REQUIREMENT
+                        )
+                    )
             }
         } else if (it.subject is ArgumentRequirementSubject<*>) {
             val arg = commandContainer.getArgument<Any?>(it.subject.name)
@@ -67,7 +83,14 @@ fun List<Requirement<*, *>>.checkRequirements(commandContainer: CommandContainer
                 it as Requirement<Any?, *>
 
                 if (!it.test(arg.value))
-                    fails.add(UnsatisfiedRequirement(it, it.subject, arg.value, Reason.UNSATISFIED_REQUIREMENT))
+                    fails.add(
+                        UnsatisfiedRequirement(
+                            it,
+                            it.subject,
+                            arg.value,
+                            Reason.UNSATISFIED_REQUIREMENT
+                        )
+                    )
             }
         }
 
@@ -78,10 +101,12 @@ fun List<Requirement<*, *>>.checkRequirements(commandContainer: CommandContainer
     return fails
 }
 
-data class UnsatisfiedRequirement<T>(val requirement: Requirement<T, *>,
-                                     val subject: RequirementSubject<T>,
-                                     val value: T?,
-                                     val reason: Reason)
+data class UnsatisfiedRequirement<T>(
+    val requirement: Requirement<T, *>,
+    val subject: RequirementSubject<T>,
+    val value: T?,
+    val reason: Reason
+)
 
 enum class Reason {
     MISSING_INFORMATION,

@@ -47,7 +47,8 @@
         "found_token": "Found token",
         "parsed_map": "Successfully parsed map entries",
         "parsed_list": "Successfully parsed list elements",
-        "dynamic_arg_tag": "!"
+        "dynamic_arg_tag": "!",
+        "value_result": "Value result of '$result_string': $value_string"
     },
     "help": {
         "header": [
@@ -81,5 +82,8 @@
         "list": "Value list",
         "map": "Map of values",
         "empty": "Empty"
+    },
+    "parser": {
+        "booleanparser": "Boolean parser."
     }
 }

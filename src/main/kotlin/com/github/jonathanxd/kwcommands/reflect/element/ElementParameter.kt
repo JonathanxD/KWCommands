@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -44,7 +44,8 @@ sealed class ElementParameter<T>(val type: TypeInfo<T>) {
      *
      * @property argument Backing command argument.
      */
-    class ArgumentParameter<T>(val argument: Argument<T>, type: TypeInfo<T>) : ElementParameter<T>(type) {
+    class ArgumentParameter<T>(val argument: Argument<T>, type: TypeInfo<T>) :
+        ElementParameter<T>(type) {
         override fun toString(): String = "ArgumentParameter(argument=$argument, type=$type)"
     }
 
@@ -55,7 +56,11 @@ sealed class ElementParameter<T>(val type: TypeInfo<T>) {
      * @property isOptional If the [Information] is optional, if true, a [Information.EMPTY] will be passed if the
      * information is not present.
      */
-    class InformationParameter<T>(val id: Information.Id<T>, val isOptional: Boolean, type: TypeInfo<T>) : ElementParameter<T>(type) {
+    class InformationParameter<T>(
+        val id: Information.Id<T>,
+        val isOptional: Boolean,
+        type: TypeInfo<T>
+    ) : ElementParameter<T>(type) {
 
         /**
          * Component of information.
@@ -63,7 +68,8 @@ sealed class ElementParameter<T>(val type: TypeInfo<T>) {
         val infoComponent: TypeInfo<*>
             get() = this.type.infoComponent
 
-        override fun toString(): String = "InformationParameter(id=$id, isOptional=$isOptional, type=$type)"
+        override fun toString(): String =
+            "InformationParameter(id=$id, isOptional=$isOptional, type=$type)"
     }
 
     /**

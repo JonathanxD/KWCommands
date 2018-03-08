@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -37,19 +37,34 @@ import com.github.jonathanxd.kwcommands.parser.Validation
 import com.github.jonathanxd.kwcommands.util.InputParseFail
 import com.github.jonathanxd.kwcommands.util.StatedIterator
 
-class InvalidInputForArgumentFail(val command: Command,
-                                  val parsedArgs: List<ArgumentContainer<*>>,
-                                  input: Input,
-                                  val arg: Argument<*>,
-                                  val validation: Validation,
-                                  parsedCommands: List<CommandContainer>,
-                                  manager: CommandManager,
-                                  iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, input, iter)
+class InvalidInputForArgumentFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    input: Input,
+    val arg: Argument<*>,
+    val validation: Validation,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, input, iter)
 
-class ArgumentInputParseFail(val command: Command,
-                             val parsedArgs: List<ArgumentContainer<*>>,
-                             val arg: Argument<*>,
-                             val inputParseFail: InputParseFail,
-                             parsedCommands: List<CommandContainer>,
-                             manager: CommandManager,
-                             iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, inputParseFail.input, iter)
+class ArgumentInputParseFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    val arg: Argument<*>,
+    val inputParseFail: InputParseFail,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, inputParseFail.input, iter)
+
+class IncompatibleInputTypesForShortArgumentsFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    val expectedArg: Argument<*>,
+    val incompatibleArg: Argument<*>,
+    input: Input,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, input, iter)

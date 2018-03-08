@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -33,4 +33,12 @@ object Printers {
 
     val sysOut = CommonPrinter(KLocale.localizer, System.out::println, true)
     val sysOutWHF = CommonPrinter(KLocale.localizer, System.out::println, false)
+
+    val sysErr = CommonPrinter(KLocale.localizer, System.err::println, true)
+    val sysErrWHF = CommonPrinter(KLocale.localizer, System.err::println, false)
+
+    @JvmOverloads
+    fun toStringBuilder(builder: StringBuilder, footAndHeader: Boolean = false) =
+        CommonPrinter(KLocale.localizer, { builder.append(it).append('\n') }, footAndHeader)
+
 }

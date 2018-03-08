@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.requirement
 
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.information.Information
 
 /**
@@ -37,10 +37,12 @@ import com.github.jonathanxd.kwcommands.information.Information
  * @param T Information value type.
  * @param R Required value type.
  */
-data class Requirement<T, R>(val required: R,
-                             val subject: RequirementSubject<T>,
-                             val type: TypeInfo<out R>,
-                             val tester: RequirementTester<T, R>) {
+data class Requirement<T, R>(
+    val required: R,
+    val subject: RequirementSubject<T>,
+    val type: TypeInfo<out R>,
+    val tester: RequirementTester<T, R>
+) {
 
     /**
      * Calls the [RequirementTester.test] method.
@@ -48,17 +50,31 @@ data class Requirement<T, R>(val required: R,
     fun test(value: T) = this.tester.test(this, value)
 
     companion object {
-        inline fun <reified T, reified R> create(required: R, name: String, tester: RequirementTester<T, R>) =
-                Requirement(required, ArgumentRequirementSubject(name), typeInfo(), tester)
+        inline fun <reified T, reified R> create(
+            required: R,
+            name: String,
+            tester: RequirementTester<T, R>
+        ) =
+            Requirement(required, ArgumentRequirementSubject(name), typeInfo(), tester)
 
-        inline fun <reified T, reified R> create(required: R, subject: Information.Id<T>, tester: RequirementTester<T, R>) =
-                Requirement(required, InformationRequirementSubject(subject), typeInfo(), tester)
+        inline fun <reified T, reified R> create(
+            required: R,
+            subject: Information.Id<T>,
+            tester: RequirementTester<T, R>
+        ) =
+            Requirement(required, InformationRequirementSubject(subject), typeInfo(), tester)
 
-        inline fun <reified T, reified R> create(required: R, tags: Array<String>, tester: RequirementTester<T, R>) =
-                Requirement(required,
-                        InformationRequirementSubject(Information.Id(typeInfo(), tags)),
-                        typeInfo(),
-                        tester)
+        inline fun <reified T, reified R> create(
+            required: R,
+            tags: Array<String>,
+            tester: RequirementTester<T, R>
+        ) =
+            Requirement(
+                required,
+                InformationRequirementSubject(Information.Id(typeInfo(), tags)),
+                typeInfo(),
+                tester
+            )
 
         @JvmStatic
         fun <T, R> builder() = RequirementBuilder<T, R>()

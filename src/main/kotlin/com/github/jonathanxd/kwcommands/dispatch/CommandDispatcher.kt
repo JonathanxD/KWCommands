@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -29,10 +29,10 @@ package com.github.jonathanxd.kwcommands.dispatch
 
 import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.command.CommandContainer
-import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.information.InformationProvidersVoid
+import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.processor.CommandResult
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 
@@ -56,7 +56,7 @@ interface CommandDispatcher {
      * Registers [command interceptors][commandInterceptors]
      */
     fun registerInterceptors(commandInterceptors: List<CommandInterceptor>): Boolean =
-            commandInterceptors.map { this.registerInterceptor(it) }.any { it }
+        commandInterceptors.map { this.registerInterceptor(it) }.any { it }
 
     /**
      * Unregister a [command interceptor][commandInterceptor].
@@ -72,7 +72,7 @@ interface CommandDispatcher {
      * Registers [dispatch handlers][dispatchHandlers]
      */
     fun registerDispatchHandlers(dispatchHandlers: List<DispatchHandler>): Boolean =
-            dispatchHandlers.map { this.registerDispatchHandler(it) }.any { it }
+        dispatchHandlers.map { this.registerDispatchHandler(it) }.any { it }
 
     /**
      * Unregisters a [dispatch handler][dispatchHandler]
@@ -90,7 +90,9 @@ interface CommandDispatcher {
      * [ResultHandler]. Results are commonly sorted and the list may contains more than one [CommandResult] for
      * each command.
      */
-    fun dispatch(commands: List<CommandContainer>,
-                 informationProviders: InformationProviders = InformationProvidersVoid): List<CommandResult>
+    fun dispatch(
+        commands: List<CommandContainer>,
+        informationProviders: InformationProviders = InformationProvidersVoid
+    ): List<CommandResult>
 
 }

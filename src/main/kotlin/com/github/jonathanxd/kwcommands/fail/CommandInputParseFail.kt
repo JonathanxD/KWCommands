@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -34,16 +34,17 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.InputType
-import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 import com.github.jonathanxd.kwcommands.util.InputParseFail
 import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 // This class needs a better name
-class CommandInputParseFail(val command: Command,
-                            val parsedArgs: List<ArgumentContainer<*>>,
-                            val argument: Argument<*>,
-                            val inputType: InputType<*>,
-                            val fail: InputParseFail,
-                            parsedCommands: List<CommandContainer>,
-                            manager: CommandManager,
-                            iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, fail.input, iter)
+class CommandInputParseFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    val argument: Argument<*>,
+    val inputType: InputType<*>,
+    val fail: InputParseFail,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, fail.input, iter)

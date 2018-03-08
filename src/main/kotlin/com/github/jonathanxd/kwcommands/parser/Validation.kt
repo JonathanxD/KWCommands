@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -32,30 +32,36 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 data class Validation(val invalids: List<InvalidElement>) {
 
     operator fun plus(validation: Validation): Validation =
-            Validation(this.invalids + validation.invalids)
+        Validation(this.invalids + validation.invalids)
 
     val isValid get() = this.invalids.isEmpty()
     val isInvalid get() = this.invalids.isNotEmpty()
 }
 
-data class InvalidElement(val input: Input,
-                          val argumentType: ArgumentType<*, *>,
-                          val parser: ArgumentParser<*, *>)
+data class InvalidElement(
+    val input: Input,
+    val argumentType: ArgumentType<*, *>,
+    val parser: ArgumentParser<*, *>
+)
 
 fun validation(invalid: InvalidElement): Validation =
-        Validation(listOf(invalid))
+    Validation(listOf(invalid))
 
 fun validation(validations: List<Validation>): Validation =
-        Validation(validations
-                .map { it.invalids }
-                .fold(mutableListOf()) { acc, r -> acc.addAll(r); acc })
+    Validation(validations
+        .map { it.invalids }
+        .fold(mutableListOf()) { acc, r -> acc.addAll(r); acc })
 
-fun invalid(input: Input,
-            argumentType: ArgumentType<*, *>,
-            parser: ArgumentParser<*, *>): Validation =
-        Validation(listOf(invalidElement(input, argumentType, parser)))
+fun invalid(
+    input: Input,
+    argumentType: ArgumentType<*, *>,
+    parser: ArgumentParser<*, *>
+): Validation =
+    Validation(listOf(invalidElement(input, argumentType, parser)))
 
-fun invalidElement(input: Input,
-                   argumentType: ArgumentType<*, *>,
-                   parser: ArgumentParser<*, *>): InvalidElement =
-        InvalidElement(input, argumentType, parser)
+fun invalidElement(
+    input: Input,
+    argumentType: ArgumentType<*, *>,
+    parser: ArgumentParser<*, *>
+): InvalidElement =
+    InvalidElement(input, argumentType, parser)

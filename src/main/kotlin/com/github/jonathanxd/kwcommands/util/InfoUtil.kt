@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -35,12 +35,14 @@ import com.github.jonathanxd.kwcommands.information.Information
  * Utility method to check if [Information.Id] matches the [required] information id.
  */
 fun <T> Information.Id<T>.matches(required: Information.Id<*>): Boolean =
-        matches(this.type, this.tags, required.type, required.tags)
+    matches(this.type, this.tags, required.type, required.tags)
 
 /**
  * Utility method to check if [type] and [tags] of [Information.Id] matches [requiredType] and [requiredTags].
  */
-fun <T> matches(type: TypeInfo<T>, tags: Array<out String>,
-                requiredType: TypeInfo<*>, requiredTags: Array<out String>): Boolean =
-        (type == Default::class.java || type == requiredType || type.isAssignableFrom(requiredType))
-                && (tags.isEmpty() || tags.all { requiredTags.contains(it) })
+fun <T> matches(
+    type: TypeInfo<T>, tags: Array<out String>,
+    requiredType: TypeInfo<*>, requiredTags: Array<out String>
+): Boolean =
+    (type == Default::class.java || type == requiredType || type.isAssignableFrom(requiredType))
+            && (tags.isEmpty() || tags.all { requiredTags.contains(it) })

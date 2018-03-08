@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -33,8 +33,8 @@ import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.ParseFail
-import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
 
 /**
@@ -42,41 +42,63 @@ import com.github.jonathanxd.kwcommands.parser.Input
  */
 class AutoCompleters(private val completers: List<AutoCompleter>) : AutoCompleter {
 
-    override fun handleNonCompletable(fail: ParseFail,
-                                      informationProviders: InformationProviders) {
+    override fun handleNonCompletable(
+        fail: ParseFail,
+        informationProviders: InformationProviders
+    ) {
         completers.forEach {
             it.handleNonCompletable(fail, informationProviders)
         }
     }
 
-    override fun completeCommand(command: Command?,
-                                 commandContainers: List<CommandContainer>,
-                                 completions: Completions,
-                                 commandManager: CommandManager,
-                                 informationProviders: InformationProviders) {
+    override fun completeCommand(
+        command: Command?,
+        commandContainers: List<CommandContainer>,
+        completions: Completions,
+        commandManager: CommandManager,
+        informationProviders: InformationProviders
+    ) {
         completers.forEach {
-            it.completeCommand(command, commandContainers, completions, commandManager, informationProviders)
+            it.completeCommand(
+                command,
+                commandContainers,
+                completions,
+                commandManager,
+                informationProviders
+            )
         }
     }
 
-    override fun completeArgumentName(command: Command,
-                                      arguments: List<ArgumentContainer<*>>,
-                                      completions: Completions,
-                                      informationProviders: InformationProviders) {
+    override fun completeArgumentName(
+        command: Command,
+        arguments: List<ArgumentContainer<*>>,
+        completions: Completions,
+        informationProviders: InformationProviders
+    ) {
         completers.forEach {
             it.completeArgumentName(command, arguments, completions, informationProviders)
         }
     }
 
-    override fun completeArgumentInput(command: Command,
-                                       arguments: List<ArgumentContainer<*>>,
-                                       argument: Argument<*>,
-                                       argumentType: ArgumentType<*, *>,
-                                       input: Input?,
-                                       completions: Completions,
-                                       informationProviders: InformationProviders) {
+    override fun completeArgumentInput(
+        command: Command,
+        arguments: List<ArgumentContainer<*>>,
+        argument: Argument<*>,
+        argumentType: ArgumentType<*, *>,
+        input: Input?,
+        completions: Completions,
+        informationProviders: InformationProviders
+    ) {
         completers.forEach {
-            it.completeArgumentInput(command, arguments, argument, argumentType, input, completions, informationProviders)
+            it.completeArgumentInput(
+                command,
+                arguments,
+                argument,
+                argumentType,
+                input,
+                completions,
+                informationProviders
+            )
         }
 
     }

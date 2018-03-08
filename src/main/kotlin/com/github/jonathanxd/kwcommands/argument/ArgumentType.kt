@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,38 +27,27 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
-import com.github.jonathanxd.iutils.`object`.Either
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.parser.*
 
-abstract class ArgumentType<I : Input, out T>(val defaultValue: T?,
-                                              val inputType: InputType<I>,
-                                              val type: TypeInfo<out T>) {
+abstract class ArgumentType<I : Input, out T>(
+    val defaultValue: T?,
+    val inputType: InputType<I>,
+    val type: TypeInfo<out T>
+) {
     abstract val parser: ArgumentParser<I, T>
     abstract val possibilities: Possibilities
 
     @Suppress("UNCHECKED_CAST")
     fun parse(input: Input): ValueOrValidation<T> =
-            if (input.type.isCompatible(this.inputType))
-                this.parser.parse(input as I, ValueOrValidationFactoryImpl(input, this, this.parser))
-            else
-                ValueOrValidation.Invalid(invalid(input, this, this.parser))
+        if (input.type.isCompatible(this.inputType))
+            this.parser.parse(input as I, ValueOrValidationFactoryImpl(input, this, this.parser))
+        else
+            ValueOrValidation.Invalid(invalid(input, this, this.parser))
 
-
-    /*
-        fun transform(input: Input): T =
-            this.transformer.invoke(input as I)
-
-    @Suppress("UNCHECKED_CAST")
-    fun validate(input: Input): Validation =
-            if (input.type.isCompatible(this.inputType))
-                this.validator.invoke(this, input as I)
-            else invalid(input, this, this.validator, null)
-
-     */
     fun possibilities(): List<Input> =
-            this.possibilities.invoke()
+        this.possibilities.invoke()
 
     abstract fun hasType(index: Int): Boolean
     abstract fun getMapKeyType(index: Int): ArgumentType<*, *>
@@ -72,20 +61,25 @@ abstract class ArgumentType<I : Input, out T>(val defaultValue: T?,
  * @property possibilities Possibilities of argument values.
  */
 sealed class BaseArgumentType<I : Input, T>(
-        override val parser: ArgumentParser<I, T>,
-        override val possibilities: Possibilities,
-        defaultValue: T?,
-        inputType: InputType<I>,
-        type: TypeInfo<out T>) : ArgumentType<I, T>(defaultValue, inputType, type)
+    override val parser: ArgumentParser<I, T>,
+    override val possibilities: Possibilities,
+    defaultValue: T?,
+    inputType: InputType<I>,
+    type: TypeInfo<out T>
+) : ArgumentType<I, T>(defaultValue, inputType, type)
 
 class SingleArgumentType<T>(
-        parser: ArgumentParser<SingleInput, T>,
-        possibilities: Possibilities,
-        defaultValue: T?,
-        type: TypeInfo<out T>)
-    : BaseArgumentType<SingleInput, T>(parser, possibilities, defaultValue, SingleInputType, type) {
+    parser: ArgumentParser<SingleInput, T>,
+    possibilities: Possibilities,
+    defaultValue: T?,
+    type: TypeInfo<out T>
+) : BaseArgumentType<SingleInput, T>(parser, possibilities, defaultValue, SingleInputType, type) {
 
-    constructor(argumentTypeParser: ArgumentTypeHelper<SingleInput, T>, defaultValue: T?, type: TypeInfo<out T>) :
+    constructor(
+        argumentTypeParser: ArgumentTypeHelper<SingleInput, T>,
+        defaultValue: T?,
+        type: TypeInfo<out T>
+    ) :
             this(argumentTypeParser, argumentTypeParser, defaultValue, type)
 
     override fun getListType(index: Int): ArgumentType<*, *> = this
@@ -95,42 +89,49 @@ class SingleArgumentType<T>(
 }
 
 class CustomArgumentType<out T, I : Input, V>(
-        val converter: (V) -> T,
-        defaultValue: T?,
-        val argumentType: ArgumentType<I, V>,
-        type: TypeInfo<T>) : ArgumentType<I, T>(defaultValue, argumentType.inputType, type) {
+    val converter: (V) -> T,
+    defaultValue: T?,
+    val argumentType: ArgumentType<I, V>,
+    type: TypeInfo<T>
+) : ArgumentType<I, T>(defaultValue, argumentType.inputType, type) {
     override val parser: ArgumentParser<I, T> = ConverterParser()
     override val possibilities: Possibilities = argumentType.possibilities
 
     inner class ConverterParser : ArgumentParser<I, T> {
-        override fun parse(input: I, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<T> =
-                argumentType.parse(input).mapIfValue(converter)
+        override fun parse(
+            input: I,
+            valueOrValidationFactory: ValueOrValidationFactory
+        ): ValueOrValidation<T> =
+            argumentType.parse(input).mapIfValue(converter)
     }
 
     override fun hasType(index: Int): Boolean =
-            argumentType.hasType(index)
+        argumentType.hasType(index)
 
     override fun getListType(index: Int): ArgumentType<*, *> =
-            argumentType.getListType(index)
+        argumentType.getListType(index)
 
     override fun getMapKeyType(index: Int): ArgumentType<*, *> =
-            argumentType.getMapKeyType(index)
+        argumentType.getMapKeyType(index)
 
     override fun getMapValueType(index: Int): ArgumentType<*, *> =
-            argumentType.getMapValueType(index)
+        argumentType.getMapValueType(index)
 
 }
 
 object AnyArgumentType : ArgumentType<Input, Any?>(null, AnyInputType, typeInfo()) {
     override val parser: ArgumentParser<Input, Any?> = object : ArgumentParser<Input, Any?> {
-        override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any?> =
-                valueOrValidationFactory.value(input.toPlain())
+        override fun parse(
+            input: Input,
+            valueOrValidationFactory: ValueOrValidationFactory
+        ): ValueOrValidation<Any?> =
+            valueOrValidationFactory.value(input.toPlain())
 
     }
 
     override val possibilities: Possibilities = object : Possibilities {
         override fun invoke(): List<Input> =
-                emptyList()
+            emptyList()
     }
 
     override fun hasType(index: Int): Boolean = true
@@ -140,32 +141,35 @@ object AnyArgumentType : ArgumentType<Input, Any?>(null, AnyInputType, typeInfo(
 
 }
 
-class ExactListArgumentType<T>(val elementTypes: List<ArgumentType<*, *>>,
-                               type: TypeInfo<out List<T>>)
-    : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
+class ExactListArgumentType<T>(
+    val elementTypes: List<ArgumentType<*, *>>,
+    type: TypeInfo<out List<T>>
+) : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
     override val parser: ArgumentParser<ListInput, List<T>> = ExactListParser(this)
     override val possibilities: Possibilities = ExactListPossibilities(this)
 
     override fun hasType(index: Int): Boolean =
-            index < this.elementTypes.size
+        index < this.elementTypes.size
 
     override fun getListType(index: Int): ArgumentType<*, *> =
-            elementTypes.getOrNull(index) ?: AnyArgumentType
+        elementTypes.getOrNull(index) ?: AnyArgumentType
 
     override fun getMapKeyType(index: Int): ArgumentType<*, *> =
-            elementTypes.getOrNull(index) ?: AnyArgumentType
+        elementTypes.getOrNull(index) ?: AnyArgumentType
 
     override fun getMapValueType(index: Int): ArgumentType<*, *> =
-            elementTypes.getOrNull(index) ?: AnyArgumentType
+        elementTypes.getOrNull(index) ?: AnyArgumentType
 }
 
-class ExactListParser<out T>(val listArgumentType: ExactListArgumentType<*>) : ArgumentParser<ListInput, List<T>> {
+class ExactListParser<out T>(val listArgumentType: ExactListArgumentType<*>) :
+    ArgumentParser<ListInput, List<T>> {
 
     override fun parse(input: ListInput, valueOrValidationFactory: ValueOrValidationFactory):
             ValueOrValidation<List<T>> {
         val vInput = input.input
         val elementTypes = listArgumentType.elementTypes
-        val parsed = vInput.mapIndexed { index, inputToMap -> elementTypes[index].parse(inputToMap) }
+        val parsed =
+            vInput.mapIndexed { index, inputToMap -> elementTypes[index].parse(inputToMap) }
 
         if (parsed.any { it.isInvalid })
             return parsed.flatToValidation()
@@ -177,13 +181,14 @@ class ExactListParser<out T>(val listArgumentType: ExactListArgumentType<*>) : A
 
 class ExactListPossibilities(val listArgumentType: ExactListArgumentType<*>) : Possibilities {
     override fun invoke(): List<Input> =
-            listArgumentType.elementTypes.map { ListInput(it.possibilities()) }
+        listArgumentType.elementTypes.map { ListInput(it.possibilities()) }
 
 }
 
-class ListArgumentType<out T>(val elementType: ArgumentType<*, *>,
-                              type: TypeInfo<out List<T>>)
-    : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
+class ListArgumentType<out T>(
+    val elementType: ArgumentType<*, *>,
+    type: TypeInfo<out List<T>>
+) : ArgumentType<ListInput, List<T>>(emptyList(), ListInputType, type) {
     override val parser: ArgumentParser<ListInput, List<T>> = ListParser(this)
     override val possibilities: Possibilities = ListPossibilities(this)
 
@@ -193,9 +198,13 @@ class ListArgumentType<out T>(val elementType: ArgumentType<*, *>,
     override fun getMapValueType(index: Int): ArgumentType<*, *> = elementType
 }
 
-class ListParser<out T>(val listArgumentType: ListArgumentType<*>) : ArgumentParser<ListInput, List<T>> {
+class ListParser<out T>(val listArgumentType: ListArgumentType<*>) :
+    ArgumentParser<ListInput, List<T>> {
 
-    override fun parse(input: ListInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<List<T>> {
+    override fun parse(
+        input: ListInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<List<T>> {
         val parsed = input.input.map { this.listArgumentType.elementType.parse(it) }
 
         if (parsed.any { it.isInvalid })
@@ -208,13 +217,14 @@ class ListParser<out T>(val listArgumentType: ListArgumentType<*>) : ArgumentPar
 
 class ListPossibilities(val listArgumentType: ListArgumentType<*>) : Possibilities {
     override fun invoke(): List<Input> =
-            listOf(ListInput(this.listArgumentType.elementType.possibilities()))
+        listOf(ListInput(this.listArgumentType.elementType.possibilities()))
 }
 
-class MapArgumentType<K, V>(val keyType: ArgumentType<*, *>,
-                            val valueType: ArgumentType<*, *>,
-                            type: TypeInfo<out Map<K, V>>)
-    : ArgumentType<MapInput, Map<K, V>>(emptyMap(), MapInputType, type) {
+class MapArgumentType<K, V>(
+    val keyType: ArgumentType<*, *>,
+    val valueType: ArgumentType<*, *>,
+    type: TypeInfo<out Map<K, V>>
+) : ArgumentType<MapInput, Map<K, V>>(emptyMap(), MapInputType, type) {
     override val parser: ArgumentParser<MapInput, Map<K, V>> = MapParser(this)
     override val possibilities: Possibilities = MapPossibilities(this)
 
@@ -225,9 +235,13 @@ class MapArgumentType<K, V>(val keyType: ArgumentType<*, *>,
 
 }
 
-class MapParser<K, V>(val mapArgumentType: MapArgumentType<*, *>) : ArgumentParser<MapInput, Map<K, V>> {
+class MapParser<K, V>(val mapArgumentType: MapArgumentType<*, *>) :
+    ArgumentParser<MapInput, Map<K, V>> {
 
-    override fun parse(input: MapInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Map<K, V>> {
+    override fun parse(
+        input: MapInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Map<K, V>> {
         val parsed = input.input.map {
             mapArgumentType.keyType.parse(it.first) to mapArgumentType.valueType.parse(it.second)
         }
@@ -243,30 +257,33 @@ class MapParser<K, V>(val mapArgumentType: MapArgumentType<*, *>) : ArgumentPars
 
 class MapPossibilities(val mapArgumentType: MapArgumentType<*, *>) : Possibilities {
     override fun invoke(): List<Input> =
-            (this.mapArgumentType.keyType.possibilities() to
-                    this.mapArgumentType.valueType.possibilities()).let { p ->
-                val map = mutableListOf<Pair<Input, Input>>()
+        (this.mapArgumentType.keyType.possibilities() to
+                this.mapArgumentType.valueType.possibilities()).let { p ->
+            val map = mutableListOf<Pair<Input, Input>>()
 
-                for (input in p.first) {
-                    for (input2 in p.second) {
-                        map += input to input2
-                    }
+            for (input in p.first) {
+                for (input2 in p.second) {
+                    map += input to input2
                 }
-
-                listOf(MapInput(map))
             }
+
+            listOf(MapInput(map))
+        }
 }
 
 
-class PairArgumentType<A, B>(val aPairType: ArgumentType<*, A>,
-                             val bPairType: ArgumentType<*, B>,
-                             val required: Boolean,
-                             type: TypeInfo<out Pair<A, B>>)
-    : ArgumentType<MapInput, Pair<A, B>>(null, MapInputType, type) {
+class PairArgumentType<A, B>(
+    val aPairType: ArgumentType<*, A>,
+    val bPairType: ArgumentType<*, B>,
+    val required: Boolean,
+    type: TypeInfo<out Pair<A, B>>
+) : ArgumentType<MapInput, Pair<A, B>>(null, MapInputType, type) {
 
-    constructor(aPairType: ArgumentType<*, A>,
-                bPairType: ArgumentType<*, B>,
-                type: TypeInfo<out Pair<A, B>>) : this(aPairType, bPairType, true, type)
+    constructor(
+        aPairType: ArgumentType<*, A>,
+        bPairType: ArgumentType<*, B>,
+        type: TypeInfo<out Pair<A, B>>
+    ) : this(aPairType, bPairType, true, type)
 
     override val parser: ArgumentParser<MapInput, Pair<A, B>> = PairParser(this)
     override val possibilities: Possibilities = PairPossibilities(this)
@@ -277,8 +294,12 @@ class PairArgumentType<A, B>(val aPairType: ArgumentType<*, A>,
     override fun getMapValueType(index: Int): ArgumentType<*, *> = bPairType
 }
 
-class PairParser<A, B>(val pairArgumentType: PairArgumentType<A, B>) : ArgumentParser<MapInput, Pair<A, B>> {
-    override fun parse(input: MapInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Pair<A, B>> {
+class PairParser<A, B>(val pairArgumentType: PairArgumentType<A, B>) :
+    ArgumentParser<MapInput, Pair<A, B>> {
+    override fun parse(
+        input: MapInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Pair<A, B>> {
         val parsed = input.input.single().let { (a, b) ->
             this.pairArgumentType.aPairType.parse(a) to
                     this.pairArgumentType.bPairType.parse(b)
@@ -297,32 +318,33 @@ class PairParser<A, B>(val pairArgumentType: PairArgumentType<A, B>) : ArgumentP
 
 class PairPossibilities(val pairArgumentType: PairArgumentType<*, *>) : Possibilities {
     override fun invoke(): List<Input> =
-            this.pairArgumentType.aPairType.possibilities() +
-                    this.pairArgumentType.bPairType.possibilities()
+        this.pairArgumentType.aPairType.possibilities() +
+                this.pairArgumentType.bPairType.possibilities()
 }
 
 
-class ComplexMapArgumentType<K, V>(val types: List<PairArgumentType<*, *>>,
-                                   type: TypeInfo<out Map<K, V>>)
-    : ArgumentType<MapInput, Map<K, V>>(emptyMap(), MapInputType, type) {
+class ComplexMapArgumentType<K, V>(
+    val types: List<PairArgumentType<*, *>>,
+    type: TypeInfo<out Map<K, V>>
+) : ArgumentType<MapInput, Map<K, V>>(emptyMap(), MapInputType, type) {
     override val parser: ArgumentParser<MapInput, Map<K, V>> = ComplexMapParser(this)
     override val possibilities: Possibilities = ComplexMapPossibilities(this)
 
     override fun hasType(index: Int): Boolean =
-            index < this.types.size
+        index < this.types.size
 
     override fun getListType(index: Int): ArgumentType<*, *> =
-            types.getOrNull(index) ?: AnyArgumentType
+        types.getOrNull(index) ?: AnyArgumentType
 
     override fun getMapKeyType(index: Int): ArgumentType<*, *> =
-            types.getOrNull(index)?.aPairType ?: AnyArgumentType
+        types.getOrNull(index)?.aPairType ?: AnyArgumentType
 
     override fun getMapValueType(index: Int): ArgumentType<*, *> =
-            types.getOrNull(index)?.bPairType ?: AnyArgumentType
+        types.getOrNull(index)?.bPairType ?: AnyArgumentType
 }
 
-class ComplexMapParser<K, V>(val complexMapArgumentType: ComplexMapArgumentType<*, *>)
-    : ArgumentParser<MapInput, Map<K, V>> {
+class ComplexMapParser<K, V>(val complexMapArgumentType: ComplexMapArgumentType<*, *>) :
+    ArgumentParser<MapInput, Map<K, V>> {
 
     override fun parse(input: MapInput, valueOrValidationFactory: ValueOrValidationFactory):
             ValueOrValidation<Map<K, V>> {
@@ -338,26 +360,27 @@ class ComplexMapParser<K, V>(val complexMapArgumentType: ComplexMapArgumentType<
     }
 }
 
-class ComplexMapPossibilities(val complexMapArgumentType: ComplexMapArgumentType<*, *>) : Possibilities {
+class ComplexMapPossibilities(val complexMapArgumentType: ComplexMapArgumentType<*, *>) :
+    Possibilities {
     override fun invoke(): List<Input> =
-            this.complexMapArgumentType.types.map {
-                it.possibilities() to it.possibilities()
-            }.flatMap { p ->
-                val list = mutableListOf<Pair<Input, Input>>()
+        this.complexMapArgumentType.types.map {
+            it.possibilities() to it.possibilities()
+        }.flatMap { p ->
+            val list = mutableListOf<Pair<Input, Input>>()
 
-                p.first.forEach { a ->
-                    p.second.forEach { b ->
-                        list += a to b
-                    }
+            p.first.forEach { a ->
+                p.second.forEach { b ->
+                    list += a to b
                 }
+            }
 
-                list
-            }.let { listOf(MapInput(it)) }
+            list
+        }.let { listOf(MapInput(it)) }
 
 }
 
 fun <T, U> List<ValueOrValidation<T>>.flatToValidation(): ValueOrValidation<U> =
-        this.filterIsInstance<ValueOrValidation.Invalid<T>>()
-                .map { it.validation }
-                .reduce { acc, either -> acc + either }
-                .let { ValueOrValidation.Invalid(it) }
+    this.filterIsInstance<ValueOrValidation.Invalid<T>>()
+        .map { it.validation }
+        .reduce { acc, either -> acc + either }
+        .let { ValueOrValidation.Invalid(it) }

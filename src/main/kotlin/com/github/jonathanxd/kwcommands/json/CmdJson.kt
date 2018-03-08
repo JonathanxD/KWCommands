@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -48,9 +48,11 @@ import kotlin.reflect.KClass
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD)
-annotation class CmdJson(val type: CmdJsonType = CmdJsonType.RESOURCE,
-                         val value: String,
-                         val parser: KClass<out JsonCommandParser> = DefaultJsonParser::class)
+annotation class CmdJson(
+    val type: CmdJsonType = CmdJsonType.RESOURCE,
+    val value: String,
+    val parser: KClass<out JsonCommandParser> = DefaultJsonParser::class
+)
 
 /**
  * Specifies that the command json is supplied by [value].
@@ -79,15 +81,19 @@ enum class CmdJsonType {
 /**
  * See [CmdJson].
  */
-data class CmdJsonObj(val type: CmdJsonType, val value: String, val parser: Class<out JsonCommandParser>)
+data class CmdJsonObj(
+    val type: CmdJsonType,
+    val value: String,
+    val parser: Class<out JsonCommandParser>
+)
 
 /**
  * Creates a [CmdJsonObj] based on [CmdJson] annotation of [receiver][AnnotatedElement], or gets
  * it from supplier specified in [CmdJsonSupplied] annotation.
  */
 fun AnnotatedElement.getCommandJsonObj(): CmdJsonObj? =
-        this.getDeclaredAnnotation(CmdJson::class.java)?.toObj()
-                ?: this.getDeclaredAnnotation(CmdJsonSupplied::class.java)?.value?.get()?.invoke()
+    this.getDeclaredAnnotation(CmdJson::class.java)?.toObj()
+            ?: this.getDeclaredAnnotation(CmdJsonSupplied::class.java)?.value?.get()?.invoke()
 
 /**
  * Creates [CmdJsonObj] from [receiver][CmdJson]
@@ -98,7 +104,9 @@ fun CmdJson.toObj(): CmdJsonObj = CmdJsonObj(this.type, this.value, this.parser.
  * Resolves json string from [CmdJsonObj] using resource of [localization] if needed.
  */
 fun CmdJsonObj.resolveJsonString(localization: Class<*>): String =
-        when (this.type) {
-            CmdJsonType.RESOURCE -> localization.getResourceAsStream(this.value).readBytes().toString(Charsets.UTF_8)
-            CmdJsonType.STRING -> this.value
-        }
+    when (this.type) {
+        CmdJsonType.RESOURCE -> localization.getResourceAsStream(this.value).readBytes().toString(
+            Charsets.UTF_8
+        )
+        CmdJsonType.STRING -> this.value
+    }

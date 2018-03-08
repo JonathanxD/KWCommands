@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -104,38 +104,43 @@ interface JsonCommandParser {
      * Parses [Command] from [json text][json] and use [superCommand] as super command of parsed [Command].
      */
     fun parseCommand(json: String, superCommand: Command?): Command =
-            this.parseCommand(JSONParser().parse(json) as JSONObject, superCommand)
+        this.parseCommand(JSONParser().parse(json) as JSONObject, superCommand)
 
     /**
      * Parses [Argument] from [json text][json].
      */
-    fun parseArgument(json: String): Argument<*> = this.parseArgument(JSONParser().parse(json) as JSONObject)
+    fun parseArgument(json: String): Argument<*> =
+        this.parseArgument(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [Information id][Information.Id] from [json text][json].
      */
-    fun parseId(json: String): Information.Id<*> = this.parseId(JSONParser().parse(json) as JSONObject)
+    fun parseId(json: String): Information.Id<*> =
+        this.parseId(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [Information] from [json text][json].
      */
-    fun parseInfo(json: String): Information<*> = this.parseInfo(JSONParser().parse(json) as JSONObject)
+    fun parseInfo(json: String): Information<*> =
+        this.parseInfo(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [Information] from [json text][json].
      */
     fun parseRequirementSubject(json: String): RequirementSubject<*> =
-            this.parseRequirementSubject(JSONParser().parse(json) as JSONObject)
+        this.parseRequirementSubject(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [RequiredInformation] from [json text][json].
      */
-    fun parseReqInfo(json: String): RequiredInformation = this.parseReqInfo(JSONParser().parse(json) as JSONObject)
+    fun parseReqInfo(json: String): RequiredInformation =
+        this.parseReqInfo(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [Requirement] from [json text][json].
      */
-    fun parseReq(json: String): Requirement<*, *> = this.parseReq(JSONParser().parse(json) as JSONObject)
+    fun parseReq(json: String): Requirement<*, *> =
+        this.parseReq(JSONParser().parse(json) as JSONObject)
 
     /**
      * Parses [Arguments] from input text [input].
@@ -169,7 +174,7 @@ interface JsonCommandParserFactory {
  */
 object DefaultJsonParserFactory : JsonCommandParserFactory {
     override fun create(typeResolver: TypeResolver): JsonCommandParser =
-            DefaultJsonParser(typeResolver)
+        DefaultJsonParser(typeResolver)
 
 }
 
@@ -183,111 +188,118 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
         get() = DefaultJsonParserFactory
 
     override fun parseCommand(jsonObject: JSONObject, superCommand: Command?): Command =
-            CommandBuilder()
-                    .parent(superCommand)
-                    .name(jsonObject.getRequired(NAME_KEY))
-                    .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
-                    .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
-                    .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
-                    .arguments(jsonObject.getArguments(ARGUMENTS_KEY, this) ?: StaticListArguments(emptyList()))
-                    .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
-                    .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
-                    .build()
-                    .also { sup ->
-                        val subcommands = jsonObject.getAs<JSONArray>(SUB_COMMANDS_KEY)
+        CommandBuilder()
+            .parent(superCommand)
+            .name(jsonObject.getRequired(NAME_KEY))
+            .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
+            .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
+            .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
+            .arguments(
+                jsonObject.getArguments(ARGUMENTS_KEY, this) ?: StaticListArguments(emptyList())
+            )
+            .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
+            .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
+            .build()
+            .also { sup ->
+                val subcommands = jsonObject.getAs<JSONArray>(SUB_COMMANDS_KEY)
 
-                        if (subcommands?.isNotEmpty() == true) {
-                            val allString = subcommands.all { it is String }
-                            val allObj = subcommands.all { it is JSONObject }
+                if (subcommands?.isNotEmpty() == true) {
+                    val allString = subcommands.all { it is String }
+                    val allObj = subcommands.all { it is JSONObject }
 
-                            when {
-                                allString -> sup.addSubCommands(jsonObject.getAsArrayOfStr(SUB_COMMANDS_KEY).map {
-                                    val res = this.typeResolver.resolveResource(it)
-                                            ?: throw IllegalArgumentException("Resource cannot be found: $it.")
-                                    return@map this.parseCommand(res, sup)
-                                })
-                                allObj -> sup.addSubCommands(jsonObject.getAsArrayOfObj(SUB_COMMANDS_KEY) {
-                                    this.parseCommand(it, sup)
-                                })
-                                else -> throw IllegalArgumentException("Sub commands can be either array of string (resources) or array of json objects (command json)")
-                            }
-                        }
+                    when {
+                        allString -> sup.addSubCommands(jsonObject.getAsArrayOfStr(SUB_COMMANDS_KEY).map {
+                            val res = this.typeResolver.resolveResource(it)
+                                    ?: throw IllegalArgumentException("Resource cannot be found: $it.")
+                            return@map this.parseCommand(res, sup)
+                        })
+                        allObj -> sup.addSubCommands(jsonObject.getAsArrayOfObj(SUB_COMMANDS_KEY) {
+                            this.parseCommand(it, sup)
+                        })
+                        else -> throw IllegalArgumentException("Sub commands can be either array of string (resources) or array of json objects (command json)")
                     }
+                }
+            }
 
     override fun parseArgument(jsonObject: JSONObject): Argument<*> {
         val type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY))
 
         @Suppress("UNCHECKED_CAST")
         return ArgumentBuilder<Any?>()
-                .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
-                .name(jsonObject.getRequired(NAME_KEY))
-                .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
-                .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
-                .argumentType(jsonObject.getAsSingleton<ArgumentType<*, Any?>>(ARGUMENT_TYPE_KEY, this.typeResolver)
-                        ?: this.typeResolver.resolveArgumentType(type as TypeInfo<Any?>) as ArgumentType<*, Any?>)
-                .handler(jsonObject.getArgumentHandler(HANDLER_KEY, this))
-                .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
-                .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
-                .build()
+            .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
+            .name(jsonObject.getRequired(NAME_KEY))
+            .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
+            .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
+            .argumentType(
+                jsonObject.getAsSingleton<ArgumentType<*, Any?>>(
+                    ARGUMENT_TYPE_KEY,
+                    this.typeResolver
+                )
+                        ?: this.typeResolver.resolveArgumentType(type as TypeInfo<Any?>) as ArgumentType<*, Any?>
+            )
+            .handler(jsonObject.getArgumentHandler(HANDLER_KEY, this))
+            .addRequirements(jsonObject.getAsArrayOfObj(REQUIREMENTS_KEY) { this.parseReq(it) })
+            .addRequiredInfo(jsonObject.getAsArrayOfObj(REQUIRED_INFO_KEY) { this.parseReqInfo(it) })
+            .build()
 
     }
 
     override fun parseReq(jsonObject: JSONObject): Requirement<*, *> =
-            @Suppress("UNCHECKED_CAST")
-            RequirementBuilder<Any?, String>()
-                    .type(TypeInfo.of(String::class.java))
-                    .subject(this.parseRequirementSubject(jsonObject) as RequirementSubject<Any?>)
-                    .tester(jsonObject.getAsSingletonReq(TESTER_KEY, this.typeResolver))
-                    .required(jsonObject.getRequired(DATA_KEY))
-                    .build()
+        @Suppress("UNCHECKED_CAST")
+        RequirementBuilder<Any?, String>()
+            .type(TypeInfo.of(String::class.java))
+            .subject(this.parseRequirementSubject(jsonObject) as RequirementSubject<Any?>)
+            .tester(jsonObject.getAsSingletonReq(TESTER_KEY, this.typeResolver))
+            .required(jsonObject.getRequired(DATA_KEY))
+            .build()
 
     override fun parseReqInfo(jsonObject: JSONObject): RequiredInformation =
-            RequiredInformation(
-                    id = this.parseId(jsonObject.getRequired<JSONObject>(ID_KEY)),
-                    useProviders = jsonObject.getAs<Boolean>(USE_PROVIDERS_KEY) ?: true
-            )
+        RequiredInformation(
+            id = this.parseId(jsonObject.getRequired<JSONObject>(ID_KEY)),
+            useProviders = jsonObject.getAs<Boolean>(USE_PROVIDERS_KEY) ?: true
+        )
 
     override fun parseId(jsonObject: JSONObject): Information.Id<*> =
-            Information.Id(
-                    tags = jsonObject.getAsArrayOfStr(TAGS_KEY).toTypedArray(),
-                    type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY)) as TypeInfo<out Any?>
-            )
+        Information.Id(
+            tags = jsonObject.getAsArrayOfStr(TAGS_KEY).toTypedArray(),
+            type = this.typeResolver.resolve(jsonObject.getRequired(TYPE_KEY)) as TypeInfo<out Any?>
+        )
 
     override fun parseInfo(jsonObject: JSONObject): Information<*> = Information(
-            this.parseId(jsonObject.getRequired<JSONObject>(ID_KEY)),
-            jsonObject.getAsSingletonReq<() -> Any?>(PROVIDER_KEY, this.typeResolver).invoke(),
-            jsonObject.getRequired<String>(DESCRIPTION_KEY)
+        this.parseId(jsonObject.getRequired<JSONObject>(ID_KEY)),
+        jsonObject.getAsSingletonReq<() -> Any?>(PROVIDER_KEY, this.typeResolver).invoke(),
+        jsonObject.getRequired<String>(DESCRIPTION_KEY)
     )
 
     override fun parseRequirementSubject(jsonObject: JSONObject): RequirementSubject<*> =
-            if (jsonObject.containsKey(ARGUMENTS_KEY))
-                ArgumentRequirementSubject<Any?>(jsonObject.getRequired(ARGUMENTS_KEY))
-            else
-                InformationRequirementSubject(this.parseId(jsonObject.getRequired<JSONObject>(INFO_KEY)))
+        if (jsonObject.containsKey(ARGUMENTS_KEY))
+            ArgumentRequirementSubject<Any?>(jsonObject.getRequired(ARGUMENTS_KEY))
+        else
+            InformationRequirementSubject(this.parseId(jsonObject.getRequired<JSONObject>(INFO_KEY)))
 
     override fun parseCommand(json: String): Command =
-            this.parseCommand(this.parser.parse(json) as JSONObject)
+        this.parseCommand(this.parser.parse(json) as JSONObject)
 
     override fun parseArgument(json: String): Argument<*> =
-            this.parseArgument(this.parser.parse(json) as JSONObject)
+        this.parseArgument(this.parser.parse(json) as JSONObject)
 
     override fun parseId(json: String): Information.Id<*> =
-            this.parseId(this.parser.parse(json) as JSONObject)
+        this.parseId(this.parser.parse(json) as JSONObject)
 
     override fun parseInfo(json: String): Information<*> =
-            this.parseInfo(this.parser.parse(json) as JSONObject)
+        this.parseInfo(this.parser.parse(json) as JSONObject)
 
     override fun parseReq(json: String): Requirement<*, *> =
-            this.parseReq(this.parser.parse(json) as JSONObject)
+        this.parseReq(this.parser.parse(json) as JSONObject)
 
     override fun parseCommandHandler(input: String): Handler? =
-            resolveCommandHandler(input, this.typeResolver)
+        resolveCommandHandler(input, this.typeResolver)
 
     override fun parseArguments(input: String): Arguments? =
-            resolveArguments(input, this.typeResolver)
+        resolveArguments(input, this.typeResolver)
 
     override fun parseArgumentHandler(input: String): ArgumentHandler<*>? =
-            resolveArgumentHandler(input, this.typeResolver)
+        resolveArgumentHandler(input, this.typeResolver)
 
     companion object {
         const val ID_KEY = "id"

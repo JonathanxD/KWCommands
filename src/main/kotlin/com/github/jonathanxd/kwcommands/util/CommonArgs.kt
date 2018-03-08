@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,40 +27,45 @@
  */
 package com.github.jonathanxd.kwcommands.util
 
-import com.github.jonathanxd.iutils.`object`.Either
-import com.github.jonathanxd.iutils.kt.left
-import com.github.jonathanxd.iutils.kt.right
-import com.github.jonathanxd.kwcommands.argument.ArgumentType
 import com.github.jonathanxd.kwcommands.parser.*
 
 object EmptyPossibilitesFunc : Possibilities {
     override fun invoke(): List<Input> =
-            emptyList()
+        emptyList()
 }
 
 object MapFormatCheckParser : ArgumentParser<Input, Any?> {
-    override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any?> =
-            throw IllegalStateException("dummy")
+    override fun parse(
+        input: Input,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Any?> =
+        throw IllegalStateException("dummy")
 }
 
 object ListFormatCheckParser : ArgumentParser<Input, Any?> {
-    override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any?> =
-            throw IllegalStateException("dummy")
+    override fun parse(
+        input: Input,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Any?> =
+        throw IllegalStateException("dummy")
 }
 
 @Suppress("UNCHECKED_CAST")
 class EnumParser<T>(val type: Class<T>) : ArgumentParser<SingleInput, T> {
     private val consts = type.enumConstants as Array<Enum<*>>
 
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<T> =
-            (consts.firstOrNull { it.name == input.input } ?:
-                    consts.firstOrNull { it.name.equals(input.input, ignoreCase = true) }).let {
-                if (it == null)
-                    valueOrValidationFactory.invalid()
-                else
-                    valueOrValidationFactory.value(it as T)
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<T> =
+        (consts.firstOrNull { it.name == input.input }
+                ?: consts.firstOrNull { it.name.equals(input.input, ignoreCase = true) }).let {
+            if (it == null)
+                valueOrValidationFactory.invalid()
+            else
+                valueOrValidationFactory.value(it as T)
 
-            }
+        }
 
 }
 
@@ -69,22 +74,25 @@ class EnumPossibilities(val type: Class<*>) : Possibilities {
     private val consts = type.enumConstants as Array<Enum<*>>
     @Suppress("UNCHECKED_CAST")
     override fun invoke(): List<Input> =
-            consts.map { SingleInput(it.name) }
+        consts.map { SingleInput(it.name) }
 
 }
 
 @Suppress("UNCHECKED_CAST")
 fun enumPossibilities(type: Class<*>): List<Input> =
-        (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
+    (type.enumConstants as Array<Enum<*>>).map { SingleInput(it.name) }
 
 
 // Short
 val SHORT_DEFAULT_VALUE: Short = 0
 
 object ShortParser : ArgumentParser<SingleInput, Short> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Short> =
-            input.input.toShortOrNull()?.let { valueOrValidationFactory.value(it) }
-                    ?: valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Short> =
+        input.input.toShortOrNull()?.let { valueOrValidationFactory.value(it) }
+                ?: valueOrValidationFactory.invalid()
 
 }
 
@@ -94,11 +102,14 @@ object ShortPossibilities : Possibilities by EmptyPossibilitesFunc
 val CHAR_DEFAULT_VALUE: Char = 0.toChar()
 
 object CharParser : ArgumentParser<SingleInput, Char> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Char> =
-            when (input.input.length) {
-                1 -> valueOrValidationFactory.value(input.input[0])
-                else -> valueOrValidationFactory.invalid()
-            }
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Char> =
+        when (input.input.length) {
+            1 -> valueOrValidationFactory.value(input.input[0])
+            else -> valueOrValidationFactory.invalid()
+        }
 }
 
 
@@ -108,9 +119,12 @@ object CharPossibilities : Possibilities by EmptyPossibilitesFunc
 val BYTE_DEFAULT_VALUE: Byte = 0.toByte()
 
 object ByteParser : ArgumentParser<SingleInput, Byte> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Byte> =
-            input.input.toByteOrNull()?.let { valueOrValidationFactory.value(it) }
-                    ?: valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Byte> =
+        input.input.toByteOrNull()?.let { valueOrValidationFactory.value(it) }
+                ?: valueOrValidationFactory.invalid()
 
 }
 
@@ -120,9 +134,12 @@ object BytePossibilities : Possibilities by EmptyPossibilitesFunc
 val INT_DEFAULT_VALUE: Int = 0
 
 object IntParser : ArgumentParser<SingleInput, Int> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Int> =
-            input.input.toIntOrNull()?.let { valueOrValidationFactory.value(it) }
-                    ?: valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Int> =
+        input.input.toIntOrNull()?.let { valueOrValidationFactory.value(it) }
+                ?: valueOrValidationFactory.invalid()
 
 }
 
@@ -132,9 +149,12 @@ object IntPossibilities : Possibilities by EmptyPossibilitesFunc
 val FLOAT_DEFAULT_VALUE: Int = 0
 
 object FloatParser : ArgumentParser<SingleInput, Float> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Float> =
-            input.input.toFloatOrNull()?.let { valueOrValidationFactory.value(it) }
-                    ?: valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Float> =
+        input.input.toFloatOrNull()?.let { valueOrValidationFactory.value(it) }
+                ?: valueOrValidationFactory.invalid()
 }
 
 object FloatPossibilities : Possibilities by EmptyPossibilitesFunc
@@ -143,9 +163,12 @@ object FloatPossibilities : Possibilities by EmptyPossibilitesFunc
 val DOUBLE_DEFAULT_VALUE: Double = 0.0
 
 object DoubleParser : ArgumentParser<SingleInput, Double> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Double> =
-            input.input.toDoubleOrNull()?.let { valueOrValidationFactory.value(it) }
-                    ?: valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Double> =
+        input.input.toDoubleOrNull()?.let { valueOrValidationFactory.value(it) }
+                ?: valueOrValidationFactory.invalid()
 }
 
 
@@ -155,9 +178,12 @@ object DoublePossibilities : Possibilities by EmptyPossibilitesFunc
 val LONG_DEFAULT_VALUE: Long = 0L
 
 object LongParser : ArgumentParser<SingleInput, Long> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Long> =
-            input.input.toLongOrNull()?.let { valueOrValidationFactory.value(it) }
-                    ?: valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Long> =
+        input.input.toLongOrNull()?.let { valueOrValidationFactory.value(it) }
+                ?: valueOrValidationFactory.invalid()
 }
 
 object LongPossibilities : Possibilities by EmptyPossibilitesFunc
@@ -166,32 +192,38 @@ object LongPossibilities : Possibilities by EmptyPossibilitesFunc
 val BOOLEAN_DEFAULT_VALUE: Boolean = false
 
 object BooleanParser : ArgumentParser<SingleInput, Boolean> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Boolean> =
-            when (input.input) {
-                "true", "yes", "y", "valid" -> valueOrValidationFactory.value(true)
-                "false", "no", "n", "invalid" -> valueOrValidationFactory.value(false)
-                else -> valueOrValidationFactory.invalid()
-            }
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Boolean> =
+        when (input.input) {
+            "true", "yes", "y", "valid" -> valueOrValidationFactory.value(true)
+            "false", "no", "n", "invalid" -> valueOrValidationFactory.value(false)
+            else -> valueOrValidationFactory.invalid()
+        }
 }
 
 
 object BooleanPossibilities : Possibilities {
     override fun invoke(): List<Input> =
-            listOf(
-                    SingleInput("true"), SingleInput("yes"), SingleInput("y"), SingleInput("valid"),
-                    SingleInput("false"), SingleInput("no"), SingleInput("n"), SingleInput("invalid")
-            )
+        listOf(
+            SingleInput("true"), SingleInput("yes"), SingleInput("y"), SingleInput("valid"),
+            SingleInput("false"), SingleInput("no"), SingleInput("n"), SingleInput("invalid")
+        )
 }
 
 // String
 val STRING_DEFAULT_VALUE: String? = null
 
 class ExactStringParser(val string: String) : ArgumentParser<SingleInput, String> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<String> =
-            if (input.input == string)
-                valueOrValidationFactory.value(input.input)
-            else
-                valueOrValidationFactory.invalid()
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<String> =
+        if (input.input == string)
+            valueOrValidationFactory.value(input.input)
+        else
+            valueOrValidationFactory.invalid()
 }
 
 class ExactStringPossibilities(val str: String) : Possibilities {
@@ -200,8 +232,11 @@ class ExactStringPossibilities(val str: String) : Possibilities {
 
 
 object StringParser : ArgumentParser<SingleInput, String> {
-    override fun parse(input: SingleInput, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<String> =
-            valueOrValidationFactory.value(input.input)
+    override fun parse(
+        input: SingleInput,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<String> =
+        valueOrValidationFactory.value(input.input)
 }
 
 object StringPossibilities : Possibilities by EmptyPossibilitesFunc
@@ -209,8 +244,11 @@ object StringPossibilities : Possibilities by EmptyPossibilitesFunc
 // Any
 
 object AnyParser : ArgumentParser<Input, Any> {
-    override fun parse(input: Input, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<Any> =
-            valueOrValidationFactory.value(input.toPlain())
+    override fun parse(
+        input: Input,
+        valueOrValidationFactory: ValueOrValidationFactory
+    ): ValueOrValidation<Any> =
+        valueOrValidationFactory.value(input.toPlain())
 }
 
 object AnyPossibilities : Possibilities {

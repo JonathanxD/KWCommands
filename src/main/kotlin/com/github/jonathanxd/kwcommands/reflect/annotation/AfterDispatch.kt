@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -38,4 +38,4 @@ import kotlin.reflect.KClass
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION)
-annotation class AfterDispatch(val filter: Array<KClass<*>> = emptyArray())
+annotation class AfterDispatch(val filter: Array<KClass<*>> = [])

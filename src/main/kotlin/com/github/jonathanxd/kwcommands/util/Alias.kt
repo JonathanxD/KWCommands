@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -29,15 +29,20 @@ package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.kwcommands.parser.*
 
-inline fun <I : Input, T> argumentParser(crossinline func:
-                                         (value: I, validationFactory: ValueOrValidationFactory) -> ValueOrValidation<T>) =
-        object : ArgumentParser<I, T> {
-            override fun parse(input: I, valueOrValidationFactory: ValueOrValidationFactory): ValueOrValidation<T> =
-                    func(input, valueOrValidationFactory)
-        }
+inline fun <I : Input, T> argumentParser(
+    crossinline func:
+        (value: I, validationFactory: ValueOrValidationFactory) -> ValueOrValidation<T>
+) =
+    object : ArgumentParser<I, T> {
+        override fun parse(
+            input: I,
+            valueOrValidationFactory: ValueOrValidationFactory
+        ): ValueOrValidation<T> =
+            func(input, valueOrValidationFactory)
+    }
 
 inline fun possibilities(crossinline func: () -> List<Input>) =
-        object : Possibilities {
-            override fun invoke(): List<Input> =
-                    func()
-        }
+    object : Possibilities {
+        override fun invoke(): List<Input> =
+            func()
+    }

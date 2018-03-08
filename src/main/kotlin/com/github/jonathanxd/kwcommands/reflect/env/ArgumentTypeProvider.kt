@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -59,22 +59,24 @@ class ConcreteProvider(val argumentType: ArgumentType<*, *>) : ArgumentTypeProvi
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> provide(type: TypeInfo<T>, storage: ArgumentTypeStorage): ArgumentType<*, T>? =
-            if (this.argumentType.type == type || this.argumentType.type.isCompatible(type))
-                this.argumentType as? ArgumentType<*, T>
-            else null
+        if (this.argumentType.type == type || this.argumentType.type.isCompatible(type))
+            this.argumentType as? ArgumentType<*, T>
+        else null
 
 }
 
 fun <T> TypeInfo<T>.isCompatible(type: TypeInfo<*>) =
-        this.classLiteral == type.classLiteral // Avoid resolution
-                && ((type.typeParameters.isEmpty() && this.typeParameters.all { it == TypeInfo.of(Any::class.java) })
-                || (this.typeParameters.isEmpty() && type.typeParameters.all { it == TypeInfo.of(Any::class.java) }))
+    this.classLiteral == type.classLiteral // Avoid resolution
+            && ((type.typeParameters.isEmpty() && this.typeParameters.all { it == TypeInfo.of(Any::class.java) })
+            || (this.typeParameters.isEmpty() && type.typeParameters.all { it == TypeInfo.of(Any::class.java) }))
 
 /**
  * Cast [ArgumentType] to [ArgumentType] of [type] [T].
  */
 @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
 inline fun <T> ArgumentType<*, *>.cast(type: TypeInfo<T>): ArgumentType<*, T> {
-    require(type.isAssignableFrom(this.type), { "Expression 'type.isAssignableFrom(this.type)' (type = $type, this.type = ${this.type}) returns false!" })
+    require(
+        type.isAssignableFrom(this.type),
+        { "Expression 'type.isAssignableFrom(this.type)' (type = $type, this.type = ${this.type}) returns false!" })
     return this as ArgumentType<*, T>
 }

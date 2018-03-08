@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -28,7 +28,6 @@
 package com.github.jonathanxd.kwcommands.command
 
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.Arguments
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -47,15 +46,17 @@ import java.util.*
  * @property requiredInfo Identifications of required information for this command work.
  * @property alias Aliases to this command.
  */
-data class Command(val parent: Command?,
-                   val order: Int,
-                   val name: String,
-                   val alias: List<String>,
-                   val description: TextComponent,
-                   val handler: Handler?,
-                   val arguments: Arguments,
-                   val requirements: List<Requirement<*, *>>,
-                   val requiredInfo: Set<RequiredInformation>) : Comparable<Command> {
+data class Command(
+    val parent: Command?,
+    val order: Int,
+    val name: String,
+    val alias: List<String>,
+    val description: TextComponent,
+    val handler: Handler?,
+    val arguments: Arguments,
+    val requirements: List<Requirement<*, *>>,
+    val requiredInfo: Set<RequiredInformation>
+) : Comparable<Command> {
     /**
      * Sub commands
      */
@@ -104,13 +105,13 @@ data class Command(val parent: Command?,
      * Remove all commands with same name as [command] from sub-command list.
      */
     fun removeSubCommand(command: Command): Boolean =
-            this.subCommands_.removeAll { it.name == command.name }
+        this.subCommands_.removeAll { it.name == command.name }
 
     /**
      * Remove all commands with name [subCommandName].
      */
     fun removeSubCommand(subCommandName: String): Boolean =
-            this.subCommands_.removeAll { it.name == subCommandName }
+        this.subCommands_.removeAll { it.name == subCommandName }
 
     /**
      * Gets the sub-command with specified [name].
@@ -132,7 +133,8 @@ data class Command(val parent: Command?,
     }
 
     override fun toString(): String {
-        return "Command(parent: ${this.parent?.name ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: [${arguments.all.joinToString { "${it.name}: ${it.argumentType}" }}], requirements: [${requirements.joinToString { "${it.subject}: ${it.required}" }}], requiredInformation: [${requiredInfo.joinToString { it.id.toString() }}], subCommands: {${subCommands.joinToString { it.name }}})"
+        return "Command(parent: ${this.parent?.name
+                ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: [${arguments.all.joinToString { "${it.name}: ${it.argumentType}" }}], requirements: [${requirements.joinToString { "${it.subject}: ${it.required}" }}], requiredInformation: [${requiredInfo.joinToString { it.id.toString() }}], subCommands: {${subCommands.joinToString { it.name }}})"
     }
 
     override fun compareTo(other: Command): Int {

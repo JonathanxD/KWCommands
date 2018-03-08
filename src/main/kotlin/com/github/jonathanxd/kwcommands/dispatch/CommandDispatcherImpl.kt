@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -31,9 +31,9 @@ import com.github.jonathanxd.iutils.option.Options
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.Container
+import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.interceptor.CommandInterceptor
 import com.github.jonathanxd.kwcommands.manager.CommandManager
-import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.processor.*
 import com.github.jonathanxd.kwcommands.requirement.checkRequirements
 import com.github.jonathanxd.kwcommands.util.MissingInformation
@@ -47,19 +47,21 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
     private val dispatchHandlers = mutableSetOf<DispatchHandler>()
 
     override fun registerInterceptor(commandInterceptor: CommandInterceptor): Boolean =
-            this.interceptors.add(commandInterceptor)
+        this.interceptors.add(commandInterceptor)
 
     override fun unregisterInterceptor(commandInterceptor: CommandInterceptor): Boolean =
-            this.interceptors.remove(commandInterceptor)
+        this.interceptors.remove(commandInterceptor)
 
     override fun registerDispatchHandler(dispatchHandler: DispatchHandler): Boolean =
-            this.dispatchHandlers.add(dispatchHandler)
+        this.dispatchHandlers.add(dispatchHandler)
 
     override fun unregisterDispatchHandler(dispatchHandler: DispatchHandler): Boolean =
-            this.dispatchHandlers.remove(dispatchHandler)
+        this.dispatchHandlers.remove(dispatchHandler)
 
-    override fun dispatch(commands: List<CommandContainer>,
-                          informationProviders: InformationProviders): List<CommandResult> {
+    override fun dispatch(
+        commands: List<CommandContainer>,
+        informationProviders: InformationProviders
+    ): List<CommandResult> {
         val results = mutableListOf<CommandResult>()
         val perCommandResults = mutableListOf<CommandResult>()
 
@@ -84,21 +86,24 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                 }
 
                 val commandReq =
-                        command.command.requirements.checkRequirements(it, informationProviders)
+                    command.command.requirements.checkRequirements(it, informationProviders)
 
                 val commandInfoReq =
-                        command.command.requiredInfo.checkRequiredInfo(informationProviders)
+                    command.command.requiredInfo.checkRequiredInfo(informationProviders)
 
                 if (commandReq.isNotEmpty()) {
                     perCommandResults.add(UnsatisfiedRequirementsResult(commandReq, null, it))
                 }
 
                 if (commandInfoReq.isNotEmpty()) {
-                    perCommandResults.add(MissingInformationResult(
+                    perCommandResults.add(
+                        MissingInformationResult(
                             missingInformationList = commandInfoReq,
                             requester = command.command,
                             rootContainer = null,
-                            container = it))
+                            container = it
+                        )
+                    )
                 }
 
                 var anyArgumentReqMissing = false
@@ -107,7 +112,13 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                     argWithReq.forEach { (arg, req) ->
                         if (req.isNotEmpty()) {
                             anyArgumentReqMissing = true
-                            perCommandResults.add(UnsatisfiedRequirementsResult(req, rootContainer = it, container = arg))
+                            perCommandResults.add(
+                                UnsatisfiedRequirementsResult(
+                                    req,
+                                    rootContainer = it,
+                                    container = arg
+                                )
+                            )
                         }
                     }
 
@@ -115,11 +126,14 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                         if (infoReq.isNotEmpty()) {
                             anyArgumentReqMissing = true
 
-                            perCommandResults.add(MissingInformationResult(
+                            perCommandResults.add(
+                                MissingInformationResult(
                                     missingInformationList = infoReq,
                                     requester = arg,
                                     rootContainer = it,
-                                    container = arg))
+                                    container = arg
+                                )
+                            )
                         }
                     }
 
@@ -130,11 +144,13 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
                         @Suppress("UNCHECKED_CAST")
                         (arg as ArgumentContainer<Any?>).handler?.let { handler ->
                             val resultHandler = ParticularResultHandler(
-                                    root = it,
-                                    current = arg,
-                                    targetList = perCommandResults)
+                                root = it,
+                                current = arg,
+                                targetList = perCommandResults
+                            )
 
-                            val handle = handler.handle(arg, it, informationProviders, resultHandler)
+                            val handle =
+                                handler.handle(arg, it, informationProviders, resultHandler)
 
                             if (resultHandler.shouldCancel())
                                 shouldExecuteCommand = false
@@ -145,9 +161,10 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
 
                     if (shouldExecuteCommand) {
                         val resultHandler = ParticularResultHandler(
-                                root = null,
-                                current = it,
-                                targetList = perCommandResults)
+                            root = null,
+                            current = it,
+                            targetList = perCommandResults
+                        )
 
                         it.handler?.let { handler ->
                             val handle = handler.handle(it, informationProviders, resultHandler)
@@ -178,22 +195,32 @@ class CommandDispatcherImpl(override val commandManager: CommandManager) : Comma
         return results
     }
 
-    private class ParticularResultHandler(val root: Container?,
-                                          val current: Container,
-                                          val targetList: MutableList<CommandResult>) : ResultHandler {
+    private class ParticularResultHandler(
+        val root: Container?,
+        val current: Container,
+        val targetList: MutableList<CommandResult>
+    ) : ResultHandler {
 
         private var cancel = false
 
-        override fun informationMissing(missingInformationList: List<MissingInformation>, requester: Any, cancel: Boolean) {
-            this.targetList += MissingInformationResult(missingInformationList, requester, root, current)
+        override fun informationMissing(
+            missingInformationList: List<MissingInformation>,
+            requester: Any,
+            cancel: Boolean
+        ) {
+            this.targetList += MissingInformationResult(
+                missingInformationList,
+                requester,
+                root,
+                current
+            )
 
             if (cancel)
                 this.cancel = true
         }
 
         override fun result(value: Any?) {
-            if (value !is Unit)
-                this.targetList += ValueResult(value, root, current)
+            this.targetList += ValueResult(value, root, current)
         }
 
         override fun shouldCancel(): Boolean {

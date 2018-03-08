@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -43,12 +43,25 @@ const val LIST_CLOSE = ']'
 const val OPEN_TAG = '"'
 const val OPEN_TAG2 = '\''
 
+private val EMPTY_CHAR_ARRAY = charArrayOf()
+
 fun String.escaped() = this.escape('\\')
+
+fun String.isName() = this.isArgumentName() || this.isShortName()
+
 fun String.isArgumentName() = this.startsWith("--")
 fun String.getArgumentName() = this.substring(2) // "--".length
 fun String.getArgumentNameOrNull() =
-        if (!this.isArgumentName()) null
-        else this.substring(2) // "--".length
+    if (!this.isArgumentName()) null
+    else this.substring(2) // "--".length
+
+fun String.isShortName() = this.startsWith("-") && !this.startsWith("--")
+fun String.getShortNameOrNull() =
+    if (!this.isShortName()) null
+    else this.substring(1)
+
+fun String.getShortNames() =
+    this.getShortNameOrNull()?.toCharArray() ?: EMPTY_CHAR_ARRAY
 
 /**
  * Escape character
@@ -81,12 +94,12 @@ fun String.escape(escape: Char): String {
  * `Hello "Beautiful \"World\""`
  */
 fun Iterable<String>.toCommandString(): String =
-        this.joinToString(" ") {
-            val r = it.replace("$OPEN_TAG", "$ESCAPE$OPEN_TAG")
-                    .replace("$OPEN_TAG2", "$ESCAPE$OPEN_TAG2")
-            if (r.contains(" ")) "$OPEN_TAG$r$OPEN_TAG"
-            else r
-        }
+    this.joinToString(" ") {
+        val r = it.replace("$OPEN_TAG", "$ESCAPE$OPEN_TAG")
+            .replace("$OPEN_TAG2", "$ESCAPE$OPEN_TAG2")
+        if (r.contains(" ")) "$OPEN_TAG$r$OPEN_TAG"
+        else r
+    }
 
 /**
  * Creates a list from a command string. Example. for the following input string:
@@ -116,10 +129,12 @@ fun Iterable<String>.toCommandString(): String =
  * Used in older versions of KWCommands, where `List<String>` was the input command.
  */
 @JvmOverloads
-fun String.toCommandStringList(escape: Char = '\\',
-                               separator: Char = ' ',
-                               openCloseChars: List<Char> = listOf('"', '\''),
-                               mode: Mode = Mode.TOGGLE): List<String> {
+fun String.toCommandStringList(
+    escape: Char = '\\',
+    separator: Char = ' ',
+    openCloseChars: List<Char> = listOf('"', '\''),
+    mode: Mode = Mode.TOGGLE
+): List<String> {
 
     val strBuilder = StringBuilder()
     val list = mutableListOf<String>()
@@ -186,48 +201,65 @@ enum class Mode {
 
 const val EMPTY_STR = ""
 
-private fun SourcedCharIterator.parseMapOrList(ch: Char,
-                                               escape: Char = '\\',
-                                               defineChar: List<Char> = listOf(':', '='),
-                                               separators: List<Char> = listOf(','),
-                                               openCloseChars: List<Char> = listOf('"', '\''))
+private fun SourcedCharIterator.parseMapOrList(
+    ch: Char,
+    escape: Char = '\\',
+    defineChar: List<Char> = listOf(':', '='),
+    separators: List<Char> = listOf(','),
+    openCloseChars: List<Char> = listOf('"', '\'')
+)
         : Either<InputParseFail, out Input> =
 
-        if (ch == LIST_OPEN)
-            this.parseListInputUncheckedStart(escape, defineChar, separators, openCloseChars)
-        else
-            this.parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
+    if (ch == LIST_OPEN)
+        this.parseListInputUncheckedStart(escape, defineChar, separators, openCloseChars)
+    else
+        this.parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
 
-private fun SourcedCharIterator.parseMapListOrSingle(ch: Char,
-                                                     escape: Char = '\\',
-                                                     defineChar: List<Char> = listOf(':', '='),
-                                                     separators: List<Char> = listOf(','),
-                                                     openCloseChars: List<Char> = listOf('"', '\''))
+private fun SourcedCharIterator.parseMapListOrSingle(
+    ch: Char,
+    escape: Char = '\\',
+    defineChar: List<Char> = listOf(':', '='),
+    separators: List<Char> = listOf(','),
+    openCloseChars: List<Char> = listOf('"', '\'')
+)
         : Either<InputParseFail, out Input> =
 
-        when (ch) {
-            LIST_OPEN -> this.parseListInputUncheckedStart(escape, defineChar, separators, openCloseChars)
-            MAP_OPEN -> this.parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
-            else -> this.callPrevious().parseSingleInput(escape, defineChar, separators, openCloseChars)
-        }
+    when (ch) {
+        LIST_OPEN -> this.parseListInputUncheckedStart(
+            escape,
+            defineChar,
+            separators,
+            openCloseChars
+        )
+        MAP_OPEN -> this.parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
+        else -> this.callPrevious().parseSingleInput(escape, defineChar, separators, openCloseChars)
+    }
 
 
 fun SourcedCharIterator.callPrevious(): SourcedCharIterator = this.apply { previous() }
 
 @JvmOverloads
-fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
-                                         separators: List<Char> = listOf(' '),
-                                         openCloseChars: List<Char> = listOf('"', '\''),
-                                         mapDefineChar: List<Char> = listOf(':', '='),
-                                         listMapSeparators: List<Char> = listOf(','),
-                                         parseData: Boolean = false): Either<InputParseFail, out Input> {
+fun SourcedCharIterator.parseSingleInput(
+    escape: Char = '\\',
+    separators: List<Char> = listOf(' '),
+    openCloseChars: List<Char> = listOf('"', '\''),
+    mapDefineChar: List<Char> = listOf(':', '='),
+    listMapSeparators: List<Char> = listOf(','),
+    parseData: Boolean = false
+): Either<InputParseFail, out Input> {
 
     this.jumpBlankSpace()
 
     if (!this.hasNext())
-        return left(NoMoreElementsInputParseFail(ListInput(emptyList(), this.sourceString,
-                this.sourceIndex,
-                this.sourceIndex)))
+        return left(
+            NoMoreElementsInputParseFail(
+                ListInput(
+                    emptyList(), this.sourceString,
+                    this.sourceIndex,
+                    this.sourceIndex
+                )
+            )
+        )
 
     val strBuilder = InputBuilder(this.sourceString)
     var lastIsEscape = false
@@ -267,8 +299,10 @@ fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
                 if (strBuilder.isNotEmpty())
                     return left(InputMalformationParseFail(strBuilder.build(this.sourceIndex - 1)))
 
-                val parse = this.parseMapOrList(it, escape, mapDefineChar,
-                        listMapSeparators, openCloseChars)
+                val parse = this.parseMapOrList(
+                    it, escape, mapDefineChar,
+                    listMapSeparators, openCloseChars
+                )
 
                 if (parse.isLeft)
                     return left(parse.left)
@@ -309,28 +343,35 @@ fun SourcedCharIterator.parseSingleInput(escape: Char = '\\',
  *
  */
 @JvmOverloads
-fun SourcedCharIterator.parseListInput(escape: Char = '\\',
-                                       mapDefineChar: List<Char> = listOf(':', '='),
-                                       separators: List<Char> = listOf(','),
-                                       openCloseChars: List<Char> = listOf('"', '\''))
+fun SourcedCharIterator.parseListInput(
+    escape: Char = '\\',
+    mapDefineChar: List<Char> = listOf(':', '='),
+    separators: List<Char> = listOf(','),
+    openCloseChars: List<Char> = listOf('"', '\'')
+)
         : Either<InputParseFail, ListInput> {
     this.jumpBlankSpace()
 
     this.next().also {
         if (it != LIST_OPEN)
-            return left(TokenExpectedFail(listOf(LIST_OPEN),
+            return left(
+                TokenExpectedFail(
+                    listOf(LIST_OPEN),
                     it.toString(),
                     EmptyInput(this.sourceString)
-            ))
+                )
+            )
     }
 
     return parseListInputUncheckedStart(escape, mapDefineChar, separators, openCloseChars)
 }
 
-private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\',
-                                                             mapDefineChar: List<Char> = listOf(':', '='),
-                                                             separators: List<Char> = listOf(','),
-                                                             openCloseChars: List<Char> = listOf('"', '\''))
+private fun SourcedCharIterator.parseListInputUncheckedStart(
+    escape: Char = '\\',
+    mapDefineChar: List<Char> = listOf(':', '='),
+    separators: List<Char> = listOf(','),
+    openCloseChars: List<Char> = listOf('"', '\'')
+)
         : Either<InputParseFail, ListInput> {
 
     val list = mutableListOf<Input>()
@@ -338,23 +379,29 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
     var index = 0
 
     fun createListInput() =
-            ListInput(list, this.sourceString, start, this.sourceIndex)
+        ListInput(list, this.sourceString, start, this.sourceIndex)
 
     if (!this.hasNext())
-        return left(TokenOrElementExpectedFail(listOf(LIST_CLOSE),
+        return left(
+            TokenOrElementExpectedFail(
+                listOf(LIST_CLOSE),
                 "",
                 createListInput()
-        ))
+            )
+        )
 
     while (this.hasNext()) {
 
         this.jumpBlankSpace()
 
         if (!this.hasNext() && list.isEmpty())
-            return left(TokenOrElementExpectedFail(listOf(LIST_CLOSE),
+            return left(
+                TokenOrElementExpectedFail(
+                    listOf(LIST_CLOSE),
                     "",
                     createListInput()
-            ))
+                )
+            )
 
         if (this.hasNext()) {
             val next = this.next()
@@ -370,12 +417,14 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
         if (!this.hasNext())
             return left(NextElementNotFoundFail(createListInput()))
 
-        val elem = this.parseSingleInput(escape,
-                listOf(' ') + separators + LIST_CLOSE,
-                openCloseChars,
-                mapDefineChar,
-                separators,
-                true)
+        val elem = this.parseSingleInput(
+            escape,
+            listOf(' ') + separators + LIST_CLOSE,
+            openCloseChars,
+            mapDefineChar,
+            separators,
+            true
+        )
 
         if (elem.isLeft) {
             list += (elem.left.root ?: elem.left.input)
@@ -391,16 +440,21 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
         val isSeparator = define.isPresent && separators.any { it == define.value }
 
         if (!define.isPresent
-                || (!isSeparator && define.value != LIST_CLOSE))
-            return left(TokenExpectedFail(
+                || (!isSeparator && define.value != LIST_CLOSE)
+        )
+            return left(
+                TokenExpectedFail(
                     separators + LIST_CLOSE,
                     define.toOptString().orElse(EMPTY_STR),
                     createListInput()
-            ))
+                )
+            )
 
         if (isSeparator && !this.hasNext()/* && argumentType.hasType(index + 1)*/) {
             list += EmptyInput(this.sourceString)
-            return left(NextElementNotFoundFail(createListInput()).also { it.root = createListInput() })
+            return left(NextElementNotFoundFail(createListInput()).also {
+                it.root = createListInput()
+            })
         }
 
         if (define.isPresent && define.value == LIST_CLOSE)
@@ -435,27 +489,35 @@ private fun SourcedCharIterator.parseListInputUncheckedStart(escape: Char = '\\'
  *
  */
 @JvmOverloads
-fun SourcedCharIterator.parseMapInput(escape: Char = '\\',
-                                      defineChar: List<Char> = listOf(':', '='),
-                                      separators: List<Char> = listOf(','),
-                                      openCloseChars: List<Char> = listOf('"', '\''))
+fun SourcedCharIterator.parseMapInput(
+    escape: Char = '\\',
+    defineChar: List<Char> = listOf(':', '='),
+    separators: List<Char> = listOf(','),
+    openCloseChars: List<Char> = listOf('"', '\'')
+)
         : Either<InputParseFail, MapInput> {
     this.jumpBlankSpace()
 
     this.next().also {
         if (it != MAP_OPEN)
-            return left(TokenExpectedFail(listOf(MAP_OPEN),
+            return left(
+                TokenExpectedFail(
+                    listOf(MAP_OPEN),
                     it.toString(),
-                    EmptyInput(this.sourceString)))
+                    EmptyInput(this.sourceString)
+                )
+            )
     }
 
     return parseMapInputUncheckedStart(escape, defineChar, separators, openCloseChars)
 }
 
-private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
-                                                            defineChar: List<Char> = listOf(':', '='),
-                                                            separators: List<Char> = listOf(','),
-                                                            openCloseChars: List<Char> = listOf('"', '\''))
+private fun SourcedCharIterator.parseMapInputUncheckedStart(
+    escape: Char = '\\',
+    defineChar: List<Char> = listOf(':', '='),
+    separators: List<Char> = listOf(','),
+    openCloseChars: List<Char> = listOf('"', '\'')
+)
         : Either<InputParseFail, MapInput> {
 
     val map = mutableListOf<Pair<Input, Input>>()
@@ -463,26 +525,30 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
     var index = 0
 
     fun createMapInput(): MapInput =
-            MapInput(map, this.sourceString, start, this.sourceIndex)
+        MapInput(map, this.sourceString, start, this.sourceIndex)
 
     this.jumpBlankSpace()
 
     if (!this.hasNext())
-        return left(TokenOrElementExpectedFail(
+        return left(
+            TokenOrElementExpectedFail(
                 listOf(MAP_CLOSE),
                 "",
                 createMapInput()
-        ))
+            )
+        )
 
     while (this.hasNext()) {
         this.jumpBlankSpace()
 
         if (!this.hasNext() && map.isEmpty()) {
-            return left(TokenOrElementExpectedFail(
+            return left(
+                TokenOrElementExpectedFail(
                     listOf(MAP_CLOSE),
                     "",
                     createMapInput()
-            ))
+                )
+            )
         }
 
 
@@ -502,12 +568,14 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
             return left(NextElementNotFoundFail(createMapInput()))
         }
 
-        val k = this.parseSingleInput(escape,
-                listOf(' ') + defineChar,
-                openCloseChars,
-                defineChar,
-                separators,
-                true)
+        val k = this.parseSingleInput(
+            escape,
+            listOf(' ') + defineChar,
+            openCloseChars,
+            defineChar,
+            separators,
+            true
+        )
 
         if (k.isLeft) {
             map += (k.left.root ?: k.left.input) to EmptyInput(this.sourceString)
@@ -519,11 +587,13 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
         val define = this.tryNext()
 
         if (!define.isPresent || defineChar.none { it == define.value })
-            return left(TokenExpectedFail(
+            return left(
+                TokenExpectedFail(
                     defineChar,
                     define.toOptString().orElse(EMPTY_STR),
                     createMapInput()
-            ))
+                )
+            )
 
         //val valueType = argumentType.getMapValueType(index)
 
@@ -534,12 +604,14 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
             return left(NextElementNotFoundFail(createMapInput()))
         }
 
-        val v = this.parseSingleInput(escape,
-                listOf(' ') + separators + MAP_CLOSE,
-                openCloseChars,
-                defineChar,
-                separators,
-                true)
+        val v = this.parseSingleInput(
+            escape,
+            listOf(' ') + separators + MAP_CLOSE,
+            openCloseChars,
+            defineChar,
+            separators,
+            true
+        )
 
         if (v.isLeft) {
             map += k.right to (v.left.root ?: v.left.input)
@@ -554,16 +626,21 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
         val isSeparator = defineV.isPresent && separators.any { it == defineV.value }
 
         if (!defineV.isPresent
-                || (!isSeparator && defineV.value != MAP_CLOSE))
-            return left(TokenExpectedFail(
+                || (!isSeparator && defineV.value != MAP_CLOSE)
+        )
+            return left(
+                TokenExpectedFail(
                     separators + MAP_CLOSE,
                     defineV.toOptString().orElse(EMPTY_STR),
                     createMapInput()
-            ))
+                )
+            )
 
         if (isSeparator && !this.hasNext()/* && argumentType.hasType(index + 1)*/) {
             map += EmptyInput(this.sourceString) to EmptyInput(this.sourceString)
-            return left(NextElementNotFoundFail(createMapInput()).also { it.root = createMapInput() })
+            return left(NextElementNotFoundFail(createMapInput()).also {
+                it.root = createMapInput()
+            })
         }
 
         if (defineV.isPresent && defineV.value == MAP_CLOSE)
@@ -576,11 +653,11 @@ private fun SourcedCharIterator.parseMapInputUncheckedStart(escape: Char = '\\',
 }
 
 private fun OptChar.toOptString(): OptObject<String> =
-        this.flatMapTo({ some(it.toString()) }, { none() })
+    this.flatMapTo({ some(it.toString()) }, { none() })
 
 private fun SourcedCharIterator.tryNext(): OptChar =
-        if (this.hasNext()) some(this.next())
-        else noneChar()
+    if (this.hasNext()) some(this.next())
+    else noneChar()
 
 fun SourcedCharIterator.jumpBlankSpace() {
     while (this.hasNext()) {
@@ -627,10 +704,12 @@ class InputBuilder(val source: String) {
             throw IllegalStateException("Start not initialized")
 
         val str = builder.toString()
-        val input = SingleInput(str,
-                this.source,
-                start,
-                end - blankSpace)
+        val input = SingleInput(
+            str,
+            this.source,
+            start,
+            end - blankSpace
+        )
         builder.setLength(0)
         blankSpace = 0
         insideOC = false
@@ -647,27 +726,33 @@ abstract class InputParseFail(val input: Input) {
     var root: Input? = null
 
     override fun toString(): String =
-            "${this::class.java.simpleName}[input=$input]"
+        "${this::class.java.simpleName}[input=$input]"
 }
 
-class InvalidInputForArgumentTypeFail(val validation: Validation,
-                                      input: Input) : InputParseFail(input) {
+class InvalidInputForArgumentTypeFail(
+    val validation: Validation,
+    input: Input
+) : InputParseFail(input) {
     override fun toString(): String =
-            "InvalidInputForArgumentTypeFail[validation=$validation, input=$input]"
+        "InvalidInputForArgumentTypeFail[validation=$validation, input=$input]"
 }
 
 class InputMalformationParseFail(input: Input) : InputParseFail(input)
 class NoMoreElementsInputParseFail(input: Input) : InputParseFail(input)
 
-class TokenExpectedFail(val tokens: List<Char>,
-                        val currentToken: String,
-                        input: Input) : InputParseFail(input)
+class TokenExpectedFail(
+    val tokens: List<Char>,
+    val currentToken: String,
+    input: Input
+) : InputParseFail(input)
 
-class TokenOrElementExpectedFail(val tokens: List<Char>,
-                                 val currentToken: String,
-                                 input: Input) : InputParseFail(input) {
+class TokenOrElementExpectedFail(
+    val tokens: List<Char>,
+    val currentToken: String,
+    input: Input
+) : InputParseFail(input) {
     override fun toString(): String =
-            "InvalidInputForArgumentTypeFail[tokens=$tokens, currentToken=$currentToken, input=$input]"
+        "InvalidInputForArgumentTypeFail[tokens=$tokens, currentToken=$currentToken, input=$input]"
 }
 
 /**

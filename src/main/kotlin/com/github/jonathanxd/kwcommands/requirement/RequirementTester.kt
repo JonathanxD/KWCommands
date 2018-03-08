@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -29,7 +29,6 @@ package com.github.jonathanxd.kwcommands.requirement
 
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.kwcommands.information.Information
 
 /**
  * A [RequirementTester] tests a subject against a [Requirement].

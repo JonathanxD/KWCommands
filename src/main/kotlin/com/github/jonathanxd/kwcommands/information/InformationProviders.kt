@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,8 +27,8 @@
  */
 package com.github.jonathanxd.kwcommands.information
 
-import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.CommandParser
@@ -36,11 +36,13 @@ import com.github.jonathanxd.kwcommands.parser.CommandParser
 @JvmField
 val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
 @JvmField
-val INFORMATION_PROVIDERS_ID = Information.Id(typeInfo<InformationProviders>(), arrayOf("information_providers"))
+val INFORMATION_PROVIDERS_ID =
+    Information.Id(typeInfo<InformationProviders>(), arrayOf("information_providers"))
 @JvmField
 val COMMAND_PARSER_ID = Information.Id(typeInfo<CommandParser>(), arrayOf("command_parser"))
 @JvmField
-val COMMAND_DISPATCHER_ID = Information.Id(typeInfo<CommandDispatcher>(), arrayOf("command_dispatcher"))
+val COMMAND_DISPATCHER_ID =
+    Information.Id(typeInfo<CommandDispatcher>(), arrayOf("command_dispatcher"))
 
 /**
  * Register and provide information.
@@ -60,9 +62,11 @@ interface InformationProviders {
     /**
      * Register recommended information.
      */
-    fun registerRecommendations(manager: CommandManager?,
-                                parser: CommandParser?,
-                                dispatcher: CommandDispatcher?) {
+    fun registerRecommendations(
+        manager: CommandManager?,
+        parser: CommandParser?,
+        dispatcher: CommandDispatcher?
+    ) {
         manager?.let {
             this.registerInformation(COMMAND_MANAGER_ID, it, "Recommended manager")
         }
@@ -79,7 +83,11 @@ interface InformationProviders {
     /**
      * Register a [static information][Information] with [id] and [description] with [value].
      */
-    fun <T> registerInformation(id: Information.Id<T>, value: T, description: String? = null): Boolean
+    fun <T> registerInformation(
+        id: Information.Id<T>,
+        value: T,
+        description: String? = null
+    ): Boolean
 
     /**
      * Register a [static information][information].
@@ -117,7 +125,7 @@ interface InformationProviders {
      * @return Found information or `null` if information cannot be found.
      */
     fun <T> find(type: TypeInfo<out T>, tags: Array<out String>): Information<T>? =
-            this.find(type, tags, useProviders = true)
+        this.find(type, tags, useProviders = true)
 
     /**
      * Find a information by [type] and [tags], this method will first lookup for `static information`, if no
@@ -130,21 +138,29 @@ interface InformationProviders {
      *
      * @return Found information or `null` if information cannot be found.
      */
-    fun <T> find(type: TypeInfo<out T>, tags: Array<out String>, useProviders: Boolean = true): Information<T>?
+    fun <T> find(
+        type: TypeInfo<out T>,
+        tags: Array<out String>,
+        useProviders: Boolean = true
+    ): Information<T>?
 
     /**
      * Same as [find], but with erased [type].
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> findErased(type: TypeInfo<*>, tags: Array<out String>): Information<T>? =
-            this.find(type as TypeInfo<out T>, tags, useProviders = true)
+        this.find(type as TypeInfo<out T>, tags, useProviders = true)
 
     /**
      * Same as [find], but with erased [type].
      */
     @Suppress("UNCHECKED_CAST")
-    fun <T> findErased(type: TypeInfo<*>, tags: Array<out String>, useProviders: Boolean = true): Information<T>? =
-            this.find(type as TypeInfo<out T>, tags, useProviders)
+    fun <T> findErased(
+        type: TypeInfo<*>,
+        tags: Array<out String>,
+        useProviders: Boolean = true
+    ): Information<T>? =
+        this.find(type as TypeInfo<out T>, tags, useProviders)
 
     /**
      * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
@@ -153,13 +169,13 @@ interface InformationProviders {
      * lead to cast exception.
      */
     fun <T> findOrEmpty(type: TypeInfo<out T>, args: Array<out String>): Information<T> =
-            this.find(type, args, useProviders = true) ?: Information.empty()
+        this.find(type, args, useProviders = true) ?: Information.empty()
 
     /**
      * Same as [findOrEmpty] but with erased [type]
      */
     fun <T> findErasedOrEmpty(type: TypeInfo<*>, args: Array<out String>): Information<T> =
-            this.findErased(type, args) ?: Information.empty()
+        this.findErased(type, args) ?: Information.empty()
 
     /**
      * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
@@ -167,14 +183,22 @@ interface InformationProviders {
      * Make sure to check if returned information [Information.isNotEmpty], getting the value before checking it may
      * lead to cast exception.
      */
-    fun <T> findOrEmpty(type: TypeInfo<out T>, args: Array<out String>, useProviders: Boolean = true): Information<T> =
-            this.find(type, args, useProviders) ?: Information.empty()
+    fun <T> findOrEmpty(
+        type: TypeInfo<out T>,
+        args: Array<out String>,
+        useProviders: Boolean = true
+    ): Information<T> =
+        this.find(type, args, useProviders) ?: Information.empty()
 
     /**
      * Same as [findOrEmpty] but with erased [type]
      */
-    fun <T> findErasedOrEmpty(type: TypeInfo<*>, args: Array<out String>, useProviders: Boolean = true): Information<T> =
-            this.findErased(type, args, useProviders) ?: Information.empty()
+    fun <T> findErasedOrEmpty(
+        type: TypeInfo<*>,
+        args: Array<out String>,
+        useProviders: Boolean = true
+    ): Information<T> =
+        this.findErased(type, args, useProviders) ?: Information.empty()
 
     /**
      * Creates a safe copy of this manager, modifications on the copy does not affect this instance.
@@ -196,7 +220,7 @@ interface InformationProviders {
      * @return Found information or `null` if information cannot be found.
      */
     fun <T> find(id: Information.Id<T>, useProviders: Boolean = true): Information<T>? =
-            this.find(id.type, id.tags, useProviders)
+        this.find(id.type, id.tags, useProviders)
 
 
     /**
@@ -213,21 +237,21 @@ interface InformationProviders {
      * @return Found information or `null` if information cannot be found.
      */
     fun <T> find(id: Information.Id<T>): Information<T>? =
-            this.find(id.type, id.tags, true)
+        this.find(id.type, id.tags, true)
 
     /**
      * Same as [find], but with erased [Information.Id] type.
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> findErased(id: Information.Id<*>): Information<T>? =
-            this.find(id.type as TypeInfo<out T>, id.tags, true)
+        this.find(id.type as TypeInfo<out T>, id.tags, true)
 
     /**
      * Same as [find], but with erased [Information.Id] type.
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> findErased(id: Information.Id<*>, useProviders: Boolean = true): Information<T>? =
-            this.find(id.type as TypeInfo<out T>, id.tags, useProviders)
+        this.find(id.type as TypeInfo<out T>, id.tags, useProviders)
 
 
     /**
@@ -237,7 +261,7 @@ interface InformationProviders {
      * lead to cast exception.
      */
     fun <T> findOrEmpty(id: Information.Id<T>): Information<T> =
-            this.find(id.type, id.tags) ?: Information.empty()
+        this.find(id.type, id.tags) ?: Information.empty()
 
     /**
      * Same as [find], but returns an [Information.EMPTY] instead of a `null` reference if [Information] cannot be found.
@@ -246,20 +270,20 @@ interface InformationProviders {
      * lead to cast exception.
      */
     fun <T> findOrEmpty(id: Information.Id<T>, useProviders: Boolean = true): Information<T> =
-            this.find(id.type, id.tags, useProviders) ?: Information.empty()
+        this.find(id.type, id.tags, useProviders) ?: Information.empty()
 
     /**
      * Same as [findOrEmpty] but with erased [Information.Id]
      */
     fun <T> findErasedOrEmpty(id: Information.Id<*>): Information<T> =
-            this.findErased(id.type, id.tags) ?: Information.empty()
+        this.findErased(id.type, id.tags) ?: Information.empty()
 
 
     /**
      * Same as [findOrEmpty] but with erased [Information.Id]
      */
     fun <T> findErasedOrEmpty(id: Information.Id<*>, useProviders: Boolean = true): Information<T> =
-            this.findErased(id.type, id.tags, useProviders) ?: Information.empty()
+        this.findErased(id.type, id.tags, useProviders) ?: Information.empty()
 
 
 }

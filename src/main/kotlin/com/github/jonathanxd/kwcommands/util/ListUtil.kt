@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -28,9 +28,9 @@
 package com.github.jonathanxd.kwcommands.util
 
 inline fun <T, R> Collection<T>.getFirstOrNull(mapper: (T) -> R, predicate: (R) -> Boolean): R? {
-    for(i in this)
+    for (i in this)
         mapper(i).let {
-            if(predicate(it))
+            if (predicate(it))
                 return it
         }
 

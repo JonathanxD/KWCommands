@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -38,124 +38,140 @@ import java.util.*
 
 
 val charArgumentType = SingleArgumentType<Char>(
-        CharParser,
-        CharPossibilities,
-        null,
-        TypeInfo.of(Char::class.java)
+    CharParser,
+    CharPossibilities,
+    null,
+    TypeInfo.of(Char::class.java)
 )
 
 val byteArgumentType = SingleArgumentType<Byte>(
-        ByteParser,
-        BytePossibilities,
-        null,
-        TypeInfo.of(Byte::class.java)
+    ByteParser,
+    BytePossibilities,
+    null,
+    TypeInfo.of(Byte::class.java)
 )
 
 val shortArgumentType = SingleArgumentType<Short>(
-        ShortParser,
-        ShortPossibilities,
-        null,
-        TypeInfo.of(Short::class.java)
+    ShortParser,
+    ShortPossibilities,
+    null,
+    TypeInfo.of(Short::class.java)
 )
 
 val intArgumentType = SingleArgumentType<Int>(
-        IntParser,
-        IntPossibilities,
-        null,
-        TypeInfo.of(Int::class.java)
+    IntParser,
+    IntPossibilities,
+    null,
+    TypeInfo.of(Int::class.java)
 )
 
 val longArgumentType = SingleArgumentType<Long>(
-        LongParser,
-        LongPossibilities,
-        null,
-        TypeInfo.of(Long::class.java)
+    LongParser,
+    LongPossibilities,
+    null,
+    TypeInfo.of(Long::class.java)
 )
 
 val doubleArgumentType = SingleArgumentType<Double>(
-        DoubleParser,
-        DoublePossibilities,
-        null,
-        TypeInfo.of(Double::class.java)
+    DoubleParser,
+    DoublePossibilities,
+    null,
+    TypeInfo.of(Double::class.java)
 )
 
 val floatArgumentType = SingleArgumentType<Float>(
-        FloatParser,
-        FloatPossibilities,
-        null,
-        TypeInfo.of(Float::class.java)
+    FloatParser,
+    FloatPossibilities,
+    null,
+    TypeInfo.of(Float::class.java)
 )
 
 val booleanArgumentType = SingleArgumentType<Boolean>(
-        BooleanParser,
-        BooleanPossibilities,
-        null,
-        TypeInfo.of(Boolean::class.java)
+    BooleanParser,
+    BooleanPossibilities,
+    null,
+    TypeInfo.of(Boolean::class.java)
 )
 
 val stringArgumentType = SingleArgumentType<String>(
-        stringParser,
-        StringPossibilities,
-        null,
-        TypeInfo.of(String::class.java)
+    stringParser,
+    StringPossibilities,
+    null,
+    TypeInfo.of(String::class.java)
 )
 
 val anyArgumentType = AnyArgumentType
 
 fun <I : Input, T> optArgumentType(argumentType: ArgumentType<I, T>): ArgumentType<I, Optional<T>> =
-        CustomArgumentType({ Optional.of(it) }, Optional.empty(), argumentType,
-                TypeInfo.builderOf(Optional::class.java).of(argumentType.type).buildGeneric())
+    CustomArgumentType(
+        { Optional.of(it) }, Optional.empty(), argumentType,
+        TypeInfo.builderOf(Optional::class.java).of(argumentType.type).buildGeneric()
+    )
 
 fun <I : Input> optIntArgumentType(argumentType: ArgumentType<I, Int>): ArgumentType<I, OptionalInt> =
-        CustomArgumentType({ OptionalInt.of(it) }, OptionalInt.empty(), argumentType,
-                TypeInfo.builderOf(OptionalInt::class.java).build())
+    CustomArgumentType(
+        { OptionalInt.of(it) }, OptionalInt.empty(), argumentType,
+        TypeInfo.builderOf(OptionalInt::class.java).build()
+    )
 
 fun <I : Input> optDoubleArgumentType(argumentType: ArgumentType<I, Double>): ArgumentType<I, OptionalDouble> =
-        CustomArgumentType({ OptionalDouble.of(it) }, OptionalDouble.empty(), argumentType,
-                TypeInfo.builderOf(OptionalDouble::class.java).build())
+    CustomArgumentType(
+        { OptionalDouble.of(it) }, OptionalDouble.empty(), argumentType,
+        TypeInfo.builderOf(OptionalDouble::class.java).build()
+    )
 
 fun <I : Input> optLongArgumentType(argumentType: ArgumentType<I, Long>): ArgumentType<I, OptionalLong> =
-        CustomArgumentType({ OptionalLong.of(it) }, OptionalLong.empty(), argumentType,
-                TypeInfo.builderOf(OptionalLong::class.java).build())
+    CustomArgumentType(
+        { OptionalLong.of(it) }, OptionalLong.empty(), argumentType,
+        TypeInfo.builderOf(OptionalLong::class.java).build()
+    )
 
 fun stringArgumentType() = SingleArgumentType<String>(
-        stringParser,
-        StringPossibilities,
-        null,
-        TypeInfo.of(String::class.java)
+    stringParser,
+    StringPossibilities,
+    null,
+    TypeInfo.of(String::class.java)
 )
 
 fun stringArgumentType(str: String) = SingleArgumentType<String>(
-        ExactStringParser(str),
-        ExactStringPossibilities(str),
-        null,
-        TypeInfo.of(String::class.java)
+    ExactStringParser(str),
+    ExactStringPossibilities(str),
+    null,
+    TypeInfo.of(String::class.java)
 )
 
 fun <T> enumArgumentType(enumType: Class<T>) = SingleArgumentType<T>(
-        EnumParser(enumType),
-        EnumPossibilities(enumType),
-        null,
-        TypeInfo.of(enumType)
+    EnumParser(enumType),
+    EnumPossibilities(enumType),
+    null,
+    TypeInfo.of(enumType)
 )
 
-fun <T> simpleArgumentType(parser: ArgumentParser<SingleInput, T>,
-                           possibilities: Possibilities,
-                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(parser, possibilities, null, typeInfo)
+fun <T> simpleArgumentType(
+    parser: ArgumentParser<SingleInput, T>,
+    possibilities: Possibilities,
+    typeInfo: TypeInfo<out T>
+): ArgumentType<SingleInput, T> =
+    SingleArgumentType(parser, possibilities, null, typeInfo)
 
-fun <T> simpleArgumentType(helper: ArgumentTypeHelper<SingleInput, T>,
-                           defaultValue: T?,
-                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(helper, defaultValue, typeInfo)
+fun <T> simpleArgumentType(
+    helper: ArgumentTypeHelper<SingleInput, T>,
+    defaultValue: T?,
+    typeInfo: TypeInfo<out T>
+): ArgumentType<SingleInput, T> =
+    SingleArgumentType(helper, defaultValue, typeInfo)
 
-fun <T> simpleArgumentType(helper: ArgumentTypeHelper<SingleInput, T>,
-                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(helper, null, typeInfo)
+fun <T> simpleArgumentType(
+    helper: ArgumentTypeHelper<SingleInput, T>,
+    typeInfo: TypeInfo<out T>
+): ArgumentType<SingleInput, T> =
+    SingleArgumentType(helper, null, typeInfo)
 
-fun <T> simpleArgumentType(parser: ArgumentParser<SingleInput, T>,
-                           possibilities: Possibilities,
-                           defaultValue: T?,
-                           typeInfo: TypeInfo<out T>): ArgumentType<SingleInput, T> =
-        SingleArgumentType(parser, possibilities, defaultValue, typeInfo)
+fun <T> simpleArgumentType(
+    parser: ArgumentParser<SingleInput, T>,
+    possibilities: Possibilities,
+    defaultValue: T?,
+    typeInfo: TypeInfo<out T>
+): ArgumentType<SingleInput, T> =
+    SingleArgumentType(parser, possibilities, defaultValue, typeInfo)
 

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -55,7 +55,7 @@ interface CommandParser {
      * null owner is provided, the [commandManager] will return the first found command.
      */
     fun parse(commandString: String, owner: Any?): Either<ParseFail, List<CommandContainer>> =
-            parseWithOwnerFunction(commandString, { owner })
+        parseWithOwnerFunction(commandString, { owner })
 
     /**
      * Process command string.
@@ -67,8 +67,10 @@ interface CommandParser {
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parseWithOwnerFunction(commandString: String,
-                               ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>>
+    fun parseWithOwnerFunction(
+        commandString: String,
+        ownerProvider: OwnerProvider
+    ): Either<ParseFail, List<CommandContainer>>
 
     /**
      * Process command string from iterator.
@@ -80,7 +82,9 @@ interface CommandParser {
      * The owner is used to lookup for the command in the [commandManager], if a
      * null owner is provided, the [commandManager] will return the first found command.
      */
-    fun parseWithOwnerFunction(commandIter: SourcedCharIterator,
-                               ownerProvider: OwnerProvider): Either<ParseFail, List<CommandContainer>>
+    fun parseWithOwnerFunction(
+        commandIter: SourcedCharIterator,
+        ownerProvider: OwnerProvider
+    ): Either<ParseFail, List<CommandContainer>>
 
 }

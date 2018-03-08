@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -103,17 +103,29 @@ interface TextsStub {
     fun getReqContinuation(@Named(CONTAINER_STRING) containerString: TextComponent): TextComponent
 
     @Section("error", "argument_not_found")
-    fun getArgumentNotFoundText(@Named(INPUT) input: String,
-                                @Named(COMMAND_NAME) commandName: String): TextComponent
+    fun getArgumentNotFoundText(
+        @Named(INPUT) input: String,
+        @Named(COMMAND_NAME) commandName: String
+    ): TextComponent
 
     @Section("error", "no_input_for_argument")
-    fun getNoInputForArgumentText(@Named(ARGUMENT_NAME) argumentName: String,
-                                  @Named(COMMAND_NAME) commandName: String): TextComponent
+    fun getNoInputForArgumentText(
+        @Named(ARGUMENT_NAME) argumentName: String,
+        @Named(COMMAND_NAME) commandName: String
+    ): TextComponent
 
     @Section("error", "invalid_input_value")
-    fun getInvalidInputValueText(@Named(INPUT) input: String,
-                                 @Named(ARGUMENT_NAME) argumentName: String,
-                                 @Named(COMMAND_NAME) commandName: String): TextComponent
+    fun getInvalidInputValueText(
+        @Named(INPUT) input: String,
+        @Named(ARGUMENT_NAME) argumentName: String,
+        @Named(COMMAND_NAME) commandName: String
+    ): TextComponent
+
+    @Section("info", "value_result")
+    fun getValueResultText(
+        @Named(RESULT_STRING) resultString: TextComponent,
+        @Named(VALUE_STRING) valueString: TextComponent
+    ): TextComponent
 
     @Section("error", "unsatisfied_requirement")
     fun getUnsatisfiedRequirementText(@Named(RESULT_STRING) resultString: TextComponent): TextComponent
@@ -176,19 +188,25 @@ interface TextsStub {
     fun getArgumentDescriptionText(): TextComponent
 
     @Section("help", "requires_value")
-    fun getRequiresValueText(@Named(REQUIRED_VALUE) value: String,
-                             @Named(SUBJECT_TYPE) subjectType: String,
-                             @Named(SUBJECT_TAGS) subjectTags: String,
-                             @Named(TESTER) tester: TextComponent): TextComponent
+    fun getRequiresValueText(
+        @Named(REQUIRED_VALUE) value: String,
+        @Named(SUBJECT_TYPE) subjectType: String,
+        @Named(SUBJECT_TAGS) subjectTags: String,
+        @Named(TESTER) tester: TextComponent
+    ): TextComponent
 
     @Section("help", "requires_argument_value")
-    fun getRequiresArgumentValueText(@Named(REQUIRED_VALUE) value: String,
-                                     @Named(ARGUMENT_NAME) argumentName: String,
-                                     @Named(TESTER) tester: TextComponent): TextComponent
+    fun getRequiresArgumentValueText(
+        @Named(REQUIRED_VALUE) value: String,
+        @Named(ARGUMENT_NAME) argumentName: String,
+        @Named(TESTER) tester: TextComponent
+    ): TextComponent
 
     @Section("help", "requires_info")
-    fun getRequiresInfoText(@Named(INFORMATION_ID) id: String,
-                            @Named(INFORMATION_TYPE) infoType: String): TextComponent
+    fun getRequiresInfoText(
+        @Named(INFORMATION_ID) id: String,
+        @Named(INFORMATION_TYPE) infoType: String
+    ): TextComponent
 
     @Section("help", "no_commands")
     fun getNoCommandsText(): TextComponent
@@ -219,6 +237,7 @@ private const val RANGE_START = "range_start"
 private const val RANGE_END = "range_end"
 private const val CONTAINER_STRING = "container_string"
 private const val RESULT_STRING = "result_string"
+private const val VALUE_STRING = "value_string"
 private const val REQUIRED_VALUE = "required_value"
 private const val SUBJECT_TYPE = "subject_type"
 private const val SUBJECT_TAGS = "subject_tags"

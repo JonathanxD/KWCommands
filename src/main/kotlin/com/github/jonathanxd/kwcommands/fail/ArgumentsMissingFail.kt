@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,17 +27,20 @@
  */
 package com.github.jonathanxd.kwcommands.fail
 
+import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 import com.github.jonathanxd.kwcommands.util.StatedIterator
 
-class ArgumentsMissingFail(val command: Command,
-                           val parsedArgs: List<ArgumentContainer<*>>,
-                           parsedCommands: List<CommandContainer>,
-                           manager: CommandManager,
-                           source: String,
-                           iter: StatedIterator<Input>) : SourcedParseFail(parsedCommands, manager, source, iter)
+class ArgumentsMissingFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    val arguments: List<Argument<*>>,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    source: String,
+    iter: StatedIterator<Input>
+) : SourcedParseFail(parsedCommands, manager, source, iter)

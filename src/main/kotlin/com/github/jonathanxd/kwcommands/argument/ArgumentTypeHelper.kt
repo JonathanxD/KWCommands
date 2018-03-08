@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -27,12 +27,14 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
-import com.github.jonathanxd.kwcommands.parser.*
+import com.github.jonathanxd.kwcommands.parser.ArgumentParser
+import com.github.jonathanxd.kwcommands.parser.Input
+import com.github.jonathanxd.kwcommands.parser.Possibilities
 
 abstract class ArgumentTypeHelper<in I : Input, out T> : Possibilities, ArgumentParser<I, T> {
 
     abstract fun possibilities(): List<Input>
 
     override fun invoke(): List<Input> =
-            this.possibilities()
+        this.possibilities()
 }

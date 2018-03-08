@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -40,11 +40,14 @@ interface StatedIterator<T> : Iterator<Either<InputParseFail, T>> {
     fun previous(): Either<InputParseFail, T>
 
     fun nextOrNull(): Either<InputParseFail, T>? = if (this.hasNext()) this.next() else null
-    fun previousOrNull(): Either<InputParseFail, T>? = if (this.hasPrevious()) this.previous() else null
+    fun previousOrNull(): Either<InputParseFail, T>? =
+        if (this.hasPrevious()) this.previous() else null
 }
 
-class ListBackedStatedIterator<T>(val list: List<Either<InputParseFail, T>>,
-                                  override val char: SourcedCharIterator) : StatedIterator<T> {
+class ListBackedStatedIterator<T>(
+    val list: List<Either<InputParseFail, T>>,
+    override val char: SourcedCharIterator
+) : StatedIterator<T> {
     override var pos: Int = -1
 
     override fun restore(pos: Int) {
@@ -58,9 +61,9 @@ class ListBackedStatedIterator<T>(val list: List<Either<InputParseFail, T>>,
     override fun hasNext(): Boolean = this.pos + 1 < this.list.size
 
     override fun next(): Either<InputParseFail, T> =
-            if (pos + 1 >= this.list.size)
-                left(NoMoreElementsInputParseFail(EmptyInput(char.sourceString)))
-            else
-                this.list[++pos]
+        if (pos + 1 >= this.list.size)
+            left(NoMoreElementsInputParseFail(EmptyInput(char.sourceString)))
+        else
+            this.list[++pos]
 
 }

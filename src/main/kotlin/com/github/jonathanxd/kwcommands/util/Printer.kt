@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -97,7 +97,10 @@ fun HelpInfoHandler.handleFail(result: Either<ParseFail, List<CommandResult>>, p
         this.handleFail(result.left, printer)
 }
 
-fun HelpInfoHandler.handleFailAndThrow(result: Either<ParseFail, List<CommandResult>>, printer: Printer) {
+fun HelpInfoHandler.handleFailAndThrow(
+    result: Either<ParseFail, List<CommandResult>>,
+    printer: Printer
+) {
     if (result.isLeft) {
         this.handleFail(result.left, printer)
 

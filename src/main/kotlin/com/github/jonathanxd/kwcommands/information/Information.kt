@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -61,7 +61,9 @@ data class Information<out T>(val id: Information.Id<T>, val value: T, val descr
     }
 
     override fun equals(other: Any?): Boolean {
-        return if (other != null && other is Information<*>) this.id == other.id else super.equals(other)
+        return if (other != null && other is Information<*>) this.id == other.id else super.equals(
+            other
+        )
     }
 
     /**
@@ -80,12 +82,12 @@ data class Information<out T>(val id: Information.Id<T>, val value: T, val descr
      */
     data class Id<out T>(val type: TypeInfo<out T>, val tags: Array<out String>) {
         override fun hashCode(): Int =
-                Objects.hash(type.hashCode(), Arrays.hashCode(tags))
+            Objects.hash(type.hashCode(), Arrays.hashCode(tags))
 
         override fun equals(other: Any?): Boolean =
-                if (other != null && other is Information.Id<*>) this.type == other.type
-                        && Arrays.equals(this.tags, other.tags)
-                else super.equals(other)
+            if (other != null && other is Information.Id<*>) this.type == other.type
+                    && Arrays.equals(this.tags, other.tags)
+            else super.equals(other)
 
     }
 
@@ -95,7 +97,7 @@ data class Information<out T>(val id: Information.Id<T>, val value: T, val descr
 
         @Suppress("UNCHECKED_CAST")
         fun <T> empty(): Information<T> =
-                EMPTY as Information<T>
+            EMPTY as Information<T>
 
         @JvmStatic
         fun <T> builder() = InformationBuilder<T>()

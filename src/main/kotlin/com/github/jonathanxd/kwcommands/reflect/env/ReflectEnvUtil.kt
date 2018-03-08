@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -41,20 +41,20 @@ import com.github.jonathanxd.kwcommands.reflect.element.ElementParameter
 import com.github.jonathanxd.kwcommands.reflect.util.get
 import com.github.jonathanxd.kwcommands.reflect.util.getHandlerOrNull
 import com.github.jonathanxd.kwcommands.reflect.util.getRequirements
-import com.github.jonathanxd.kwcommands.reflect.util.toSpecs
 import com.github.jonathanxd.kwcommands.util.*
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Field
-import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 import java.util.*
 
 fun AnnotatedElement.type(): TypeInfo<*> =
-        TypeUtil.toTypeInfo((this as? Field)?.genericType ?: (this as Parameter).parameterizedType)
+    TypeUtil.toTypeInfo((this as? Field)?.genericType ?: (this as Parameter).parameterizedType)
 
-fun AnnotatedElement.createElement(reflectionEnvironment: ReflectionEnvironment,
-                                   type_: TypeInfo<*>? = null,
-                                   arg: Argument<*>? = null): ElementParameter<*> {
+fun AnnotatedElement.createElement(
+    reflectionEnvironment: ReflectionEnvironment,
+    type_: TypeInfo<*>? = null,
+    arg: Argument<*>? = null
+): ElementParameter<*> {
     val argumentAnnotation = this.getDeclaredAnnotation(Arg::class.java)
     val infoAnnotation = this.getDeclaredAnnotation(Info::class.java)
     val ctxAnnotation = this.getDeclaredAnnotation(Ctx::class.java)
@@ -70,20 +70,23 @@ fun AnnotatedElement.createElement(reflectionEnvironment: ReflectionEnvironment,
 
             @Suppress("UNCHECKED_CAST")
             ElementParameter.InformationParameter(
-                    id = infoId,
-                    isOptional = infoIsOptional,
-                    type = type as TypeInfo<Any?>
+                id = infoId,
+                isOptional = infoIsOptional,
+                type = type as TypeInfo<Any?>
             )
         }
         argumentAnnotation != null || arg != null -> ElementParameter.ArgumentParameter(
-                arg ?: this.createArg(reflectionEnvironment),
-                type as TypeInfo<Any?>)
+            arg ?: this.createArg(reflectionEnvironment),
+            type as TypeInfo<Any?>
+        )
         else -> throw IllegalStateException("Missing annotation for parameter: $this")
     }
 }
 
-fun AnnotatedElement.createArg(reflectionEnvironment: ReflectionEnvironment,
-                               type_: TypeInfo<*>? = null): Argument<*> {
+fun AnnotatedElement.createArg(
+    reflectionEnvironment: ReflectionEnvironment,
+    type_: TypeInfo<*>? = null
+): Argument<*> {
     val argumentAnnotation: Arg? = this.getDeclaredAnnotation(Arg::class.java)
 
     val name = argumentAnnotation?.value.let {
@@ -97,7 +100,8 @@ fun AnnotatedElement.createArg(reflectionEnvironment: ReflectionEnvironment,
     val typeIsOptInt = type.classLiteral == TypeInfo.of(OptionalInt::class.java).classLiteral
     val typeIsOptDouble = type.classLiteral == TypeInfo.of(OptionalDouble::class.java).classLiteral
     val typeIsOptLong = type.classLiteral == TypeInfo.of(OptionalLong::class.java).classLiteral
-    val isOptional = argumentAnnotation?.optional ?: typeIsOpt || typeIsOptInt || typeIsOptDouble || typeIsOptLong
+    val isOptional =
+        argumentAnnotation?.optional ?: typeIsOpt || typeIsOptInt || typeIsOptDouble || typeIsOptLong
     val argumentType0 = reflectionEnvironment.getOrNull(type)
             ?: argumentAnnotation?.argumentType?.get()?.invoke()
             ?: stringArgumentType
@@ -117,18 +121,18 @@ fun AnnotatedElement.createArg(reflectionEnvironment: ReflectionEnvironment,
 
     @Suppress("UNCHECKED_CAST")
     return Argument(
-            name = name,
-            alias = argumentAnnotation?.alias?.toList().orEmpty(),
-            description = TextUtil.parse(description),
-            isOptional = isOptional,
-            argumentType = argumentType,
-            requiredInfo = emptySet(),
-            requirements = argumentAnnotation?.getRequirements(this).orEmpty(),
-            handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
+        name = name,
+        alias = argumentAnnotation?.alias?.toList().orEmpty(),
+        description = TextUtil.parse(description),
+        isOptional = isOptional,
+        argumentType = argumentType,
+        requiredInfo = emptySet(),
+        requirements = argumentAnnotation?.getRequirements(this).orEmpty(),
+        handler = argumentAnnotation?.getHandlerOrNull() as? ArgumentHandler<out Any>
     )
 }
 
 fun AnnotatedElement.anyArgAnnotation() =
-        this.isAnnotationPresent(Arg::class.java)
-                || this.isAnnotationPresent(Info::class.java)
-                || this.isAnnotationPresent(Ctx::class.java)
+    this.isAnnotationPresent(Arg::class.java)
+            || this.isAnnotationPresent(Info::class.java)
+            || this.isAnnotationPresent(Ctx::class.java)

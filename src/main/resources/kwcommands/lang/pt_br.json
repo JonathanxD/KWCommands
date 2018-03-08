@@ -47,7 +47,8 @@
         "found_token": "Símbolo encontrado",
         "parsed_map": "Entradas do mapa analisadas com sucesso",
         "parsed_list": "Entradas da lista analisadas com sucesso",
-        "dynamic_arg_tag": "!"
+        "dynamic_arg_tag": "!",
+        "value_result": "Resultado de valor de '$result_string': $value_string"
     },
     "help": {
         "header": [
@@ -81,5 +82,8 @@
         "list": "Lista de valores",
         "map": "Mapa de valores",
         "empty": "Vazio"
+    },
+    "parser": {
+        "booleanparser": "Analisador booleano."
     }
 }

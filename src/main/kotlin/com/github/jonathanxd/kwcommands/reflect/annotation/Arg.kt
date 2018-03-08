@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -54,10 +54,12 @@ import kotlin.reflect.KClass
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
-annotation class Arg(val value: String = "",
-                     val alias: Array<String> = [],
-                     val description: String = "",
-                     val optional: Boolean = false,
-                     val requirements: Array<Require> = [],
-                     val argumentType: KClass<out () -> ArgumentType<*, *>> = NoneArgumentType::class,
-                     val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class)
+annotation class Arg(
+    val value: String = "",
+    val alias: Array<String> = [],
+    val description: String = "",
+    val optional: Boolean = false,
+    val requirements: Array<Require> = [],
+    val argumentType: KClass<out () -> ArgumentType<*, *>> = NoneArgumentType::class,
+    val handler: KClass<out ArgumentHandler<*>> = NoneArgumentHandler::class
+)

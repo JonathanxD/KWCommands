@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -45,10 +45,12 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.VALUE_PARAMETER)
 @Suppress("DEPRECATED_JAVA_ANNOTATION")
 @java.lang.annotation.Repeatable(Requires::class)
-annotation class Require(val subject: Id = Id(),
-                         val testerType: KClass<out RequirementTester<*, *>>,
-                         val required: String = "",
-                         val requiredProvider: KClass<out Supplier<*>> = DefaultRequiredProvider::class)
+annotation class Require(
+    val subject: Id = Id(),
+    val testerType: KClass<out RequirementTester<*, *>>,
+    val required: String = "",
+    val requiredProvider: KClass<out Supplier<*>> = DefaultRequiredProvider::class
+)
 
 object DefaultRequiredProvider : Supplier<Any> {
     override fun get(): Any = throw IllegalStateException("Default provider")

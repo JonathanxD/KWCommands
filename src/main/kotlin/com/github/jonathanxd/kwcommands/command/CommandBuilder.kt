@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -33,7 +33,6 @@ import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.Arguments
 import com.github.jonathanxd.kwcommands.argument.StaticListArguments
 import com.github.jonathanxd.kwcommands.argument.StaticListArgumentsBuilder
-import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 
@@ -104,7 +103,7 @@ class CommandBuilder {
      * Creates and adds arguments of builded [StaticListArguments].
      */
     fun staticArguments(): StaticListArgumentsBuilderToCommand =
-            StaticListArgumentsBuilderToCommand(this)
+        StaticListArgumentsBuilderToCommand(this)
 
     /**
      * Adds [Command.requirements].
@@ -203,15 +202,15 @@ class CommandBuilder {
     }
 
     fun build(): Command = Command(
-            parent = this.parent,
-            order = this.order,
-            name = this.name,
-            description = this.description,
-            handler = this.handler,
-            arguments = this.arguments,
-            requirements = this.requirements.toList(),
-            requiredInfo = this.requiredInfo.toSet(),
-            alias = this.alias.toList()
+        parent = this.parent,
+        order = this.order,
+        name = this.name,
+        description = this.description,
+        handler = this.handler,
+        arguments = this.arguments,
+        requirements = this.requirements.toList(),
+        requiredInfo = this.requiredInfo.toSet(),
+        alias = this.alias.toList()
     )
 
 }
@@ -240,7 +239,7 @@ class StaticListArgumentsBuilderToCommand(private val cmdBuilder: CommandBuilder
     }
 
     fun setArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilderToCommand =
-            this.clear().addArguments(arguments)
+        this.clear().addArguments(arguments)
 
     fun clear(): StaticListArgumentsBuilderToCommand {
         this.builder.clear()

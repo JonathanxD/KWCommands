@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -37,6 +37,7 @@ import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.information.InformationProvidersImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
+import com.github.jonathanxd.kwcommands.processor.ValueResult
 import com.github.jonathanxd.kwcommands.util.KLocale
 import com.github.jonathanxd.kwcommands.util.stringArgumentType
 import org.junit.Assert
@@ -105,7 +106,7 @@ class DslTest {
             processor.parseAndDispatch("hello KWCommands", this, infoManager).let {
                 if (it.isRight) {
                     handler.handleResults(it.right, printer)
-                    Assert.assertTrue(it.right.isEmpty())
+                    Assert.assertTrue(it.right.all { it is ValueResult && it.value == Unit })
                 }
                 it
             }.ifLeftSide {
@@ -116,7 +117,7 @@ class DslTest {
             processor.parseAndDispatch("promote KWCommands ADMIN USER", this, infoManager).let {
                 if (it.isRight) {
                     handler.handleResults(it.right, printer)
-                    Assert.assertTrue(it.right.isEmpty())
+                    Assert.assertTrue(it.right.all { it is ValueResult && it.value == Unit })
                 }
                 it
             }.ifLeftSide {
@@ -127,7 +128,7 @@ class DslTest {
         processor.parseAndDispatch("promote KWCommands x", this, infoManager).let {
             if (it.isRight) {
                 handler.handleResults(it.right, printer)
-                Assert.assertTrue(it.right.isEmpty())
+                Assert.assertTrue(it.right.all { it is ValueResult && it.value == Unit })
             }
             it
         }.ifLeftSide {

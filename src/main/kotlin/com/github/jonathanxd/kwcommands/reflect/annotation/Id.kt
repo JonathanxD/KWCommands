@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -42,15 +42,17 @@ import kotlin.reflect.KClass
  * of Java type, this is recommended to be used to specify a type with generic information.
  * @property tags Tags to be used to identify the requested information.
  */
-annotation class Id(val value: KClass<*> = Default::class,
-                    val typeLiter: String = "",
-                    vararg val tags: String = [])
+annotation class Id(
+    val value: KClass<*> = Default::class,
+    val typeLiter: String = "",
+    vararg val tags: String = []
+)
 
 val Id.isDefault: Boolean
     get() = this.value.java == Default::class.java && this.typeLiter.isEmpty() && this.tags.isEmpty()
 
 fun Id.idTypeInfo(inferred: TypeInfo<*>): TypeInfo<*> =
-        this.typeInfoOrNull ?: inferred
+    this.typeInfoOrNull ?: inferred
 
 val Id.typeInfoOrNull: TypeInfo<*>?
     get() =
@@ -62,7 +64,7 @@ val Id.typeInfoOrNull: TypeInfo<*>?
 
 val Id.typeInfo: TypeInfo<*>
     get () =
-        this.typeInfoOrNull ?:
-                throw IllegalStateException("Neither type literal nor value class was defined in annotation $this.")
+        this.typeInfoOrNull
+                ?: throw IllegalStateException("Neither type literal nor value class was defined in annotation $this.")
 
 

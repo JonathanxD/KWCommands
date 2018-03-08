@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -37,8 +37,8 @@ import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandContext
 import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
-import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.parser.ArgumentParser
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.parser.ListInput
@@ -100,30 +100,36 @@ class BuildingArgument<I : Input, T> {
         f(this.requiredInfo)
     }
 
-    inline fun handler(crossinline f: (argumentContainer: ArgumentContainer<T>,
-                                       commandContainer: CommandContainer,
-                                       informationProviders: InformationProviders,
-                                       resultHandler: ResultHandler) -> Any) {
+    inline fun handler(
+        crossinline f: (
+            argumentContainer: ArgumentContainer<T>,
+            commandContainer: CommandContainer,
+            informationProviders: InformationProviders,
+            resultHandler: ResultHandler
+        ) -> Any
+    ) {
         this.handler = object : ArgumentHandler<T> {
-            override fun handle(argumentContainer: ArgumentContainer<T>,
-                                commandContainer: CommandContainer,
-                                informationProviders: InformationProviders,
-                                resultHandler: ResultHandler): Any =
-                    f(argumentContainer, commandContainer, informationProviders, resultHandler)
+            override fun handle(
+                argumentContainer: ArgumentContainer<T>,
+                commandContainer: CommandContainer,
+                informationProviders: InformationProviders,
+                resultHandler: ResultHandler
+            ): Any =
+                f(argumentContainer, commandContainer, informationProviders, resultHandler)
 
         }
     }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun toArgument(): Argument<T> = Argument(
-            name = this.name,
-            alias = this.alias.coll.toList(),
-            description = this.description,
-            isOptional = this.isOptional,
-            argumentType = this.type as ArgumentType<*, T>,
-            requirements = this.requirements.coll.toList(),
-            requiredInfo = this.requiredInfo.coll.toSet(),
-            handler = this.handler
+        name = this.name,
+        alias = this.alias.coll.toList(),
+        description = this.description,
+        isOptional = this.isOptional,
+        argumentType = this.type as ArgumentType<*, T>,
+        requirements = this.requirements.coll.toList(),
+        requiredInfo = this.requiredInfo.coll.toSet(),
+        handler = this.handler
     )
 }
 
@@ -152,28 +158,30 @@ class BuildingRequirement<T, R>(var required: R) {
     inline fun tester(crossinline f: (requirement: Requirement<T, R>, value: T) -> Boolean) {
         this.tester = object : RequirementTester<T, R> {
             override fun test(requirement: Requirement<T, R>, value: T): Boolean =
-                    f(requirement, value)
+                f(requirement, value)
         }
     }
 
-    inline fun tester(testerName: TextComponent,
-                      crossinline f: (requirement: Requirement<T, R>, value: T) -> Boolean) {
+    inline fun tester(
+        testerName: TextComponent,
+        crossinline f: (requirement: Requirement<T, R>, value: T) -> Boolean
+    ) {
         this.tester = object : RequirementTester<T, R> {
             override val name: TextComponent
                 get() = testerName
 
             override fun test(requirement: Requirement<T, R>, value: T): Boolean =
-                    f(requirement, value)
+                f(requirement, value)
 
         }
     }
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun toRequirement(): Requirement<T, R> = Requirement(
-            required = this.required,
-            subject = this.subject,
-            type = this.type,
-            tester = this.tester
+        required = this.required,
+        subject = this.subject,
+        type = this.type,
+        tester = this.tester
     )
 }
 
@@ -187,7 +195,7 @@ class BuildingInfoId<T> {
     }
 
     inline fun tags(f: UList<String>.() -> Unit) =
-            f(this.tags)
+        f(this.tags)
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun from(id: Information.Id<T>) {
@@ -216,8 +224,8 @@ class BuildingRequiredInfo<T> {
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun toRequiredInformation(): RequiredInformation = RequiredInformation(
-            id = this.id.toId(),
-            useProviders = this.useProviders
+        id = this.id.toId(),
+        useProviders = this.useProviders
     )
 }
 
@@ -242,7 +250,10 @@ inline fun <reified I : Input, reified T> argument(f: BuildingArgument<I, T>.() 
 }
 
 
-inline fun <I : Input, T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<I, T>.() -> Unit): Argument<T> {
+inline fun <I : Input, T> argumentPlain(
+    type: TypeInfo<T>,
+    f: BuildingArgument<I, T>.() -> Unit
+): Argument<T> {
     val building = BuildingArgument<I, T>()
 
     building.typeInfo = type
@@ -252,7 +263,10 @@ inline fun <I : Input, T> argumentPlain(type: TypeInfo<T>, f: BuildingArgument<I
     return building.toArgument()
 }
 
-inline fun <reified T, reified R> requirement(required: R, f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
+inline fun <reified T, reified R> requirement(
+    required: R,
+    f: BuildingRequirement<T, R>.() -> Unit
+): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
     building.type = typeInfo()
@@ -262,9 +276,11 @@ inline fun <reified T, reified R> requirement(required: R, f: BuildingRequiremen
     return building.toRequirement()
 }
 
-inline fun <T, R> requirementPlain(reqType: TypeInfo<R>,
-                                   required: R,
-                                   f: BuildingRequirement<T, R>.() -> Unit): Requirement<T, R> {
+inline fun <T, R> requirementPlain(
+    reqType: TypeInfo<R>,
+    required: R,
+    f: BuildingRequirement<T, R>.() -> Unit
+): Requirement<T, R> {
     val building = BuildingRequirement<T, R>(required)
 
     building.type = reqType
@@ -290,15 +306,21 @@ inline fun <T> requireInfoPlain(f: BuildingRequiredInfo<T>.() -> Unit): Required
     return building.toRequiredInformation()
 }
 
-inline fun <T> argumentHandler(crossinline f: (argumentContainer: ArgumentContainer<T>,
-                                               commandContainer: CommandContainer,
-                                               informationProviders: InformationProviders,
-                                               resultHandler: ResultHandler) -> Any): ArgumentHandler<T> = object : ArgumentHandler<T> {
-    override fun handle(argumentContainer: ArgumentContainer<T>,
-                        commandContainer: CommandContainer,
-                        informationProviders: InformationProviders,
-                        resultHandler: ResultHandler): Any =
-            f(argumentContainer, commandContainer, informationProviders, resultHandler)
+inline fun <T> argumentHandler(
+    crossinline f: (
+        argumentContainer: ArgumentContainer<T>,
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ) -> Any
+): ArgumentHandler<T> = object : ArgumentHandler<T> {
+    override fun handle(
+        argumentContainer: ArgumentContainer<T>,
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any =
+        f(argumentContainer, commandContainer, informationProviders, resultHandler)
 
 }
 
@@ -318,57 +340,61 @@ val booleanParser: ArgumentParser<SingleInput, Boolean> = BooleanParser
 val booleanPossibilities = BooleanPossibilities
 
 inline fun stringArg(f: BuildingArgument<SingleInput, String>.() -> Unit): Argument<String> =
-        argument<SingleInput, String> {
-            type = stringArgumentType
-            f(this)
-        }
+    argument<SingleInput, String> {
+        type = stringArgumentType
+        f(this)
+    }
 
 inline fun intArg(f: BuildingArgument<SingleInput, Int>.() -> Unit): Argument<Int> =
-        argument<SingleInput, Int> {
-            type = intArgumentType
-            f(this)
-        }
+    argument<SingleInput, Int> {
+        type = intArgumentType
+        f(this)
+    }
 
 inline fun longArg(f: BuildingArgument<SingleInput, Long>.() -> Unit): Argument<Long> =
-        argument<SingleInput, Long> {
-            type = longArgumentType
-            f(this)
-        }
+    argument<SingleInput, Long> {
+        type = longArgumentType
+        f(this)
+    }
 
 inline fun doubleArg(f: BuildingArgument<SingleInput, Double>.() -> Unit): Argument<Double> =
-        argument<SingleInput, Double> {
-            type = doubleArgumentType
-            f(this)
-        }
+    argument<SingleInput, Double> {
+        type = doubleArgumentType
+        f(this)
+    }
 
 inline fun booleanArg(f: BuildingArgument<SingleInput, Boolean>.() -> Unit): Argument<Boolean> =
-        argument<SingleInput, Boolean> {
-            type = booleanArgumentType
-            f(this)
-        }
+    argument<SingleInput, Boolean> {
+        type = booleanArgumentType
+        f(this)
+    }
 
 inline fun <reified T> enumArg(f: BuildingArgument<SingleInput, T>.() -> Unit): Argument<T> =
-        argument<SingleInput, T> {
-            type = enumArgumentType(T::class.java)
-            f(this)
-        }
+    argument<SingleInput, T> {
+        type = enumArgumentType(T::class.java)
+        f(this)
+    }
 
 inline fun <reified T> listArg(base: Argument<T>): Argument<List<T>> =
-        listArg(base, {})
+    listArg(base, {})
 
-inline fun <reified T> listArg(base: Argument<T>,
-                               f: BuildingArgument<ListInput, List<T>>.() -> Unit): Argument<List<T>> =
-        argument<ListInput, List<T>> {
-            alias { +base.alias }
-            name = base.name
-            isOptional = base.isOptional
-            isMultiple = true
-            type = ListArgumentType(base.argumentType,
-                    TypeInfo.builderOf(List::class.java).of(base.argumentType.type).buildGeneric())
-            requirements { +base.requirements }
-            requiredInfo { +base.requiredInfo }
-            f(this)
-        }
+inline fun <reified T> listArg(
+    base: Argument<T>,
+    f: BuildingArgument<ListInput, List<T>>.() -> Unit
+): Argument<List<T>> =
+    argument<ListInput, List<T>> {
+        alias { +base.alias }
+        name = base.name
+        isOptional = base.isOptional
+        isMultiple = true
+        type = ListArgumentType(
+            base.argumentType,
+            TypeInfo.builderOf(List::class.java).of(base.argumentType.type).buildGeneric()
+        )
+        requirements { +base.requirements }
+        requiredInfo { +base.requiredInfo }
+        f(this)
+    }
 
 // Command
 
@@ -450,32 +476,40 @@ class BuildingCommand {
     }
 
     inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) =
-            f(this.requirements)
+        f(this.requirements)
 
     inline fun requiredInfo(f: USet<RequiredInformation>.() -> Unit) =
-            f(this.requiredInfo)
+        f(this.requiredInfo)
 
 
     inline fun alias(f: UList<String>.() -> Unit) =
-            f(this.alias)
+        f(this.alias)
 
-    inline fun handler(crossinline f: (commandContainer: CommandContainer,
-                                       informationProviders: InformationProviders,
-                                       resultHandler: ResultHandler) -> Any) {
+    inline fun handler(
+        crossinline f: (
+            commandContainer: CommandContainer,
+            informationProviders: InformationProviders,
+            resultHandler: ResultHandler
+        ) -> Any
+    ) {
         this.handler = object : Handler {
-            override fun handle(commandContainer: CommandContainer,
-                                informationProviders: InformationProviders,
-                                resultHandler: ResultHandler): Any =
-                    f(commandContainer, informationProviders, resultHandler)
+            override fun handle(
+                commandContainer: CommandContainer,
+                informationProviders: InformationProviders,
+                resultHandler: ResultHandler
+            ): Any =
+                f(commandContainer, informationProviders, resultHandler)
         }
     }
 
     inline fun handlerWithContext(crossinline f: (context: CommandContext) -> Any) {
         this.handler = object : Handler {
-            override fun handle(commandContainer: CommandContainer,
-                                informationProviders: InformationProviders,
-                                resultHandler: ResultHandler): Any =
-                    f(CommandContext(commandContainer, informationProviders, resultHandler))
+            override fun handle(
+                commandContainer: CommandContainer,
+                informationProviders: InformationProviders,
+                resultHandler: ResultHandler
+            ): Any =
+                f(CommandContext(commandContainer, informationProviders, resultHandler))
         }
     }
 
@@ -485,27 +519,35 @@ class BuildingCommand {
 
     @Suppress("NOTHING_TO_INLINE")
     inline fun toCommand(): Command = Command(
-            parent = this.parent,
-            order = this.order,
-            name = this.name,
-            description = this.description,
-            handler = this.handler,
-            arguments = this.arguments,
-            requirements = this.requirements.coll.toList(),
-            requiredInfo = this.requiredInfo.coll.toSet(),
-            alias = this.alias.coll.toList()
+        parent = this.parent,
+        order = this.order,
+        name = this.name,
+        description = this.description,
+        handler = this.handler,
+        arguments = this.arguments,
+        requirements = this.requirements.coll.toList(),
+        requiredInfo = this.requiredInfo.coll.toSet(),
+        alias = this.alias.coll.toList()
     )
 }
 
 inline fun command(f: BuildingCommand.() -> Unit): Command =
-        BuildingCommand().also { f(it) }.toCommand()
+    BuildingCommand().also { f(it) }.toCommand()
 
-inline fun handler(crossinline f: (commandContainer: CommandContainer,
-                                   informationProviders: InformationProviders,
-                                   resultHandler: ResultHandler) -> Any) = object : Handler {
-    override fun handle(commandContainer: CommandContainer, informationProviders: InformationProviders, resultHandler: ResultHandler): Any =
-            f(commandContainer, informationProviders, resultHandler)
+inline fun handler(
+    crossinline f: (
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ) -> Any
+) = object : Handler {
+    override fun handle(
+        commandContainer: CommandContainer,
+        informationProviders: InformationProviders,
+        resultHandler: ResultHandler
+    ): Any =
+        f(commandContainer, informationProviders, resultHandler)
 }
 
 inline fun staticListArguments(f: UList<Argument<*>>.() -> Unit): Arguments =
-        UList<Argument<*>>().also(f).let { StaticListArguments(it.coll) }
+    UList<Argument<*>>().also(f).let { StaticListArguments(it.coll) }

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -42,9 +42,11 @@ import java.util.*
  * @property handler Handler of command. This handler is always the same as [Command.handler] for original containers, but
  * for modified containers this handler may or may not be the same as [Command.handler] (see [CommandInterceptor]).
  */
-data class CommandContainer(val command: Command,
-                            val arguments: List<ArgumentContainer<*>>,
-                            val handler: Handler?) : Container {
+data class CommandContainer(
+    val command: Command,
+    val arguments: List<ArgumentContainer<*>>,
+    val handler: Handler?
+) : Container {
 
     /**
      * Gets argument by [name] and [type]. Returns found argument casted to [Argument] of [T] or
@@ -52,8 +54,10 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getCommandArgument(name: String, type: TypeInfo<T>): Argument<T>? =
-            this.arguments.firstOrNull { it.argument.name == name
-                    && TypeInfoUtil.isNormalizedEquals(it.argument.argumentType.type, type) }?.argument as? Argument<T>
+        this.arguments.firstOrNull {
+            it.argument.name == name
+                    && TypeInfoUtil.isNormalizedEquals(it.argument.argumentType.type, type)
+        }?.argument as? Argument<T>
 
     /**
      * Gets [command] argument by [name] and [type]. Returns found argument casted to [ArgumentContainer] of [T] or
@@ -61,9 +65,9 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getArgument(name: String, type: TypeInfo<T>): ArgumentContainer<T>? =
-            this.getCommandArgument(name, type)?.let { arg ->
-                arguments.firstOrNull { it.argument == arg } as ArgumentContainer<T>
-            }
+        this.getCommandArgument(name, type)?.let { arg ->
+            arguments.firstOrNull { it.argument == arg } as ArgumentContainer<T>
+        }
 
     /**
      * Gets [command] argument by [name]. Returns found argument casted to [Argument] of [T] or
@@ -71,7 +75,7 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getCommandArgument(name: String): Argument<T>? =
-            this.arguments.firstOrNull { it.argument.name == name }?.argument as? Argument<T>
+        this.arguments.firstOrNull { it.argument.name == name }?.argument as? Argument<T>
 
     /**
      * Gets argument by [name]. Returns found argument casted to [ArgumentContainer] of [T] or
@@ -79,16 +83,16 @@ data class CommandContainer(val command: Command,
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getArgument(name: String): ArgumentContainer<T>? =
-            this.getCommandArgument<T>(name)?.let { arg ->
-                arguments.firstOrNull { it.argument == arg } as ArgumentContainer<T>
-            }
+        this.getCommandArgument<T>(name)?.let { arg ->
+            arguments.firstOrNull { it.argument == arg } as ArgumentContainer<T>
+        }
 
     /**
      * Gets argument container of [argument] specification.
      */
     @Suppress("UNCHECKED_CAST")
     fun <T> getArgumentContainer(argument: Argument<T>): ArgumentContainer<T>? =
-            this.arguments.firstOrNull { it.argument == argument } as ArgumentContainer<T>
+        this.arguments.firstOrNull { it.argument == argument } as ArgumentContainer<T>
 
     /**
      * Gets argument by [name]. Returns found argument casted to [ArgumentContainer] of [T] or

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -26,9 +26,6 @@
  *      THE SOFTWARE.
  */
 package com.github.jonathanxd.kwcommands.parser
-
-import com.github.jonathanxd.iutils.`object`.Either
-import com.github.jonathanxd.iutils.option.Option
 
 /**
  * Options for the parser of processor

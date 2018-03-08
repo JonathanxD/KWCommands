@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -77,8 +77,8 @@ class StaticListArguments(val argumentList: List<Argument<*>>) : Arguments {
 
     override fun getRemainingArguments(): List<Argument<*>> = this.argumentList
     override fun getRemainingArguments(current: List<ArgumentContainer<*>>): List<Argument<*>> =
-            if (current.isEmpty()) this.getRemainingArguments()
-            else this.argumentList.filter { curr -> current.none { it.argument == curr } }
+        if (current.isEmpty()) this.getRemainingArguments()
+        else this.argumentList.filter { curr -> current.none { it.argument == curr } }
 }
 
 class StaticListArgumentsBuilder {
@@ -105,7 +105,7 @@ class StaticListArgumentsBuilder {
     }
 
     fun setArguments(arguments: Iterable<Argument<*>>): StaticListArgumentsBuilder =
-            this.clear().addArguments(arguments)
+        this.clear().addArguments(arguments)
 
     fun clear(): StaticListArgumentsBuilder {
         this.arguments.clear()
@@ -113,5 +113,5 @@ class StaticListArgumentsBuilder {
     }
 
     fun build(): StaticListArguments =
-            StaticListArguments(this.arguments.toList())
+        StaticListArguments(this.arguments.toList())
 }

@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -32,7 +32,6 @@ import com.github.jonathanxd.iutils.localization.LocaleManager
 import com.github.jonathanxd.iutils.localization.Locales
 import com.github.jonathanxd.iutils.localization.MapLocaleManager
 import com.github.jonathanxd.iutils.localization.json.JsonLocaleLoader
-import com.github.jonathanxd.iutils.text.localizer.DefaultTextLocalizer
 import com.github.jonathanxd.iutils.text.localizer.FastTextLocalizer
 import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
 import com.github.jonathanxd.kwcommands.printer.Printers

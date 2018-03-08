@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -32,15 +32,28 @@ import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.util.SourcedCharIterator
 import com.github.jonathanxd.kwcommands.util.StatedIterator
 
 /**
- * Command not found by [name][input].
+ * Argument not found by [name][input].
  */
-class ArgumentNotFoundFail(val command: Command,
-                           val parsedArgs: List<ArgumentContainer<*>>,
-                           input: Input,
-                           parsedCommands: List<CommandContainer>,
-                           manager: CommandManager,
-                           iter: StatedIterator<Input>) : InputedParseFail(parsedCommands, manager, input, iter)
+class ArgumentNotFoundFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    input: Input,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, input, iter)
+
+/**
+ * Argument not found by [short names][input].
+ */
+class ArgumentShortNamesNotFoundFail(
+    val command: Command,
+    val parsedArgs: List<ArgumentContainer<*>>,
+    input: Input,
+    parsedCommands: List<CommandContainer>,
+    manager: CommandManager,
+    iter: StatedIterator<Input>
+) : InputedParseFail(parsedCommands, manager, input, iter)

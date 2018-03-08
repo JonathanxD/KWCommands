@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -55,27 +55,32 @@ interface ValueOrValidationFactory {
      * the [value] if not.
      */
     fun <T> valueOrValidation(value: @UnsafeVariance T?): ValueOrValidation<T> =
-            value?.let(::value) ?: invalid()
+        value?.let(::value) ?: invalid()
 
     /**
      * Returns a [ValueOrValidation] that holds [Validation] if [value] is `null` or that holds
      * the [value] if not.
      */
-    fun <T> valueOrValidation(value: @UnsafeVariance T?, validation: Validation): ValueOrValidation<T> =
-            value?.let(::value) ?: invalid(validation)
+    fun <T> valueOrValidation(
+        value: @UnsafeVariance T?,
+        validation: Validation
+    ): ValueOrValidation<T> =
+        value?.let(::value) ?: invalid(validation)
 }
 
-class ValueOrValidationFactoryImpl(val input: Input,
-                                   val argumentType: ArgumentType<*, *>,
-                                   val parser: ArgumentParser<*, *>) : ValueOrValidationFactory {
+class ValueOrValidationFactoryImpl(
+    val input: Input,
+    val argumentType: ArgumentType<*, *>,
+    val parser: ArgumentParser<*, *>
+) : ValueOrValidationFactory {
     override fun <T> invalid(): ValueOrValidation<T> =
-            ValueOrValidation.Invalid(invalid(input, argumentType, parser))
+        ValueOrValidation.Invalid(invalid(input, argumentType, parser))
 
     override fun <T> invalid(validation: Validation): ValueOrValidation<T> =
-            ValueOrValidation.Invalid(validation)
+        ValueOrValidation.Invalid(validation)
 
     override fun <T> value(value: @UnsafeVariance T): ValueOrValidation<T> =
-            ValueOrValidation.Value(value)
+        ValueOrValidation.Value(value)
 }
 
 sealed class ValueOrValidation<out T> {
@@ -94,7 +99,7 @@ sealed class ValueOrValidation<out T> {
             get() = throw IllegalStateException("Cannot get validation from value container!")
 
         override fun <R> mapIfValue(func: (T) -> R): ValueOrValidation<R> =
-                Value(func(this.value))
+            Value(func(this.value))
     }
 
     data class Invalid<T>(override val validation: Validation) : ValueOrValidation<T>() {
@@ -106,9 +111,9 @@ sealed class ValueOrValidation<out T> {
             get() = throw IllegalStateException("Cannot get value from Invalid validation container!")
 
         operator fun plus(invalid: Invalid<T>): Invalid<T> =
-                Invalid(validation + invalid.validation)
+            Invalid(validation + invalid.validation)
 
         override fun <R> mapIfValue(func: (T) -> R): ValueOrValidation<R> =
-                Invalid(validation)
+            Invalid(validation)
     }
 }

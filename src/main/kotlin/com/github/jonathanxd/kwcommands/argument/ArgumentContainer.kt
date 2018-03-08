@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2017 JonathanxD
+ *      Copyright (c) 2018 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -37,10 +37,12 @@ import com.github.jonathanxd.kwcommands.parser.Input
  * @property input Input argument value(s).
  * @property value Value of argument.
  */
-data class ArgumentContainer<T>(val argument: Argument<T>,
-                                val input: Input?,
-                                val value: T?,
-                                var handler: ArgumentHandler<T>?) : Container {
+data class ArgumentContainer<T>(
+    val argument: Argument<T>,
+    val input: Input?,
+    val value: T?,
+    var handler: ArgumentHandler<T>?
+) : Container {
 
     /**
      * Returns true if this argument is defined.
