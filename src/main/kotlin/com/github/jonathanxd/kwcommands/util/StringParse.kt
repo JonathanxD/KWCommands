@@ -30,7 +30,7 @@ package com.github.jonathanxd.kwcommands.util
 import com.github.jonathanxd.iutils.`object`.Either
 import com.github.jonathanxd.iutils.kt.*
 import com.github.jonathanxd.iutils.opt.specialized.OptChar
-import com.github.jonathanxd.iutils.opt.specialized.OptObject
+import com.github.jonathanxd.iutils.opt.OptObject
 import com.github.jonathanxd.kwcommands.parser.*
 
 const val ESCAPE = '\\'

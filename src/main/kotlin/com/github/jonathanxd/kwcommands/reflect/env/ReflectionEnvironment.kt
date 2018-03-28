@@ -27,9 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.env
 
-import com.github.jonathanxd.iutils.reflection.Invokables
-import com.github.jonathanxd.iutils.reflection.Link
-import com.github.jonathanxd.iutils.reflection.Links
+import com.github.jonathanxd.iutils.link.Invokables
+import com.github.jonathanxd.iutils.link.Link
+import com.github.jonathanxd.iutils.link.Links
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.Command

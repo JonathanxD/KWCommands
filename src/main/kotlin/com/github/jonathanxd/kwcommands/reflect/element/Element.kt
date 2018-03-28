@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.element
 
-import com.github.jonathanxd.iutils.reflection.Invokable
+import com.github.jonathanxd.iutils.link.Invokable
 import com.github.jonathanxd.kwcommands.reflect.ReflectionHandler
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field

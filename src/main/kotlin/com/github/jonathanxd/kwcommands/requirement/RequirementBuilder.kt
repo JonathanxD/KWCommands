@@ -28,7 +28,7 @@
 package com.github.jonathanxd.kwcommands.requirement
 
 import com.github.jonathanxd.iutils.opt.Opt
-import com.github.jonathanxd.iutils.opt.specialized.None
+import com.github.jonathanxd.iutils.opt.None
 import com.github.jonathanxd.iutils.type.TypeInfo
 
 /**

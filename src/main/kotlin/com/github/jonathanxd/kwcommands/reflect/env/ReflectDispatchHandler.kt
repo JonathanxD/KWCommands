@@ -27,7 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.env
 
-import com.github.jonathanxd.iutils.reflection.Link
+import com.github.jonathanxd.iutils.link.Link
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.dispatch.DispatchHandler
