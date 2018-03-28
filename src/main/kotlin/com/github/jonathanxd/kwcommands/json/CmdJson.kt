@@ -34,9 +34,112 @@ import kotlin.reflect.KClass
 /**
  * Specifies a JSON String or a JSON Resource that specifies command properties.
  *
- * When on a `type` or `function`, the json should follow [Command JSON][https://github.com/JonathanxD/KWCommands/wiki/Command-JSON],
- * when on a field, the json should follow [Argument JSON][https://github.com/JonathanxD/KWCommands/wiki/Argument-JSON],
+ * When on a `type` or `function`, the json should follow [Command JSON][https://github.com/JonathanxD/KWCommands/wiki/Default-Format#commands],
+ * when on a field, the json should follow [Argument JSON][https://github.com/JonathanxD/KWCommands/wiki/Default-Format#arguments],
  * remember that these formats only applies to default [parser].
+ *
+ * ## Commands
+ *
+ *  ```
+ * | Key          | Data type             | Description                                           |
+ * | ------------ | --------------------- | ----------------------------------------------------- |
+ * | name         | string                | Name of the command                                   |
+ * | description² | string                | Description of command (what it does)                 |
+ * | alias?       | string[]              | Aliases to command                                    |
+ * | arguments?   | object[]              | Arguments of command (see below)                      |
+ * | requirements?| object[]              | Requirements of command (see below)                   |
+ * | requiredInfo?| object[]              | Required information ids (see below)                  |
+ * | handler?¹    | string                | Qualified name of command handler                     |
+ * | subcommands? | object[] or string[]  | Sub commands, either this format or resource location |
+ * ```
+ *
+ * ## Arguments
+ *
+ *  ```
+ * | Key             | Data type | Description                                                |
+ * | --------------- | --------- | ---------------------------------------------------------- |
+ * | type¹           | string    | Qualified name of argument type                            |
+ * | id              | string    | Argument identification                                    |
+ * | name?           | string    | Argument name (set to id if not specified)                 |
+ * | description?²   | string    | Argument description (since 1.1.5)                         |
+ * | optional?       | boolean   | Whether the argument is optional or not (default: false)   |
+ * | requirements?   | object[]  | Argument requirements (see below)                          |
+ * | requiredInfo?   | object[]  | Required information ids (see below)                       |
+ * | validator?¹     | string    | Qualified name of validator of argument input              |
+ * | transformer?¹   | string    | Qualified name of transformer of argument input to object  |
+ * | possibilities?¹ | string    | Qualified name of possibilities function of argument input |
+ * | handler?¹       | string    | Qualified name of handler of argument value                |
+ *  ```
+ *
+ *
+ * ## Requirements
+ *
+ *  ```
+ * | Key             | Data type | Description                                                |
+ * | --------------- | --------- | ---------------------------------------------------------- |
+ * | info            | object    | Required information id (see below)                        |
+ * | tester¹         | string    | Qualified name of requirements tester                      |
+ * | data            | string    | Required data                                              |
+ *  ```
+ *
+ * ## Required information
+ *
+ *  ```
+ * | Key             | Data type | Description                                                |
+ * | --------------- | --------- | ---------------------------------------------------------- |
+ * | id              | object    | Information id (see below)                                 |
+ * | useProviders?   | boolean   | Whether provided information satisfies this requirement    |
+ *  ```
+ *
+ * ## Information id
+ *
+ *  ```
+ * | Key             | Data type | Description                                                |
+ * | --------------- | --------- | ---------------------------------------------------------- |
+ * | tags            | string[]  | Tags used to identify information                          |
+ * | type¹           | string    | Qualified name of information id                           |
+ *  ```
+ *
+ * ## Ref
+ *
+ * - `¹` - Qualified names are resolved to class, using `TypeResolver`.
+ * - `²` - Text representation specified by [TextUtil.parse][com.github.jonathanxd.iutils.text.TextUtil.parse] may be used.
+ * - `?` - Optional
+ *
+ * ## Example
+ *
+ * ```json
+ * {
+ *   "name": "register",
+ *   "description": "Registers the user",
+ *   "handler": "my.test.RegisterCommandHandler",
+ *   "arguments": [
+ *     {
+ *       "id": "name",
+ *       "type": "String"
+ *     },
+ *     {
+ *       "id": "email",
+ *       "type": "String",
+ *       "validator": "my.test.EmailValidator"
+ *     }
+ *   ],
+ *   "requiredInfo": [
+ *     {
+ *       "id": { "tags": ["player"], "type": "my.test.Player" }
+ *     }
+ *   ],
+ *   "requirements": [
+ *     {
+ *       "id": { "tags": ["player"], "type": "my.test.Player" },
+ *       "tester": "my.test.ReqTester",
+ *       "data": "perm.register"
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * You may also use ':'
  *
  * Obs: this annotation is converted to a [CmdJsonObj].
  *
