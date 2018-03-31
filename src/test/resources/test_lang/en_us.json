@@ -1,0 +1,12 @@
+{
+    "command": {
+        "first": {
+            "name": "first__",
+            "alias": [
+                "frs",
+                "fst"
+            ],
+            "description": "Love yourself"
+        }
+    }
+}

@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.json
 
+import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.*
@@ -187,12 +188,37 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
     override val factory: JsonCommandParserFactory
         get() = DefaultJsonParserFactory
 
+    private fun JSONObject.parseNameComponent() =
+        this.getAs<String>(NAME_COMPONENT_KEY)?.let(TextUtil::parse)
+                ?: this.getAs<String>(LOCALE_KEY)?.let {
+                    if (it.isEmpty()) null else it
+                }?.let {
+                    Text.localizable("$it.name")
+                } ?: Text.of(this.getRequired<String>(NAME_KEY))
+
+    private fun JSONObject.parseDescription() =
+        this.getAs<String>(DESCRIPTION_KEY)?.let(TextUtil::parse)
+                ?: this.getAs<String>(LOCALE_KEY)?.let {
+                    if (it.isEmpty()) null else it
+                }?.let {
+                    Text.localizable("$it.description")
+                } ?: Text.of("")
+
+    private fun JSONObject.parseAliasComponent() =
+        this.getAs<String>(LOCALE_KEY)?.let {
+            if (it.isEmpty()) null else it
+        }?.let {
+            Text.localizable("$it.alias")
+        }
+
     override fun parseCommand(jsonObject: JSONObject, superCommand: Command?): Command =
         CommandBuilder()
             .parent(superCommand)
             .name(jsonObject.getRequired(NAME_KEY))
-            .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
+            .nameComponent(jsonObject.parseNameComponent())
+            .description(jsonObject.parseDescription())
             .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
+            .aliasComponent(jsonObject.parseAliasComponent())
             .handler(jsonObject.getCommandHandler(HANDLER_KEY, this))
             .arguments(
                 jsonObject.getArguments(ARGUMENTS_KEY, this) ?: StaticListArguments(emptyList())
@@ -228,7 +254,9 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
         return ArgumentBuilder<Any?>()
             .addAlias(jsonObject.getAs<JSONArray>(ALIAS_KEY)?.map { it as String }.orEmpty())
             .name(jsonObject.getRequired(NAME_KEY))
-            .description(TextUtil.parse(jsonObject.getAs<String>(DESCRIPTION_KEY) ?: ""))
+            .nameComponent(jsonObject.parseNameComponent())
+            .description(jsonObject.parseDescription())
+            .aliasComponent(jsonObject.parseAliasComponent())
             .optional(jsonObject.getAs(OPTIONAL_KEY) ?: false)
             .argumentType(
                 jsonObject.getAsSingleton<ArgumentType<*, Any?>>(
@@ -319,6 +347,8 @@ class DefaultJsonParser(override val typeResolver: TypeResolver) : JsonCommandPa
         const val ARGUMENT_TYPE_KEY = "argumentType"
         const val HANDLER_KEY = "handler"
         const val NAME_KEY = "name"
+        const val NAME_COMPONENT_KEY = "nameComponent"
+        const val LOCALE_KEY = "locale"
         const val OPTIONAL_KEY = "optional"
         const val TRANSFORMER_KEY = "transformer"
         const val VALIDATOR_KEY = "validator"

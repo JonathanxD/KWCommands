@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.printer
 
 import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
 import com.github.jonathanxd.kwcommands.command.Command
 
@@ -36,7 +37,7 @@ import com.github.jonathanxd.kwcommands.command.Command
  */
 interface Printer {
 
-    val localizer: TextLocalizer
+    val localizer: Localizer
 
     /**
      * Prints command to buffer.

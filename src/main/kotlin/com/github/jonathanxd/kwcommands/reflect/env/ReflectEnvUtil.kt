@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.reflect.env
 
+import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
@@ -94,6 +95,10 @@ fun AnnotatedElement.createArg(
         else it
     }
 
+    val nameComponent = argumentAnnotation?.nameComponent?.let {
+        if (it.isEmpty()) null else it
+    }
+
     val type = type_ ?: this.type()
 
     val typeIsOpt = type.classLiteral == TypeInfo.of(Optional::class.java).classLiteral
@@ -119,10 +124,15 @@ fun AnnotatedElement.createArg(
         else -> argumentType0
     }
 
+    val aliasComponent = argumentAnnotation?.aliasComponent?.let { if (it.isEmpty()) null else it }
+        ?.let(TextUtil::parse)
+
     @Suppress("UNCHECKED_CAST")
     return Argument(
         name = name,
+        nameComponent = nameComponent?.let(TextUtil::parse) ?: Text.of(name),
         alias = argumentAnnotation?.alias?.toList().orEmpty(),
+        aliasComponent = aliasComponent,
         description = TextUtil.parse(description),
         isOptional = isOptional,
         argumentType = argumentType,

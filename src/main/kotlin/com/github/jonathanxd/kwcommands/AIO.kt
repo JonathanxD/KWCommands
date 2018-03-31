@@ -27,11 +27,14 @@
  */
 package com.github.jonathanxd.kwcommands
 
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.completion.CompletionImpl
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcherImpl
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
 import com.github.jonathanxd.kwcommands.information.InformationProviders
+import com.github.jonathanxd.kwcommands.json.DefaultJsonParser
+import com.github.jonathanxd.kwcommands.json.MapTypeResolver
 import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.manager.InstanceProvider
 import com.github.jonathanxd.kwcommands.manager.instanceProvider
@@ -53,6 +56,8 @@ class AIO(val owner: Any) {
     val reflectionEnvironment = ReflectionEnvironment(commandManager)
     val completion = CompletionImpl(parser)
     val help = CommonHelpInfoHandler()
+    val typeResolver = MapTypeResolver()
+    val jsonParser = DefaultJsonParser(typeResolver)
 
     /**
      * Stores commands to be loaded later, this allows the parent command resolution
@@ -72,6 +77,16 @@ class AIO(val owner: Any) {
             queue,
             false
         )
+
+
+        this.reflectionEnvironment.fromJsonClass(
+            obj::class.java,
+            instanceProvider { obj },
+            { jsonParser }
+
+        ).forEach {
+            queue.add(it)
+        }
         return this
     }
 
@@ -113,4 +128,12 @@ class AIO(val owner: Any) {
      */
     fun parseAndDispatch(commandString: String, informationProviders: InformationProviders) =
         this.processor.parseAndDispatch(commandString, owner, informationProviders)
+
+    /**
+     * Parse and dispatch commands of this [owner].
+     */
+    fun parseAndDispatch(commandString: String,
+                         informationProviders: InformationProviders,
+                         localizer: Localizer) =
+        this.processor.parseAndDispatch(commandString, owner, informationProviders, localizer)
 }

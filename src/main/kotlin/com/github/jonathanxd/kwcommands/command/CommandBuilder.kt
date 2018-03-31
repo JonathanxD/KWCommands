@@ -44,12 +44,14 @@ class CommandBuilder {
     private var parent: Command? = null
     private var order = 0
     private lateinit var name: String
+    private var nameComponent: TextComponent? = null
     private var description: TextComponent = Text.single("")
     private var handler: Handler? = null
     private var arguments: Arguments = StaticListArguments(emptyList())
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private val alias = mutableListOf<String>()
+    private var aliasComponent: TextComponent? = null
 
     /**
      * Sets [Command.parent].
@@ -72,6 +74,14 @@ class CommandBuilder {
      */
     fun name(name: String): CommandBuilder {
         this.name = name
+        return this
+    }
+
+    /**
+     * Sets [Command.nameComponent].
+     */
+    fun nameComponent(nameComponent: TextComponent): CommandBuilder {
+        this.nameComponent = nameComponent
         return this
     }
 
@@ -170,6 +180,14 @@ class CommandBuilder {
     }
 
     /**
+     * Sets [Command.aliasComponent].
+     */
+    fun aliasComponent(aliasComponent: TextComponent?): CommandBuilder {
+        this.aliasComponent = aliasComponent
+        return this
+    }
+
+    /**
      * Adds [Command.alias].
      */
     fun addAlias(aliases: List<String>): CommandBuilder {
@@ -205,13 +223,16 @@ class CommandBuilder {
         parent = this.parent,
         order = this.order,
         name = this.name,
+        nameComponent = nameComponent ?: Text.of(this.name),
         description = this.description,
         handler = this.handler,
         arguments = this.arguments,
         requirements = this.requirements.toList(),
         requiredInfo = this.requiredInfo.toSet(),
-        alias = this.alias.toList()
+        alias = this.alias.toList(),
+        aliasComponent = this.aliasComponent
     )
+
 
 }
 

@@ -58,8 +58,10 @@ import kotlin.reflect.KClass
 annotation class Cmd(
     val order: Int = 0,
     val name: String = "",
+    val nameComponent: String = "",
     val description: String = "",
     val alias: Array<String> = [],
+    val aliasComponent: String = "",
     val parents: Array<String> = [],
     val requirements: Array<Require> = [],
     val handler: KClass<out Handler> = NoneHandler::class

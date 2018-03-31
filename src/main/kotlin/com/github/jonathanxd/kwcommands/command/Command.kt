@@ -27,18 +27,28 @@
  */
 package com.github.jonathanxd.kwcommands.command
 
+import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.kwcommands.NamedAndAliased
 import com.github.jonathanxd.kwcommands.argument.Arguments
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import java.util.*
 
 /**
- * A command.
+ * Command definition.
+ *
+ * The difference between [name] and [nameComponent] is that [nameComponent] is the name
+ * used to interface with the user. Also user may use the [name] to dispatch the command too,
+ * but cannot use a name that is resolved by a locale rather than the current locale, in
+ * other words, if you define that the [name] is `foo`, and that in language Y the name
+ * is `bar` and in language Z that the name is `baz` and current language is `Y`, then dispatching
+ * command with `bar` and `foo` works, but with `baz` does not work.
  *
  * @property parent Parent command.
  * @property order Command order.
  * @property name Command name.
+ * @property nameComponent Command name component.
  * @property description Command description.
  * @property handler Command handler.
  * @property arguments Arguments that this command can receive.
@@ -49,14 +59,41 @@ import java.util.*
 data class Command(
     val parent: Command?,
     val order: Int,
-    val name: String,
-    val alias: List<String>,
-    val description: TextComponent,
+    override val name: String,
+    override val nameComponent: TextComponent,
+    override val alias: List<String>,
+    override val aliasComponent: TextComponent?,
+    override val description: TextComponent,
     val handler: Handler?,
     val arguments: Arguments,
     val requirements: List<Requirement<*, *>>,
     val requiredInfo: Set<RequiredInformation>
-) : Comparable<Command> {
+) : Comparable<Command>, NamedAndAliased {
+
+    constructor(
+        parent: Command?,
+        order: Int,
+        name: String,
+        alias: List<String>,
+        description: TextComponent,
+        handler: Handler?,
+        arguments: Arguments,
+        requirements: List<Requirement<*, *>>,
+        requiredInfo: Set<RequiredInformation>
+    ) : this(
+        parent,
+        order,
+        name,
+        Text.of(name),
+        alias,
+        null,
+        description,
+        handler,
+        arguments,
+        requirements,
+        requiredInfo
+    )
+
     /**
      * Sub commands
      */
@@ -84,7 +121,7 @@ data class Command(
      * of the [fullname] of [parent] command and the [name] of this command.
      */
     val fullname: String
-        get() = if (this.parent != null) "${this.parent.fullname} ${this.name}" else this.name.toString()
+        get() = if (this.parent != null) "${this.parent.fullname} ${this.name}" else this.name
 
 
     /**
@@ -114,7 +151,8 @@ data class Command(
         this.subCommands_.removeAll { it.name == subCommandName }
 
     /**
-     * Gets the sub-command with specified [name].
+     * Gets the sub-command with specified [name]. This does not compare [nameComponent] because
+     * it cannot be resolved from this context.
      */
     fun getSubCommand(name: String) = this.subCommands_.find { it.name.compareTo(name) == 0 }
 
@@ -134,7 +172,7 @@ data class Command(
 
     override fun toString(): String {
         return "Command(parent: ${this.parent?.name
-                ?: "none"}, order: $order, name: $name, description: $description, alias: $alias, arguments: [${arguments.all.joinToString { "${it.name}: ${it.argumentType}" }}], requirements: [${requirements.joinToString { "${it.subject}: ${it.required}" }}], requiredInformation: [${requiredInfo.joinToString { it.id.toString() }}], subCommands: {${subCommands.joinToString { it.name }}})"
+                ?: "none"}, order: $order, name: $name, nameComponent: $nameComponent, description: $description, alias: $alias, aliasComponent: $aliasComponent, arguments: [${arguments.all.joinToString { "${it.name}: ${it.argumentType}" }}], requirements: [${requirements.joinToString { "${it.subject}: ${it.required}" }}], requiredInformation: [${requiredInfo.joinToString { it.id.toString() }}], subCommands: {${subCommands.joinToString { it.name }}})"
     }
 
     override fun compareTo(other: Command): Int {

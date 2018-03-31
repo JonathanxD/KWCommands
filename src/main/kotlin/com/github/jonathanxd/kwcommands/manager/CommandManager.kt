@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.manager
 
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.kwcommands.command.Command
 
 /**
@@ -37,7 +38,6 @@ import com.github.jonathanxd.kwcommands.command.Command
  * Obs: There is no restriction to register same command instance with different owners.
  */
 interface CommandManager {
-
     /**
      * View of registered commands. The returned list cannot be modified.
      */
@@ -91,22 +91,54 @@ interface CommandManager {
     /**
      * Searches for a command with name [name], this method recursively searches for this command.
      */
-    fun findCommand(name: String, owner: Any? = null): Command?
+    fun findCommand(name: String, owner: Any? = null): Command? =
+        this.findCommand(name, owner, null)
+
+    /**
+     * Searches for a command with name [name], this method recursively searches for this command.
+     */
+    fun findCommand(name: String, owner: Any? = null, localizer: Localizer? = null): Command?
 
     /**
      * Gets the command with specified [name].
      */
-    fun getCommand(name: String, owner: Any? = null): Command?
+    fun getCommand(name: String, owner: Any? = null): Command? =
+        this.getCommand(name, owner, null)
+
+    /**
+     * Gets the command with specified [name] using [localizer] to resolve components.
+     */
+    fun getCommand(name: String, owner: Any? = null, localizer: Localizer? = null): Command?
 
     /**
      * Gets the command in specified [path].
      */
-    fun getCommand(path: Array<String>, owner: Any? = null): Command
+    fun getCommand(path: Array<String>, owner: Any? = null): Command =
+        this.getCommand(path, owner, null)
 
     /**
      * Gets the command in specified [path].
      */
-    fun getOptionalCommand(path: Array<String>, owner: Any? = null): Command?
+    fun getCommand(
+        path: Array<String>,
+        owner: Any? = null,
+        localizer: Localizer? = null
+    ): Command
+
+    /**
+     * Gets the command in specified [path].
+     */
+    fun getOptionalCommand(path: Array<String>, owner: Any? = null): Command? =
+        this.getOptionalCommand(path, owner, null)
+
+    /**
+     * Gets the command in specified [path].
+     */
+    fun getOptionalCommand(
+        path: Array<String>,
+        owner: Any? = null,
+        localizer: Localizer? = null
+    ): Command?
 
     /**
      * Gets the owner set of a command (empty if not registered),
@@ -118,7 +150,13 @@ interface CommandManager {
     /**
      * Gets sub command of [command] that matches [name].
      */
-    fun getSubCommand(command: Command, name: String): Command?
+    fun getSubCommand(command: Command, name: String): Command? =
+        this.getSubCommand(command, name, null)
+
+    /**
+     * Gets sub command of [command] that matches [name].
+     */
+    fun getSubCommand(command: Command, name: String, localizer: Localizer? = null): Command?
 
     /**
      * Creates a pair of command and the command owner.

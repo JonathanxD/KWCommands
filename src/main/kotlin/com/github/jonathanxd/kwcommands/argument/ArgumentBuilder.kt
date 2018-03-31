@@ -39,6 +39,7 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
 class ArgumentBuilder<T> {
 
     private var name: String = ""
+    private var nameComponent: TextComponent? = null
     private var alias = mutableListOf<String>()
     private var description: TextComponent = Text.single("")
     private var isOptional: Boolean = false
@@ -48,6 +49,7 @@ class ArgumentBuilder<T> {
     private val requirements = mutableListOf<Requirement<*, *>>()
     private val requiredInfo = mutableSetOf<RequiredInformation>()
     private var handler: ArgumentHandler<out T>? = null
+    private var aliasComponent: TextComponent? = null
 
     /**
      * Sets [Argument.name]
@@ -58,10 +60,26 @@ class ArgumentBuilder<T> {
     }
 
     /**
+     * Sets [Argument.nameComponent]
+     */
+    fun nameComponent(nameComponent: TextComponent): ArgumentBuilder<T> {
+        this.nameComponent = nameComponent
+        return this
+    }
+
+    /**
+     * Sets [Argument.aliasComponent]
+     */
+    fun aliasComponent(aliasComponent: TextComponent?): ArgumentBuilder<T> {
+        this.aliasComponent = aliasComponent
+        return this
+    }
+
+    /**
      * Sets [Argument.alias]
      */
-    fun alias(alias: List<String>): ArgumentBuilder<T> {
-        this.alias = alias.toMutableList()
+    fun alias(aliases: List<String>): ArgumentBuilder<T> {
+        this.alias = aliases.toMutableList()
         return this
     }
 
@@ -206,7 +224,9 @@ class ArgumentBuilder<T> {
      */
     fun build(): Argument<T> = Argument(
         name = this.name,
-        alias = this.alias,
+        nameComponent = this.nameComponent ?: Text.of(name),
+        alias = this.alias.toList(),
+        aliasComponent = this.aliasComponent,
         description = this.description,
         isOptional = this.isOptional,
         argumentType = this.argumentType,

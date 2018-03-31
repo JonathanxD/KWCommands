@@ -56,7 +56,9 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FIELD)
 annotation class Arg(
     val value: String = "",
+    val nameComponent: String = "",
     val alias: Array<String> = [],
+    val aliasComponent: String = "",
     val description: String = "",
     val optional: Boolean = false,
     val requirements: Array<Require> = [],

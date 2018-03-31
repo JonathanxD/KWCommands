@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.reflect.util
 
 import com.github.jonathanxd.iutils.reflection.Reflection
+import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextUtil
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.iutils.type.TypeUtil
@@ -149,23 +150,27 @@ fun Cmd.toKCommand(
 ): Command {
     val order = this.order
     val name = this.getName(annotatedElement)
+    val nameComponent = this.nameComponent.let { if (it.isEmpty()) null else it }
     val alias = this.alias
     val description = this.description
     val parent = this.resolveParents(manager, owner)
     val argumentsInstance =
         annotatedElement.getDeclaredAnnotation(DynamicArgs::class.java)?.value?.get()
                 ?: StaticListArguments(arguments)
+    val aliasComponent = this.aliasComponent.let { if (it.isEmpty()) null else it }?.let(TextUtil::parse)
 
     val cmd = Command(
         parent = parent ?: superCommand,
         order = order,
         name = name,
+        nameComponent = nameComponent?.let(TextUtil::parse) ?: Text.of(name),
         description = TextUtil.parse(description),
         handler = handler,
         arguments = argumentsInstance,
         requirements = this.getRequirements(annotatedElement),
         requiredInfo = reqInfo,
-        alias = alias.toList()
+        alias = alias.toList(),
+        aliasComponent = aliasComponent
     )
 
     cmd.parent?.addSubCommand(cmd)

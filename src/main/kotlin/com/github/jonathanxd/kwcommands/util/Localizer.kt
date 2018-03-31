@@ -25,51 +25,22 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.printer
+package com.github.jonathanxd.kwcommands.util
 
+import com.github.jonathanxd.iutils.kt.get
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.text.localizer.Localizer
-import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
+import com.github.jonathanxd.kwcommands.NamedAndAliased
 import com.github.jonathanxd.kwcommands.command.Command
 
-/**
- * Common implementation of command printer backing to a print function
- */
-class ControllableCommonPrinter(
-    val printer: Printer,
-    var enabled: Boolean = true
-) : Printer {
-    override val localizer: Localizer
-        get() = this.printer.localizer
+fun TextComponent.localizeMulti(localizer: Localizer) =
+    localizer.getLocalizations(this).map { localizer[it] }
 
-    override fun printCommand(command: Command, level: Int) {
-        if (enabled)
-            this.printer.printCommand(command, level)
-    }
+fun NamedAndAliased.resolveNameComponent(localizer: Localizer) =
+        localizer[this.nameComponent]
 
-    override fun printFromRoot(command: Command, level: Int) {
-        if (enabled)
-            this.printer.printFromRoot(command, level)
-    }
+fun NamedAndAliased.resolveAliasComponent(localizer: Localizer) =
+    this.aliasComponent?.let { localizer.getLocalizations(it).map { localizer[it] } }.orEmpty()
 
-    override fun printTo(command: Command, level: Int, out: (String) -> Unit) {
-        if (enabled)
-            this.printer.printTo(command, level, out)
-    }
-
-    override fun printPlain(text: TextComponent) {
-        if (enabled)
-            this.printer.printPlain(text)
-    }
-
-    override fun printEmpty() {
-        if (enabled)
-            this.printer.printEmpty()
-    }
-
-    override fun flush() {
-        if (enabled)
-            this.printer.flush()
-    }
-
-}
+fun NamedAndAliased.resolveDescription(localizer: Localizer) =
+    localizer[this.description]

@@ -27,7 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
+import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.kwcommands.NamedAndAliased
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
 import com.github.jonathanxd.kwcommands.parser.Input
 import com.github.jonathanxd.kwcommands.requirement.Requirement
@@ -35,7 +37,12 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
 /**
  * A command argument.
  *
+ * To understand difference between [name] and [nameComponent] see
+ * [Command][com.github.jonathanxd.kwcommands.command.Command].
+ *
  * @property name Argument name to be used in definition, empty string means that argument cannot be defined by name.
+ * @property nameComponent Argument name component to be used in definition, empty string means that argument
+ * cannot be defined by name.
  * @property alias Aliases to argument.
  * @property description Argument description.
  * @property isOptional Is optional argument.
@@ -44,15 +51,39 @@ import com.github.jonathanxd.kwcommands.requirement.Requirement
  * @property requiredInfo Identifications of required information for this argument work.
  */
 data class Argument<out T>(
-    val name: String,
-    val alias: List<String>,
-    val description: TextComponent,
+    override val name: String,
+    override val nameComponent: TextComponent,
+    override val alias: List<String>,
+    override val aliasComponent: TextComponent?,
+    override val description: TextComponent,
     val isOptional: Boolean,
     val argumentType: ArgumentType<*, T>,
     val requirements: List<Requirement<*, *>>,
     val requiredInfo: Set<RequiredInformation>,
     val handler: ArgumentHandler<out T>? = null
-) {
+) : NamedAndAliased {
+
+    constructor(
+        name: String,
+        alias: List<String>,
+        description: TextComponent,
+        isOptional: Boolean,
+        argumentType: ArgumentType<*, T>,
+        requirements: List<Requirement<*, *>>,
+        requiredInfo: Set<RequiredInformation>,
+        handler: ArgumentHandler<out T>? = null
+    ) : this(
+        name,
+        Text.of(name),
+        alias,
+        null,
+        description,
+        isOptional,
+        argumentType,
+        requirements,
+        requiredInfo,
+        handler
+    )
 
     fun parse(input: Input) = this.argumentType.parse(input)
 

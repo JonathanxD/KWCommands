@@ -25,51 +25,33 @@
  *      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *      THE SOFTWARE.
  */
-package com.github.jonathanxd.kwcommands.printer
+package com.github.jonathanxd.kwcommands
 
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.text.localizer.Localizer
-import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
-import com.github.jonathanxd.kwcommands.command.Command
 
-/**
- * Common implementation of command printer backing to a print function
- */
-class ControllableCommonPrinter(
-    val printer: Printer,
-    var enabled: Boolean = true
-) : Printer {
-    override val localizer: Localizer
-        get() = this.printer.localizer
+interface NamedAndAliased {
+    /**
+     * Name of element
+     */
+    val name: String
 
-    override fun printCommand(command: Command, level: Int) {
-        if (enabled)
-            this.printer.printCommand(command, level)
-    }
+    /**
+     * Name component of element
+     */
+    val nameComponent: TextComponent
 
-    override fun printFromRoot(command: Command, level: Int) {
-        if (enabled)
-            this.printer.printFromRoot(command, level)
-    }
+    /**
+     * Description of element
+     */
+    val description: TextComponent
 
-    override fun printTo(command: Command, level: Int, out: (String) -> Unit) {
-        if (enabled)
-            this.printer.printTo(command, level, out)
-    }
+    /**
+     * Aliases to element
+     */
+    val alias: List<String>
 
-    override fun printPlain(text: TextComponent) {
-        if (enabled)
-            this.printer.printPlain(text)
-    }
-
-    override fun printEmpty() {
-        if (enabled)
-            this.printer.printEmpty()
-    }
-
-    override fun flush() {
-        if (enabled)
-            this.printer.flush()
-    }
-
+    /**
+     * Aliases component to element.
+     */
+    val aliasComponent: TextComponent?
 }

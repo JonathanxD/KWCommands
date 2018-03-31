@@ -27,6 +27,9 @@
  */
 package com.github.jonathanxd.kwcommands.completion
 
+import com.github.jonathanxd.iutils.kt.get
+import com.github.jonathanxd.iutils.text.localizer.Localizer
+import com.github.jonathanxd.kwcommands.NamedAndAliased
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
@@ -43,7 +46,8 @@ class DefaultAutoCompleter : AutoCompleter {
         commandContainers: List<CommandContainer>,
         completions: Completions,
         commandManager: CommandManager,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) {
         val commands = mutableListOf<Command>()
         val last = commandContainers.lastOrNull()
@@ -59,16 +63,38 @@ class DefaultAutoCompleter : AutoCompleter {
             last?.command?.subCommands.orEmpty()
 
 
-        completions.addAll(commands.flatMap { listOf(it.name) + it.alias })
+        completions.addAll(commands.flatMap { it.completions(localizer) })
     }
 
     override fun completeArgumentName(
         command: Command,
         arguments: List<ArgumentContainer<*>>,
         completions: Completions,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) {
-        completions.addAll(command.arguments.getRemainingArguments(arguments).flatMap { listOf(it.name) + it.alias })
+        completions.addAll(command.arguments.getRemainingArguments(arguments)
+            .flatMap {
+                it.completions(localizer)
+            })
+    }
+
+    private fun NamedAndAliased.completions(localizer: Localizer?): List<String> {
+        val completions = mutableListOf<String>()
+        completions += this.name
+        completions += this.alias
+
+        localizer?.let { loc ->
+            loc[this.nameComponent].let {
+                if (it != this.name)
+                    completions += it
+            }
+            this.aliasComponent?.let(loc::getLocalizations)?.let {
+                completions += it.map { loc[it] }
+            }
+        }
+
+        return completions
     }
 
     override fun completeArgumentInput(
@@ -78,7 +104,8 @@ class DefaultAutoCompleter : AutoCompleter {
         argumentType: ArgumentType<*, *>,
         input: Input?,
         completions: Completions,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) {
 
         when (argumentType.inputType) {

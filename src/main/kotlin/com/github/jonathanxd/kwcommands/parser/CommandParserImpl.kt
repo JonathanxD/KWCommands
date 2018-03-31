@@ -35,10 +35,8 @@ import com.github.jonathanxd.iutils.kt.left
 import com.github.jonathanxd.iutils.kt.leftBooleanObj
 import com.github.jonathanxd.iutils.kt.right
 import com.github.jonathanxd.iutils.option.Options
-import com.github.jonathanxd.kwcommands.argument.Argument
-import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
-import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
-import com.github.jonathanxd.kwcommands.argument.Arguments
+import com.github.jonathanxd.iutils.text.localizer.Localizer
+import com.github.jonathanxd.kwcommands.argument.*
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.fail.*
@@ -51,13 +49,15 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
 
     override fun parseWithOwnerFunction(
         commandString: String,
-        ownerProvider: OwnerProvider
+        ownerProvider: OwnerProvider,
+        localizer: Localizer?
     ): Either<ParseFail, List<CommandContainer>> =
-        parseWithOwnerFunction(commandString.sourcedCharIterator(), ownerProvider)
+        this.parseWithOwnerFunction(commandString.sourcedCharIterator(), ownerProvider, localizer)
 
     override fun parseWithOwnerFunction(
         commandIter: SourcedCharIterator,
-        ownerProvider: OwnerProvider
+        ownerProvider: OwnerProvider,
+        localizer: Localizer?
     ): Either<ParseFail, List<CommandContainer>> {
         val inputs = this.parseInputs(commandIter)
 
@@ -67,7 +67,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             commandIter,
             mutableListOf(),
             CommandHolder(),
-            ownerProvider
+            ownerProvider,
+            localizer
         )
     }
 
@@ -92,7 +93,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         iter: SourcedCharIterator,
         containers: MutableList<CommandContainer>,
         lastCommand: CommandHolder,
-        ownerProvider: OwnerProvider
+        ownerProvider: OwnerProvider,
+        localizer: Localizer?
     ): Either<ParseFail, List<CommandContainer>> {
         val inputIter: StatedIterator<Input> = ListBackedStatedIterator(inputs, iter)
 
@@ -112,6 +114,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                     containers,
                     lastCommand,
                     ownerProvider,
+                    localizer,
                     !lastCommand.isPresent
                 )
 
@@ -124,7 +127,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 if (last != null) {
                     lastCommand.set(null)
 
-                    val args = parseArguments(inputIter, sourceString, last, containers)
+                    val args = parseArguments(inputIter, sourceString, last, containers, localizer)
 
                     if (args.isLeft)
                         return left(args.left)
@@ -143,6 +146,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         containers: MutableList<CommandContainer>,
         lastCommand: CommandHolder,
         ownerProvider: OwnerProvider,
+        localizer: Localizer?,
         required: Boolean
     ): EitherObjBoolean<ParseFail> {
         val state = inputIter.pos
@@ -176,7 +180,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             commandInput.input,
             containers,
             lastCommand,
-            ownerProvider(commandInput.input)
+            ownerProvider(commandInput.input),
+            localizer
         )
 
         if (command != null) {
@@ -197,13 +202,14 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         inputsIter: StatedIterator<Input>,
         source: String,
         command: Command,
-        parsedCommands: List<CommandContainer>
+        parsedCommands: List<CommandContainer>,
+        localizer: Localizer?
     ): Either<ParseFail, List<ArgumentContainer<*>>> {
         if (command.arguments.getRemainingArguments().isEmpty()) {
             return right(emptyList())
         }
 
-        val parsing = ArgumentParsing(command.arguments)
+        val parsing = ArgumentParsing(command.arguments, localizer)
         val args = parsing.argumentList
 
         var currentRequired = 0
@@ -335,7 +341,16 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val required = commandArgumentsList.count { !it.isOptional }
 
         if (required != 0) {
-            return left(createFailAME(command, args, commandArgumentsList, parsedCommands, source, inputsIter))
+            return left(
+                createFailAME(
+                    command,
+                    args,
+                    commandArgumentsList,
+                    parsedCommands,
+                    source,
+                    inputsIter
+                )
+            )
         }
 
         commandArgumentsList.filter { a ->
@@ -793,20 +808,19 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         return right(true)
     }
 
-    // Old code
-
     private fun getCommand(
         name: String,
         containers: MutableList<CommandContainer>,
         lastCommand: CommandHolder,
-        owner: Any?
+        owner: Any?,
+        localizer: Localizer?
     ): Command? {
         val list = mutableListOf<Command>()
 
         var last: Command? = lastCommand.getOrElse(null)
 
         while (last != null) {
-            val cmd = this.commandManager.getSubCommand(last, name)
+            val cmd = this.commandManager.getSubCommand(last, name, localizer)
 
             if (cmd != null) {
                 lastCommand.set(cmd)
@@ -824,7 +838,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             }
         }
 
-        return this.commandManager.getCommand(name, owner)?.also {
+        return this.commandManager.getCommand(name, owner, localizer)?.also {
             lastCommand.set(it)
         }.also {
             if (it != null) {
@@ -980,7 +994,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
     }
 
-    private class ArgumentParsing(val arguments: Arguments) {
+    private class ArgumentParsing(val arguments: Arguments, val localizer: Localizer?) {
         private val argumentList_ = mutableListOf<ArgumentContainer<*>>()
         val argumentList = ParsingBackedList(this, argumentList_)
 
@@ -1009,10 +1023,11 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         }
 
         fun getByName(name: String): Argument<*>? =
-            this.args.firstOrNull { it.name == name }
+            this.args.firstWithName(name, this.localizer)
+
 
         fun getByShortName(name: Char): Argument<*>? =
-            this.args.firstOrNull { it.name[0] == name }
+            this.args.firstNameMatches(this.localizer) { it[0] == name }
 
     }
 

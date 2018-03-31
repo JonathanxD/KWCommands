@@ -38,7 +38,7 @@ import com.github.jonathanxd.kwcommands.reflect.env.ReflectionEnvironment
  * Implementation of [ReflectCommandManager] which delegates calls to [manager] and [environment].
  */
 class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl()) :
-    ReflectCommandManager {
+    ReflectCommandManager, CommandManager by manager {
 
     override val registeredCommands: Set<Command>
         get() = this.manager.registeredCommands
@@ -88,58 +88,6 @@ class ReflectCommandManagerImpl(val manager: CommandManager = CommandManagerImpl
         return allStatic && environment.fromClass(klass, instanceProvider { Unit }, owner).all {
             this.manager.unregisterCommand(it, owner)
         }
-    }
-
-    override fun registerCommand(command: Command, owner: Any): Boolean {
-        return this.manager.registerCommand(command, owner)
-    }
-
-    override fun unregisterCommand(command: Command, owner: Any?): Boolean {
-        return this.manager.unregisterCommand(command, owner)
-    }
-
-    override fun unregisterAllCommandsOfOwner(owner: Any): Boolean {
-        return this.manager.unregisterAllCommandsOfOwner(owner)
-    }
-
-    override fun isRegistered(command: Command, owner: Any?): Boolean {
-        return this.manager.isRegistered(command, owner)
-    }
-
-    override fun findCommand(name: String, owner: Any?): Command? {
-        return this.manager.findCommand(name, owner)
-    }
-
-    override fun getCommand(name: String, owner: Any?): Command? {
-        return this.manager.getCommand(name, owner)
-    }
-
-    override fun getCommand(path: Array<String>, owner: Any?): Command {
-        return this.manager.getCommand(path, owner)
-    }
-
-    override fun getOptionalCommand(path: Array<String>, owner: Any?): Command? {
-        return this.manager.getOptionalCommand(path, owner)
-    }
-
-    override fun getOwners(command: Command): Set<Any> {
-        return this.manager.getOwners(command)
-    }
-
-    override fun getSubCommand(command: Command, name: String): Command? {
-        return this.manager.getSubCommand(command, name)
-    }
-
-    override fun createCommandsPair(): List<Pair<Command, Any>> {
-        return this.manager.createCommandsPair()
-    }
-
-    override fun createListWithCommands(): List<Command> {
-        return this.manager.createListWithCommands()
-    }
-
-    override fun createListWithAllCommands(): List<Command> {
-        return this.manager.createListWithAllCommands()
     }
 
 }

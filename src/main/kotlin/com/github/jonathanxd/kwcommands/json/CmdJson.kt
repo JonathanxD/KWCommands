@@ -41,16 +41,19 @@ import kotlin.reflect.KClass
  * ## Commands
  *
  *  ```
- * | Key          | Data type             | Description                                           |
- * | ------------ | --------------------- | ----------------------------------------------------- |
- * | name         | string                | Name of the command                                   |
- * | description² | string                | Description of command (what it does)                 |
- * | alias?       | string[]              | Aliases to command                                    |
- * | arguments?   | object[]              | Arguments of command (see below)                      |
- * | requirements?| object[]              | Requirements of command (see below)                   |
- * | requiredInfo?| object[]              | Required information ids (see below)                  |
- * | handler?¹    | string                | Qualified name of command handler                     |
- * | subcommands? | object[] or string[]  | Sub commands, either this format or resource location |
+ * | Key             | Data type             | Description                                           |
+ * | --------------- | --------------------- | ----------------------------------------------------- |
+ * | name            | string                | Name of the command                                   |
+ * | nameComponent?  | string                | Name component of the command                         |
+ * | description²    | string                | Description of command (what it does)                 |
+ * | alias?          | string[]              | Aliases to command                                    |
+ * | aliasComponent? | string                | Aliases component                                     |
+ * | locale?³        | string                | Locale of command                                     |
+ * | arguments?      | object[]              | Arguments of command (see below)                      |
+ * | requirements?   | object[]              | Requirements of command (see below)                   |
+ * | requiredInfo?   | object[]              | Required information ids (see below)                  |
+ * | handler?¹       | string                | Qualified name of command handler                     |
+ * | subCommands?    | object[] or string[]  | Sub commands, either this format or resource location |
  * ```
  *
  * ## Arguments
@@ -61,7 +64,11 @@ import kotlin.reflect.KClass
  * | type¹           | string    | Qualified name of argument type                            |
  * | id              | string    | Argument identification                                    |
  * | name?           | string    | Argument name (set to id if not specified)                 |
+ * | nameComponent?  | string    | Name component of the argument                             |
  * | description?²   | string    | Argument description (since 1.1.5)                         |
+ * | alias?          | string[]  | Aliases to argument                                        |
+ * | aliasComponent? | string    | Aliases component                                          |
+ * | locale?³        | string    | Locale of argument                                         |
  * | optional?       | boolean   | Whether the argument is optional or not (default: false)   |
  * | requirements?   | object[]  | Argument requirements (see below)                          |
  * | requiredInfo?   | object[]  | Required information ids (see below)                       |
@@ -104,6 +111,7 @@ import kotlin.reflect.KClass
  *
  * - `¹` - Qualified names are resolved to class, using `TypeResolver`.
  * - `²` - Text representation specified by [TextUtil.parse][com.github.jonathanxd.iutils.text.TextUtil.parse] may be used.
+ * - `³` - Locale: When defined, nameComponent and description is resolved based on the locale (alias too for commands). The resolution is made through resolving localization of `PATH.name`, `PATH.description` and `PATH.alias` (if applicable), where `PATH` is the value defined for locale.
  * - `?` - Optional
  *
  * ## Example

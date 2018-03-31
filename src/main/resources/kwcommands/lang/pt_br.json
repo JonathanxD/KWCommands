@@ -48,7 +48,9 @@
         "parsed_map": "Entradas do mapa analisadas com sucesso",
         "parsed_list": "Entradas da lista analisadas com sucesso",
         "dynamic_arg_tag": "!",
-        "value_result": "Resultado de valor de '$result_string': $value_string"
+        "value_result": "Resultado de valor de '$result_string': $value_string",
+        "aliases": "Alias",
+        "localized_name": "Nome localizado"
     },
     "help": {
         "header": [

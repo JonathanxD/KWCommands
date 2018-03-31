@@ -28,6 +28,7 @@
 package com.github.jonathanxd.kwcommands.processor
 
 import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.fail.ParseFail
@@ -78,6 +79,16 @@ interface CommandProcessor {
         this.parser.parse(commandString, owner)
 
     /**
+     * Parse command string.
+     *
+     * @param commandString Command line string, with commands and arguments of commands.
+     * @param owner Owner of the command. The owner is used to lookup for the command in the [commandManager], if a
+     * null owner is provided, the [commandManager] will return the first found command.
+     */
+    fun parse(commandString: String, owner: Any?, localizer: Localizer): Either<ParseFail, List<CommandContainer>> =
+        this.parser.parse(commandString, owner, localizer)
+
+    /**
      * Dispatch command string.
      *
      * This provides a way to specify owner based on command input string (`commandName`).
@@ -92,6 +103,23 @@ interface CommandProcessor {
         ownerProvider: (commandName: String) -> Any?
     ): Either<ParseFail, List<CommandContainer>> =
         this.parser.parseWithOwnerFunction(commandString, ownerProvider)
+
+    /**
+     * Dispatch command string.
+     *
+     * This provides a way to specify owner based on command input string (`commandName`).
+     *
+     * @param commandString Command line string, with commands and arguments of commands.
+     * @param ownerProvider Provider of the owner of the input command.
+     * The owner is used to lookup for the command in the [commandManager], if a
+     * null owner is provided, the [commandManager] will return the first found command.
+     */
+    fun parseWithOwnerFunction(
+        commandString: String,
+        ownerProvider: (commandName: String) -> Any?,
+        localizer: Localizer
+    ): Either<ParseFail, List<CommandContainer>> =
+        this.parser.parseWithOwnerFunction(commandString, ownerProvider, localizer)
 
     /**
      * Dispatch [commands] and returns [result list][CommandResult] of command executions.
@@ -117,9 +145,19 @@ interface CommandProcessor {
         commandString: String,
         owner: Any?,
         informationProviders: InformationProviders = InformationProvidersVoid
-    )
-            : Either<ParseFail, List<CommandResult>> =
+    ): Either<ParseFail, List<CommandResult>> =
         parseAndDispatchWithOwnerFunc(commandString, { owner }, informationProviders)
+
+    /**
+     * Calls [parse] and then [dispatch] to dispatch result of [parse].
+     */
+    fun parseAndDispatch(
+        commandString: String,
+        owner: Any?,
+        informationProviders: InformationProviders = InformationProvidersVoid,
+        localizer: Localizer
+    ): Either<ParseFail, List<CommandResult>> =
+        parseAndDispatchWithOwnerFunc(commandString, { owner }, informationProviders, localizer)
 
     /**
      * Calls [parseWithOwnerFunction] and then [dispatch] to dispatch result of [parse].
@@ -128,9 +166,24 @@ interface CommandProcessor {
         commandString: String,
         ownerProvider: (commandName: String) -> Any?,
         informationProviders: InformationProviders = InformationProvidersVoid
-    )
-            : Either<ParseFail, List<CommandResult>> =
+    ): Either<ParseFail, List<CommandResult>> =
         parseWithOwnerFunction(commandString, ownerProvider).mapRight {
+            this.dispatch(
+                it,
+                informationProviders
+            )
+        }
+
+    /**
+     * Calls [parseWithOwnerFunction] and then [dispatch] to dispatch result of [parse].
+     */
+    fun parseAndDispatchWithOwnerFunc(
+        commandString: String,
+        ownerProvider: (commandName: String) -> Any?,
+        informationProviders: InformationProviders = InformationProvidersVoid,
+        localizer: Localizer
+    ): Either<ParseFail, List<CommandResult>> =
+        parseWithOwnerFunction(commandString, ownerProvider, localizer).mapRight {
             this.dispatch(
                 it,
                 informationProviders

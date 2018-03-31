@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.help
 import com.github.jonathanxd.iutils.function.collector.Collectors3
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
 import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
@@ -590,7 +591,7 @@ class CommonHelpInfoHandler : HelpInfoHandler {
         private val wrapped: Printer,
         val prefix: String
     ) : Printer by wrapped {
-        override val localizer: TextLocalizer
+        override val localizer: Localizer
             get() = this.wrapped.localizer
 
         override fun printPlain(text: TextComponent) {

@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.completion
 
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
@@ -62,7 +63,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
     override fun completeWithOwnerFunc(
         input: String,
         ownerProvider: OwnerProvider,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ): List<String> {
         val suggestions = mutableListOf<String>()
         val iter = IndexedSourcedCharIter(input)
@@ -70,9 +72,9 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         val parse = parser.parseWithOwnerFunction(iter, ownerProvider)
 
         if (parse.isRight) {
-            completeSuccess(parse.right, iter, suggestions, informationProviders)
+            completeSuccess(parse.right, iter, suggestions, informationProviders, localizer)
         } else {
-            complete(parse.left, suggestions, informationProviders)
+            complete(parse.left, suggestions, informationProviders, localizer)
         }
 
         return suggestions
@@ -82,7 +84,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         commandContainers: List<CommandContainer>,
         iter: SourcedCharIterator,
         suggestion: MutableList<String>,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) {
         val completions = ListCompletionsImpl()
         val last = commandContainers.lastOrNull()
@@ -92,7 +95,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
             commandContainers,
             completions,
             this.parser.commandManager,
-            informationProviders
+            informationProviders,
+            localizer
         )
 
         if (last != null) {
@@ -101,7 +105,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 last.arguments.filter { it.isDefined },
                 iter.sourceString,
                 completions,
-                informationProviders
+                informationProviders,
+                localizer
             )
         }
 
@@ -142,6 +147,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         source: String,
         completions: ListCompletionsImpl,
         informationProviders: InformationProviders,
+        localizer: Localizer?,
         suggestName: Boolean = true
     ) {
 
@@ -151,7 +157,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 command,
                 parsedArgs,
                 completions2,
-                informationProviders
+                informationProviders,
+                localizer
             )
 
             completions2.retainIfAnyMatch { parsedArgs.none { arg -> arg.argument.name == it } }
@@ -176,7 +183,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                         next.argumentType,
                         EmptyInput(source),
                         completions,
-                        informationProviders
+                        informationProviders,
+                        localizer
                     )
                 }
                 is MapInputType -> {
@@ -193,7 +201,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
     private fun complete(
         parseFail: ParseFail,
         suggestion: MutableList<String>,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) {
 
         val iter = parseFail.iter.char
@@ -205,7 +214,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
         val completionList = completions.list
 
         if (parseFail.iter.char.hasNext()) {
-            this.autoCompleters.handleNonCompletable(parseFail, informationProviders)
+            this.autoCompleters.handleNonCompletable(parseFail, informationProviders, localizer)
             return
         }
 
@@ -218,7 +227,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     parseFail.parsedCommands,
                     completions,
                     parseFail.manager,
-                    informationProviders
+                    informationProviders,
+                    localizer
                 )
 
                 completions.retainIfAnyMatch { it.startsWith(cmd) }
@@ -231,14 +241,16 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     suggestion += " "
                 } else {
                     if (parsedArgs.isEmpty()
-                            || parsedArgs.size >= command.arguments.getRemainingArguments(parsedArgs).count { !it.isOptional }
+                            || parsedArgs.size >= command.arguments.getRemainingArguments(parsedArgs)
+                                .count { !it.isOptional }
                     ) {
                         this.autoCompleters.completeCommand(
                             command,
                             parseFail.parsedCommands,
                             completions,
                             parseFail.manager,
-                            informationProviders
+                            informationProviders,
+                            localizer
                         )
                     }
 
@@ -247,7 +259,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                         parsedArgs,
                         parseFail.source,
                         completions,
-                        informationProviders
+                        informationProviders,
+                        localizer
                     )
                 }
 
@@ -261,7 +274,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     command,
                     parsedArgs,
                     completions,
-                    informationProviders
+                    informationProviders,
+                    localizer
                 )
 
                 completions.retainIfAnyMatch { it.startsWith(input.content) }
@@ -280,7 +294,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     argument.argumentType,
                     EmptyInput(parseFail.source),
                     completions,
-                    informationProviders
+                    informationProviders,
+                    localizer
                 )
                 completions.retainIfAnyMatch { it.startsWith(input.content) }
             }
@@ -299,7 +314,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                         argument.argumentType,
                         EmptyInput(parseFail.source),
                         completions,
-                        informationProviders
+                        informationProviders,
+                        localizer
                     )
                 }
             }
@@ -330,7 +346,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 elementType.second,
                                 part,
                                 completions2,
-                                informationProviders
+                                informationProviders,
+                                localizer
                             )
 
                             completions2.retainIfAnyMatch { it.startsWith(part.getString()) }
@@ -354,7 +371,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                             elementType,
                             input,
                             completions,
-                            informationProviders
+                            informationProviders,
+                            localizer
                         )
                     }
                     is InvalidInputForArgumentTypeFail -> {
@@ -365,7 +383,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                             argument.argumentType,
                             null,
                             completions,
-                            informationProviders
+                            informationProviders,
+                            localizer
                         )
 
                         completions.retainIfAnyMatch { it.startsWith(fail.input.getString()) }
@@ -384,7 +403,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                     type,
                                     fail.input,
                                     completions,
-                                    informationProviders
+                                    informationProviders,
+                                    localizer
                                 )
                             }
 
@@ -420,7 +440,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                 parsedArgs,
                                 parseFail.source,
                                 completions,
-                                informationProviders
+                                informationProviders,
+                                localizer
                             )
                         }
                     }
@@ -431,7 +452,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                             argument.argumentType,
                             fail.input,
                             completions,
-                            informationProviders
+                            informationProviders,
+                            localizer
                         )
                     }
                 }

@@ -28,9 +28,12 @@
 package com.github.jonathanxd.kwcommands.printer
 
 import com.github.jonathanxd.iutils.kt.asText
+import com.github.jonathanxd.iutils.kt.get
+import com.github.jonathanxd.iutils.text.MapLocalizedOperators
 import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
-import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
+import com.github.jonathanxd.iutils.text.localizer.Localizer
+import com.github.jonathanxd.kwcommands.NamedAndAliased
 import com.github.jonathanxd.kwcommands.Texts
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.dsl.command
@@ -45,7 +48,7 @@ import com.github.jonathanxd.kwcommands.util.level
  * Common implementation of command printer backing to a print function
  */
 class CommonPrinter(
-    override val localizer: TextLocalizer,
+    override val localizer: Localizer,
     val out: (String) -> Unit,
     val printHeaderAndFooter: Boolean = true
 ) : Printer {
@@ -127,7 +130,7 @@ class CommonPrinter(
         /**
          * Prints [command] of inheritance [level][level] to [out]. See [Printer.printTo].
          */
-        fun printTo(command: Command, level: Int, out: (String) -> Unit, localize: TextLocalizer) {
+        fun printTo(command: Command, level: Int, out: (String) -> Unit, localize: Localizer) {
             val buffer = mutableListOf<TextComponent>()
             val commands = mutableListOf<Command>()
 
@@ -248,7 +251,7 @@ class CommonPrinter(
         fun flushTo(
             out: (String) -> Unit, commands: List<Command>,
             cBuffer: List<TextComponent>,
-            localize: TextLocalizer
+            localize: Localizer
         ) {
             val buffer = cBuffer.map { localize.localize(it) }
 
@@ -284,6 +287,19 @@ class CommonPrinter(
                         out.flushAndClean(builder)
                     }
 
+                    val localizeName = localize[command.nameComponent]
+
+                    if (localizeName != command.name) {
+                        out.flushAndClean(builder)
+                        builder.append(' ', remaining)
+                        builder.append("  ${localize.localize(Texts.getLocalizedNameText())}: $localizeName")
+                        out.flushAndClean(builder)
+                    }
+
+                    if (command.printAlias(builder, localize, remaining)) {
+                        out.flushAndClean(builder)
+                    }
+
                     val to = buff.indexOf(">")
 
                     if (command.arguments.all.any { it.description.isNotEmpty }) {
@@ -303,6 +319,20 @@ class CommonPrinter(
                                 builder.append(" - ${it.name}: ${localize.localize(it.description)}")
                                 out.flushAndClean(builder)
                             }
+                        }
+                    }
+
+                    command.arguments.all.forEach {
+                        val localizedName = localize[it.nameComponent]
+
+                        if (localizedName != it.name) {
+                            builder.append(' ', remaining)
+                            builder.append("  ${localize.localize(Texts.getLocalizedNameText())}: $localizedName")
+                            out.flushAndClean(builder)
+                        }
+
+                        if (it.printAlias(builder, localize, remaining)) {
+                            out.flushAndClean(builder)
                         }
                     }
 
@@ -426,6 +456,47 @@ class CommonPrinter(
                     out(localize.localize(Texts.getNoCommandsText()))
                 }
             }
+        }
+
+        private fun NamedAndAliased.printAlias(
+            builder: StringBuilder,
+            localize: Localizer,
+            remaining: Int
+        ): Boolean {
+            if (this.alias.isNotEmpty() || this.aliasComponent != null) {
+
+                val textAliasComponent = this.aliasComponent
+                    ?.mapLocalized(MapLocalizedOperators.join(Text.of(", ")))
+                    ?.let(Text::of)
+
+                val text = if (alias.isNotEmpty()) {
+                    Texts.getAliasesText()
+                        .append(": ")
+                        .append(this.alias.joinToString(separator = ", "))
+                        .let {
+                            if (textAliasComponent != null)
+                                it.append(" | ").append(textAliasComponent)
+                            else
+                                it
+                        }
+                } else {
+                    Texts.getAliasesText()
+                        .append(": ")
+                        .append(
+                            textAliasComponent?.mapLocalized(
+                                MapLocalizedOperators.join(
+                                    Text.of(", ")
+                                )
+                            ) ?: Text.of("-?-")
+                        )
+                }
+
+                builder.append(' ', remaining)
+                builder.append(" - ${localize[text]}")
+                return true
+            }
+
+            return false
         }
     }
 }

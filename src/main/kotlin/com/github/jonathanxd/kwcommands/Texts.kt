@@ -178,6 +178,12 @@ interface TextsStub {
     @Section("info", "dynamic_args_tag")
     fun getDynamicArgsTag(): TextComponent
 
+    @Section("info", "aliases")
+    fun getAliasesText(): TextComponent
+
+    @Section("info", "localized_name")
+    fun getLocalizedNameText(): TextComponent
+
     @Section("help", "header")
     fun header(): TextComponent
 

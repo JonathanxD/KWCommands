@@ -27,6 +27,11 @@
  */
 package com.github.jonathanxd.kwcommands.argument
 
+import com.github.jonathanxd.iutils.kt.get
+import com.github.jonathanxd.iutils.text.localizer.Localizer
+import com.github.jonathanxd.iutils.text.localizer.TextLocalizer
+import com.github.jonathanxd.kwcommands.util.localizeMulti
+
 interface Arguments {
 
     /**
@@ -115,3 +120,20 @@ class StaticListArgumentsBuilder {
     fun build(): StaticListArguments =
         StaticListArguments(this.arguments.toList())
 }
+
+inline fun List<Argument<*>>.firstNameMatches(
+    localizer: Localizer?,
+    matcher: (name: String) -> Boolean
+) =
+    this.firstOrNull { matcher(it.name) }
+            ?: this.firstOrNull {
+                it.alias.any(matcher)
+                        || (localizer != null && (
+                        matcher(localizer[it.nameComponent])
+                                || it.aliasComponent?.localizeMulti(localizer)?.any { matcher(it) } == true
+                        ))
+            }
+
+
+fun List<Argument<*>>.firstWithName(name: String, localizer: Localizer?) =
+    this.firstNameMatches(localizer) { it == name }

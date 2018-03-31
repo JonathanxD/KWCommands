@@ -27,8 +27,10 @@
  */
 package com.github.jonathanxd.kwcommands.dsl
 
+import com.github.jonathanxd.iutils.collection.view.ViewCollections
 import com.github.jonathanxd.iutils.kt.asText
 import com.github.jonathanxd.iutils.kt.typeInfo
+import com.github.jonathanxd.iutils.text.Text
 import com.github.jonathanxd.iutils.text.TextComponent
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.*
@@ -49,6 +51,7 @@ import com.github.jonathanxd.kwcommands.util.*
 
 class BuildingArgument<I : Input, T> {
     var name: String = ""
+    var nameComponent: TextComponent? = null
     val alias = UList<String>()
     var description: TextComponent = "".asText()
     var isOptional: Boolean = false
@@ -59,9 +62,14 @@ class BuildingArgument<I : Input, T> {
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     var handler: ArgumentHandler<out T>? = null
+    var aliasComponent: TextComponent? = null
 
     inline fun name(f: () -> String) {
         this.name = f()
+    }
+
+    inline fun nameComponent(f: () -> TextComponent) {
+        this.nameComponent = f()
     }
 
     inline fun description(f: () -> TextComponent) {
@@ -90,6 +98,10 @@ class BuildingArgument<I : Input, T> {
 
     inline fun alias(f: UList<String>.() -> Unit) {
         f(this.alias)
+    }
+
+    inline fun aliasComponent(f: () -> TextComponent?) {
+        this.aliasComponent = f()
     }
 
     inline fun requirements(f: UList<Requirement<*, *>>.() -> Unit) {
@@ -123,7 +135,9 @@ class BuildingArgument<I : Input, T> {
     @Suppress("NOTHING_TO_INLINE")
     inline fun toArgument(): Argument<T> = Argument(
         name = this.name,
+        nameComponent = this.nameComponent ?: Text.of(name),
         alias = this.alias.coll.toList(),
+        aliasComponent = this.aliasComponent,
         description = this.description,
         isOptional = this.isOptional,
         argumentType = this.type as ArgumentType<*, T>,
@@ -443,9 +457,18 @@ abstract class UColl<E> {
     }
 }
 
-class UList<E> : UColl<E>() {
+open class UList<E> : UColl<E>() {
     override val coll = mutableListOf<E>()
+}
 
+class MapUList<E, R>(val target: MutableList<R>, val mapper: (E) -> R, val unmapper: (R) -> E) : UList<E>() {
+    override val coll: MutableList<E> = ViewCollections.listMapped<R, E>(
+        this.target,
+        { unmapper(it) },
+        { mapper(it) },
+        { target.add(mapper(it)) },
+        { target.remove(mapper(it)) }
+    )
 }
 
 class USet<E> : UColl<E>() {
@@ -456,12 +479,14 @@ class BuildingCommand {
     var parent: Command? = null
     var order = 0
     lateinit var name: String
+    var nameComponent: TextComponent? = null
     var description: TextComponent = "".asText()
     var handler: Handler? = null
     var arguments: Arguments = StaticListArguments()
     val requirements = UList<Requirement<*, *>>()
     val requiredInfo = USet<RequiredInformation>()
     val alias = UList<String>()
+    var aliasComponent: TextComponent? = null
 
     inline fun order(f: () -> Int) {
         this.order = f()
@@ -481,9 +506,12 @@ class BuildingCommand {
     inline fun requiredInfo(f: USet<RequiredInformation>.() -> Unit) =
         f(this.requiredInfo)
 
-
     inline fun alias(f: UList<String>.() -> Unit) =
         f(this.alias)
+
+    inline fun aliasComponent(f: () -> TextComponent?) {
+        this.aliasComponent = f()
+    }
 
     inline fun handler(
         crossinline f: (
@@ -517,17 +545,23 @@ class BuildingCommand {
         this.name = f()
     }
 
+    inline fun nameComponent(f: () -> TextComponent) {
+        this.nameComponent = f()
+    }
+
     @Suppress("NOTHING_TO_INLINE")
     inline fun toCommand(): Command = Command(
         parent = this.parent,
         order = this.order,
         name = this.name,
+        nameComponent = this.nameComponent ?: Text.of(this.name),
         description = this.description,
         handler = this.handler,
         arguments = this.arguments,
         requirements = this.requirements.coll.toList(),
         requiredInfo = this.requiredInfo.coll.toSet(),
-        alias = this.alias.coll.toList()
+        alias = this.alias.coll.toList(),
+        aliasComponent = this.aliasComponent
     )
 }
 

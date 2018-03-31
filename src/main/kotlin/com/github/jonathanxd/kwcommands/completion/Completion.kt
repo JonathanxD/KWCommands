@@ -27,6 +27,7 @@
  */
 package com.github.jonathanxd.kwcommands.completion
 
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentContainer
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
@@ -61,10 +62,32 @@ interface Completion {
     /**
      * Gets suggestions to complete [input].
      */
+    fun complete(
+        input: String,
+        owner: Any?,
+        informationProviders: InformationProviders,
+        localizer: Localizer?
+    ): List<String> =
+        this.completeWithOwnerFunc(input, { owner }, informationProviders, localizer)
+
+    /**
+     * Gets suggestions to complete [input].
+     */
     fun completeWithOwnerFunc(
         input: String,
         ownerProvider: OwnerProvider,
         informationProviders: InformationProviders
+    ): List<String> =
+            this.completeWithOwnerFunc(input, ownerProvider, informationProviders, null)
+
+    /**
+     * Gets suggestions to complete [input].
+     */
+    fun completeWithOwnerFunc(
+        input: String,
+        ownerProvider: OwnerProvider,
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ): List<String>
 
 }
@@ -111,7 +134,8 @@ interface AutoCompleter {
      */
     fun handleNonCompletable(
         fail: ParseFail,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) = Unit
 
     /**
@@ -122,7 +146,8 @@ interface AutoCompleter {
         commandContainers: List<CommandContainer>,
         completions: Completions,
         commandManager: CommandManager,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) = Unit
 
     /**
@@ -132,7 +157,8 @@ interface AutoCompleter {
         command: Command,
         arguments: List<ArgumentContainer<*>>,
         completions: Completions,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) = Unit
 
     /**
@@ -145,7 +171,8 @@ interface AutoCompleter {
         argumentType: ArgumentType<*, *>,
         input: Input?,
         completions: Completions,
-        informationProviders: InformationProviders
+        informationProviders: InformationProviders,
+        localizer: Localizer?
     ) = Unit
 
 

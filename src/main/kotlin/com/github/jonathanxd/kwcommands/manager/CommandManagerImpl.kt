@@ -29,9 +29,15 @@ package com.github.jonathanxd.kwcommands.manager
 
 import com.github.jonathanxd.iutils.collection.view.ViewCollections
 import com.github.jonathanxd.iutils.collection.view.ViewUtils
+import com.github.jonathanxd.iutils.kt.get
+import com.github.jonathanxd.iutils.recursion.Element
+import com.github.jonathanxd.iutils.recursion.ElementUtil
+import com.github.jonathanxd.iutils.recursion.Elements
+import com.github.jonathanxd.iutils.text.localizer.Localizer
 import com.github.jonathanxd.kwcommands.command.Command
 import com.github.jonathanxd.kwcommands.exception.NoCommandException
 import com.github.jonathanxd.kwcommands.util.allSubCommandsTo
+import com.github.jonathanxd.kwcommands.util.localizeMulti
 import java.util.function.Function
 
 /**
@@ -83,11 +89,11 @@ class CommandManagerImpl : CommandManager {
     override fun isRegistered(command: Command, owner: Any?) =
         this.commands.any { (owner == null || it.owner == owner) && it.command == command }
 
-    override fun findCommand(name: String, owner: Any?): Command? {
+    override fun findCommand(name: String, owner: Any?, localizer: Localizer?): Command? {
         this.commands.forEach {
 
             if (owner == null || it.owner == owner) {
-                it.command.getCommand(name)?.let {
+                it.command.getCommand(name, localizer)?.let {
                     return it
                 }
             }
@@ -96,41 +102,54 @@ class CommandManagerImpl : CommandManager {
         return null
     }
 
-    override fun getCommand(name: String, owner: Any?): Command? = this.commands.find {
-        (owner == null || it.owner == owner) && it.command.name.compareTo(name) == 0
-    }?.command
+    override fun getCommand(name: String, owner: Any?, localizer: Localizer?): Command? =
+        this.commands.find {
+            (owner == null || it.owner == owner) && it.command.nameMatch(name, localizer)
+        }?.command
 
-    override fun getCommand(path: Array<String>, owner: Any?): Command = path.let {
+    override fun getCommand(path: Array<String>, owner: Any?, localizer: Localizer?): Command =
+        path.let {
 
-        var cmd = this.getCommand(it.first(), owner)
-                ?: throw NoCommandException("Specified parent command ${it.first()} was not found.")
+            var cmd = this.getCommand(it.first(), owner, localizer)
+                    ?: throw NoCommandException("Specified parent command ${it.first()} was not found.")
 
-        if (it.size > 1) {
-            for (x in it.copyOfRange(1, it.size)) {
-                cmd = this.getSubCommand(cmd, x)
-                        ?:
-                        throw NoCommandException("Specified parent command $x was not found in command $cmd.")
+            if (it.size > 1) {
+                for (x in it.copyOfRange(1, it.size)) {
+                    cmd = this.getSubCommand(cmd, x, localizer)
+                            ?:
+                            throw NoCommandException("Specified parent command $x was not found in command $cmd.")
+                }
             }
+
+            cmd
         }
 
-        cmd
-    }
+    override fun getOptionalCommand(
+        path: Array<String>,
+        owner: Any?,
+        localizer: Localizer?
+    ): Command? =
+        path.let {
+            if (it.isEmpty()) null else
+                try {
+                    this.getCommand(path, owner, localizer)
+                } catch (c: NoCommandException) {
+                    null
+                }
 
-    override fun getOptionalCommand(path: Array<String>, owner: Any?): Command? = path.let {
-        if (it.isEmpty()) null else
-            try {
-                getCommand(path, owner)
-            } catch (c: NoCommandException) {
-                null
-            }
-
-    }
+        }
 
     override fun getOwners(command: Command): Set<Any> =
         this.commands.filter { it.command == command }.toSet()
 
-    override fun getSubCommand(command: Command, name: String): Command? =
-        command.getSubCommand(name)
+    override fun getSubCommand(
+        command: Command,
+        name: String,
+        localizer: Localizer?
+    ): Command? =
+        command.subCommands.firstOrNull {
+            it.nameMatch(name, localizer)
+        }
 
     override fun createCommandsPair(): List<Pair<Command, Any>> =
         this.commands.map { it.command to it.owner }
@@ -149,19 +168,37 @@ class CommandManagerImpl : CommandManager {
         return list
     }
 
-    private fun Command.getCommand(name: String): Command? {
+    private fun Command.getCommand(name: String, localizer: Localizer?): Command? {
 
-        if (this.name.compareTo(name) == 0)
+        if (this.nameMatch(name, localizer))
             return this
 
-        this.subCommands.forEach {
-            it.getCommand(name)?.let {
-                return it
-            }
+        val elements = Elements<Command>().apply {
+            insert(Element(this@getCommand))
+        }
+
+        var command = elements.nextElement()?.value
+
+        while (command != null) {
+            if (command.nameMatch(name, localizer))
+                return command
+
+            elements.insertFromPair(ElementUtil.fromIterable(command.subCommands))
+
+            command = elements.nextElement()?.value
         }
 
         return null
     }
+
+    private fun Command.nameMatch(name: String, localizer: Localizer?): Boolean =
+        this.name == name
+                || localizer != null
+                && (
+                this.alias.any { it == name }
+                        || localizer[this.nameComponent] == name
+                        || this.aliasComponent?.localizeMulti(localizer)?.any { it == name } == true
+                )
 
     internal data class RegisteredCommand(val command: Command, val owner: Any)
 }

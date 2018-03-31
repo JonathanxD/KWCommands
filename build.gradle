@@ -18,7 +18,7 @@ plugins {
 }
 
 group 'com.github.jonathanxd'
-version '1.6.7'
+version '1.6.8'
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
@@ -31,14 +31,13 @@ license {
     header rootProject.file("LICENSE_HEADER")
 }
 
-
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
 }
 
 dependencies {
-    ext.iutils_version = '4.15.5'
+    ext.iutils_version = '4.15.10'
 
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"

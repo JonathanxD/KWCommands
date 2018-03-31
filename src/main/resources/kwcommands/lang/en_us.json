@@ -48,7 +48,9 @@
         "parsed_map": "Successfully parsed map entries",
         "parsed_list": "Successfully parsed list elements",
         "dynamic_arg_tag": "!",
-        "value_result": "Value result of '$result_string': $value_string"
+        "value_result": "Value result of '$result_string': $value_string",
+        "aliases": "Aliases",
+        "localized_name": "Localized name"
     },
     "help": {
         "header": [
