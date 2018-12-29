@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.dispatch.CommandDispatcher
 import com.github.jonathanxd.kwcommands.manager.CommandManager
 import com.github.jonathanxd.kwcommands.parser.CommandParser
+import com.github.jonathanxd.kwcommands.printer.Printer
 
 @JvmField
 val COMMAND_MANAGER_ID = Information.Id(typeInfo<CommandManager>(), arrayOf("command_manager"))
@@ -43,6 +44,8 @@ val COMMAND_PARSER_ID = Information.Id(typeInfo<CommandParser>(), arrayOf("comma
 @JvmField
 val COMMAND_DISPATCHER_ID =
     Information.Id(typeInfo<CommandDispatcher>(), arrayOf("command_dispatcher"))
+@JvmField
+val PRINTER_ID = Information.Id(typeInfo<Printer>(), arrayOf("printer"))
 
 /**
  * Register and provide information.
@@ -63,9 +66,10 @@ interface InformationProviders {
      * Register recommended information.
      */
     fun registerRecommendations(
-        manager: CommandManager?,
-        parser: CommandParser?,
-        dispatcher: CommandDispatcher?
+        manager: CommandManager? = null,
+        parser: CommandParser? = null,
+        dispatcher: CommandDispatcher? = null,
+        printer: Printer? = null
     ) {
         manager?.let {
             this.registerInformation(COMMAND_MANAGER_ID, it, "Recommended manager")
@@ -77,6 +81,10 @@ interface InformationProviders {
 
         dispatcher?.let {
             this.registerInformation(COMMAND_DISPATCHER_ID, it, "Recommended dispatcher")
+        }
+
+        printer?.let {
+            this.registerInformation(PRINTER_ID, it, "Recommended printer")
         }
     }
 
