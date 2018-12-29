@@ -87,6 +87,39 @@ class AssignArgTest {
                         })
     }
 
+    @Test
+    fun autocompleteAssignArgEquals() {
+        val completions = aio.completion.complete("request --method", this, this.provider, this.printer.localizer)
+        assertEquals("Completions must be blank space and equals", listOf(" ", "="), completions)
+    }
+
+    @Test
+    fun autocompleteAssignArgPossibilities() {
+        val completions = aio.completion.complete("request --method=", this, this.provider, this.printer.localizer)
+        assertEquals("Completions must be method possibilities",
+                listOf("GET", "POST", "PUT", "DELETE"),
+                completions
+        )
+    }
+
+    @Test
+    fun autocompleteAssignUrlArgEq() {
+        val completions = aio.completion.complete("request --method=GET --url", this, this.provider, this.printer.localizer)
+        assertEquals("Completions must be blank space and equals",
+                listOf(" ", "="),
+                completions
+        )
+    }
+
+    @Test
+    fun autocompleteAssignUrlArgPossibilities() {
+        val completions = aio.completion.complete("request --method=GET --url=", this, this.provider, this.printer.localizer)
+        assertEquals("Completions must be url possibilities",
+                emptyList<String>(),
+                completions
+        )
+    }
+
     class AssignArg {
         @Cmd(name = "get")
         fun get(@Arg("url") url: String,
@@ -96,5 +129,23 @@ class AssignArgTest {
 
             assertEquals("Url must be localhost", "http://localhost", url)
         }
+
+        @Cmd(name = "request")
+        fun request(@Arg("method") method: Method,
+                    @Arg("url") url: String,
+                    @Info printer: Printer) {
+            printer.printPlain("hello world".toText())
+            printer.flush()
+
+            assertEquals("Method must be get", Method.GET, method)
+            assertEquals("Url must be localhost", "http://localhost", url)
+        }
+    }
+
+    enum class Method {
+        GET,
+        POST,
+        PUT,
+        DELETE
     }
 }

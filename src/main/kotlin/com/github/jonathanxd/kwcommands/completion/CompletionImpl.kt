@@ -133,6 +133,9 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
     private fun ParseFail.suggestBlankSpace(): Boolean =
         (this is SourcedParseFail && !this.source.endsWith(" "))
 
+    private fun NoInputForArgumentFail.suggestBlankSpaceOrEquals(): Boolean =
+            !this.source.endsWith(" ")  && !this.source.endsWith("=")
+
     private fun SourcedCharIterator.isValid(): Boolean =
         this.runAndRestore {
             if (this.hasPrevious() && this.previous() == ' ')
@@ -304,8 +307,9 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 val parsedArgs = parseFail.parsedArgs
                 val argument = parseFail.arg
 
-                if (parseFail.suggestBlankSpace()) {
+                if (parseFail.suggestBlankSpaceOrEquals()) {
                     suggestion += " "
+                    suggestion += "="
                 } else {
                     this.autoCompleters.completeArgumentInput(
                         command,
