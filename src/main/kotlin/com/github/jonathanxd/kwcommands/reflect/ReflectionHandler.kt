@@ -96,6 +96,9 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
                 is ElementParameter.CtxParameter -> {
                     args += CommandContext(commandContainer, informationProviders, resultHandler)
                 }
+                is ElementParameter.CmdContainerParameter -> {
+                    args += commandContainer
+                }
             }
         }
 
@@ -137,6 +140,9 @@ class ReflectionHandler constructor(val element: Element) : Handler, ArgumentHan
             is ElementParameter.CtxParameter -> {
                 link.invoke(CommandContext(commandContainer, informationProviders, resultHandler))
                         ?: Unit
+            }
+            is ElementParameter.CmdContainerParameter -> {
+                link.invoke(commandContainer) ?: Unit
             }
         }
     }

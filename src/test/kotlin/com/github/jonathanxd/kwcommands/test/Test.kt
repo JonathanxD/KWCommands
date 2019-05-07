@@ -237,6 +237,17 @@ fun Either<ParseFail, List<CommandResult>>.assertAll(expected: List<Any?>) {
     this.right.assertAll(expected)
 }
 
+fun Either<ParseFail, List<CommandResult>>.assertWithAsserter(asserter: (Any?) -> Unit, sizeAsserter: (Int) -> Unit = {}) {
+    if (this.isLeft) {
+        val h = CommonHelpInfoHandler()
+        val printer = Printers.sysOutWHF
+        h.handleFail(this.left, printer)
+    }
+
+    Assert.assertTrue(this.isRight)
+    this.right.assertAll(asserter, sizeAsserter)
+}
+
 fun List<CommandResult>.assertAll(expected: List<Any?>) {
 
     if (this.count { it is ValueResult && it.value != Unit } != expected.size)
@@ -244,6 +255,16 @@ fun List<CommandResult>.assertAll(expected: List<Any?>) {
 
     this.filter { it !is ValueResult || it.value != Unit }.forEachIndexed { index, result ->
         (result as? ValueResult)?.assert(expected[index])
+    }
+
+}
+
+fun List<CommandResult>.assertAll(asserter: (Any?) -> Unit, sizeAsserter: (Int) -> Unit = {}) {
+
+    sizeAsserter(this.count { it is ValueResult && it.value != Unit })
+
+    this.filter { it !is ValueResult || it.value != Unit }.forEachIndexed { index, result ->
+        asserter((result as? ValueResult)?.value)
     }
 
 }

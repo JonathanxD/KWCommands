@@ -30,6 +30,7 @@ package com.github.jonathanxd.kwcommands.test.reflect
 import com.github.jonathanxd.iutils.kt.typeInfo
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
+import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.dsl.informationId
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProvidersImpl
@@ -47,6 +48,7 @@ import com.github.jonathanxd.kwcommands.requirement.Reason
 import com.github.jonathanxd.kwcommands.requirement.Requirement
 import com.github.jonathanxd.kwcommands.requirement.RequirementTester
 import com.github.jonathanxd.kwcommands.test.assertAll
+import com.github.jonathanxd.kwcommands.test.assertWithAsserter
 import com.github.jonathanxd.kwcommands.util.*
 import org.junit.Assert
 import org.junit.Test
@@ -207,8 +209,28 @@ class ReflectionTest {
         result.assertAll(listOf(simplePlayer.name))
     }
 
-}
+    @Test
+    fun testCommandContainer() {
+        val information = InformationProvidersImpl()
 
+        val manager = CommandManagerImpl()
+        val env = ReflectionEnvironment(manager)
+        env.registerCommands(env.fromClass(TestCommandContainer::class, instanceProvider { it.newInstance() }, this), this)
+
+        val printer = CommonPrinter(KLocale.localizer, ::println)
+
+        printer.printAll(manager)
+        printer.flush()
+
+        val processor = Processors.createCommonProcessor(manager)
+
+        val result = processor.parseAndDispatch("command container", this, information)
+
+
+        result.assertWithAsserter({ Assert.assertTrue(it is CommandContainer) })
+    }
+
+}
 
 @Cmd(name = "download", description = "Download settings")
 class Download {
@@ -341,4 +363,10 @@ class TestOptInfo {
         Assert.assertEquals(player.name, playerInfo.value.name) // Ensure correctness?
         return playerInfo.value.name
     }
+}
+
+@Cmd(name = "command", description = "")
+class TestCommandContainer {
+    @Cmd(name = "container", description = "")
+    fun testContainer(@CmdContainer container: CommandContainer?): CommandContainer? = container
 }

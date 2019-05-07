@@ -508,7 +508,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     is ElementParameter.InformationParameter<*> -> {
                         if (!fField.isOptional) requiredInfo += RequiredInformation(fField.id)
                     }
-                    is ElementParameter.CtxParameter -> {
+                    is ElementParameter.CtxParameter, is ElementParameter.CmdContainerParameter -> {
                     }
                 }
 
@@ -748,7 +748,7 @@ class ReflectionEnvironment(val manager: CommandManager) : ArgumentTypeStorage {
                     if (!element.isOptional) requiredInfo += RequiredInformation(element.id)
                 }
                 is ElementParameter.ArgumentParameter<*> -> arguments += element.argument
-                is ElementParameter.CtxParameter -> {
+                is ElementParameter.CtxParameter, is ElementParameter.CmdContainerParameter -> {
 
                 }
             }

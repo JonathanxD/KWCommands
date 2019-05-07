@@ -29,6 +29,7 @@ package com.github.jonathanxd.kwcommands.reflect.element
 
 import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.argument.Argument
+import com.github.jonathanxd.kwcommands.command.CommandContainer
 import com.github.jonathanxd.kwcommands.command.CommandContext
 import com.github.jonathanxd.kwcommands.information.Information
 
@@ -76,6 +77,11 @@ sealed class ElementParameter<T>(val type: TypeInfo<T>) {
      * Context parameter
      */
     object CtxParameter : ElementParameter<CommandContext>(TypeInfo.of(CommandContext::class.java))
+
+    /**
+     * Context parameter
+     */
+    object CmdContainerParameter : ElementParameter<CommandContainer>(TypeInfo.of(CommandContainer::class.java))
 }
 
 val TypeInfo<*>.infoComponent: TypeInfo<*>

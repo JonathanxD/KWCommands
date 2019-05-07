@@ -34,10 +34,7 @@ import com.github.jonathanxd.iutils.type.TypeUtil
 import com.github.jonathanxd.kwcommands.argument.Argument
 import com.github.jonathanxd.kwcommands.argument.ArgumentHandler
 import com.github.jonathanxd.kwcommands.argument.ArgumentType
-import com.github.jonathanxd.kwcommands.reflect.annotation.Arg
-import com.github.jonathanxd.kwcommands.reflect.annotation.Ctx
-import com.github.jonathanxd.kwcommands.reflect.annotation.Info
-import com.github.jonathanxd.kwcommands.reflect.annotation.createId
+import com.github.jonathanxd.kwcommands.reflect.annotation.*
 import com.github.jonathanxd.kwcommands.reflect.element.ElementParameter
 import com.github.jonathanxd.kwcommands.reflect.util.get
 import com.github.jonathanxd.kwcommands.reflect.util.getHandlerOrNull
@@ -59,11 +56,13 @@ fun AnnotatedElement.createElement(
     val argumentAnnotation = this.getDeclaredAnnotation(Arg::class.java)
     val infoAnnotation = this.getDeclaredAnnotation(Info::class.java)
     val ctxAnnotation = this.getDeclaredAnnotation(Ctx::class.java)
+    val cmdContAnnotation = this.getDeclaredAnnotation(CmdContainer::class.java)
 
     val type = type_ ?: this.type()
 
     @Suppress("UNCHECKED_CAST")
     return when {
+        cmdContAnnotation != null -> ElementParameter.CmdContainerParameter
         ctxAnnotation != null -> ElementParameter.CtxParameter
         infoAnnotation != null -> {
             val infoIsOptional = infoAnnotation.isOptional
