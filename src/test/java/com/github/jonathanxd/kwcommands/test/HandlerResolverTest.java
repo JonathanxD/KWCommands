@@ -73,7 +73,7 @@ public class HandlerResolverTest {
 
         InformationProviders informationProviders = new InformationProvidersImpl();
 
-        informationProviders.registerRecommendations(aio.getCommandManager(), aio.getParser(), aio.getDispatcher());
+        informationProviders.registerRecommendations(aio.getCommandManager(), aio.getParser(), aio.getDispatcher(), null);
 
         Either<ParseFail, List<CommandResult>> firstA =
                 aio.parseAndDispatch("first A", informationProviders);

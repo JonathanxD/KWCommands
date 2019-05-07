@@ -28,9 +28,11 @@
 package com.github.jonathanxd.kwcommands.util
 
 import com.github.jonathanxd.iutils.`object`.Either
+import com.github.jonathanxd.iutils.`object`.result.Result
 import com.github.jonathanxd.iutils.kt.*
 import com.github.jonathanxd.iutils.opt.specialized.OptChar
 import com.github.jonathanxd.iutils.opt.OptObject
+import com.github.jonathanxd.kwcommands.fail.ParseFail
 import com.github.jonathanxd.kwcommands.parser.*
 
 const val ESCAPE = '\\'
@@ -43,6 +45,8 @@ const val LIST_CLOSE = ']'
 const val OPEN_TAG = '"'
 const val OPEN_TAG2 = '\''
 
+const val ASSIGN = '='
+
 private val EMPTY_CHAR_ARRAY = charArrayOf()
 
 fun String.escaped() = this.escape('\\')
@@ -53,7 +57,67 @@ fun String.isArgumentName() = this.startsWith("--")
 fun String.getArgumentName() = this.substring(2) // "--".length
 fun String.getArgumentNameOrNull() =
     if (!this.isArgumentName()) null
-    else this.substring(2) // "--".length
+    else this.substring(2).takeUntilEquals() // "--".length
+
+fun SingleInput.extractAssignmentValue(): SingleInput? {
+    val sb = StringBuilder()
+
+    var lastIsEscape = true
+    var nameDef = false
+    var offset = 0
+
+    this.input.forEachIndexed { index, it ->
+        if (!lastIsEscape && it == ESCAPE) {
+            lastIsEscape = true
+        } else if (!nameDef && !lastIsEscape && it == ASSIGN) {
+            if (index + 1 == this.input.length) return@extractAssignmentValue null
+            lastIsEscape = false
+            nameDef = true
+            sb.setLength(0)
+            offset = index + 1
+        } else {
+            if (nameDef) sb.append(it)
+            lastIsEscape = false
+        }
+    }
+
+    return SingleInput(sb.toString(), this.source, this.start + offset, this.end)
+}
+
+fun String.takeUntilEquals(): String {
+    var lastEscape = false
+
+    return this.takeWhile {
+        if (it == ESCAPE && !lastEscape) {
+            lastEscape = true
+            true
+        } else {
+            if (it == ASSIGN && !lastEscape) {
+                false
+            } else if (lastEscape) {
+                lastEscape = false
+                true
+            } else it != ASSIGN
+        }
+    }
+}
+
+
+fun String.isAssignmentArg(): Boolean {
+    var lastIsEscape = true
+
+    this.forEach {
+        lastIsEscape = if (it == ESCAPE && !lastIsEscape) {
+            true
+        } else if (it == ASSIGN && !lastIsEscape){
+            return true
+        } else {
+            false
+        }
+    }
+
+    return false
+}
 
 fun String.isShortName() = this.startsWith("-") && !this.startsWith("--")
 fun String.getShortNameOrNull() =
@@ -761,3 +825,8 @@ class TokenOrElementExpectedFail(
  * @param iter Iterator.
  */
 class NextElementNotFoundFail(input: Input) : InputParseFail(input)
+
+inline fun String.lookbackForEach(f: (prev: () -> Char?, current: Char) -> Unit) =
+    this.forEachIndexed { index, c ->
+        f({ this.getOrNull(index - 1) }, c)
+    }
