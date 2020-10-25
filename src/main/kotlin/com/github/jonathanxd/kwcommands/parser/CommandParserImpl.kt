@@ -661,7 +661,7 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             if (!type.hasType(index))
                 break
 
-            val elementType = type.getListType(index)
+            val elementType = type.getListType(inputs, index)
 
             val state = inputsIter.pos
             val input = inputsIter.next()

@@ -32,6 +32,7 @@ import com.github.jonathanxd.iutils.type.TypeInfo
 import com.github.jonathanxd.kwcommands.parser.*
 
 typealias Pairs = List<Pair<Input, Input>>
+typealias Inputs = List<Input>
 
 abstract class ArgumentType<I : Input, out T>(
         val defaultValue: T?,
@@ -54,7 +55,7 @@ abstract class ArgumentType<I : Input, out T>(
     abstract fun hasType(index: Int): Boolean
     abstract fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *>
     abstract fun getMapValueType(key: Input, index: Int): ArgumentType<*, *>
-    abstract fun getListType(index: Int): ArgumentType<*, *>
+    abstract fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *>
 
 }
 
@@ -84,7 +85,7 @@ class SingleArgumentType<T>(
     ) :
             this(argumentTypeParser, argumentTypeParser, defaultValue, type)
 
-    override fun getListType(index: Int): ArgumentType<*, *> = this
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> = this
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> = this
     override fun getMapValueType(key: Input, index: Int): ArgumentType<*, *> = this
     override fun hasType(index: Int): Boolean = true
@@ -110,8 +111,8 @@ class CustomArgumentType<out T, I : Input, V>(
     override fun hasType(index: Int): Boolean =
             argumentType.hasType(index)
 
-    override fun getListType(index: Int): ArgumentType<*, *> =
-            argumentType.getListType(index)
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> =
+            argumentType.getListType(parsedInputs, index)
 
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> =
             argumentType.getMapKeyType(parsedPairs, index)
@@ -137,7 +138,7 @@ object AnyArgumentType : ArgumentType<Input, Any?>(null, AnyInputType, typeInfo(
     }
 
     override fun hasType(index: Int): Boolean = true
-    override fun getListType(index: Int): ArgumentType<*, *> = this
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> = this
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> = this
     override fun getMapValueType(key: Input, index: Int): ArgumentType<*, *> = this
 
@@ -153,7 +154,7 @@ class ExactListArgumentType<T>(
     override fun hasType(index: Int): Boolean =
             index < this.elementTypes.size
 
-    override fun getListType(index: Int): ArgumentType<*, *> =
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> =
             elementTypes.getOrNull(index) ?: AnyArgumentType
 
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> =
@@ -195,7 +196,7 @@ class ListArgumentType<out T>(
     override val possibilities: Possibilities = ListPossibilities(this)
 
     override fun hasType(index: Int): Boolean = true
-    override fun getListType(index: Int): ArgumentType<*, *> = elementType
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> = elementType
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> = elementType
     override fun getMapValueType(key: Input, index: Int): ArgumentType<*, *> = elementType
 }
@@ -231,7 +232,7 @@ class MapArgumentType<K, V>(
     override val possibilities: Possibilities = MapPossibilities(this)
 
     override fun hasType(index: Int): Boolean = true
-    override fun getListType(index: Int): ArgumentType<*, *> = keyType
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> = keyType
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> = keyType
     override fun getMapValueType(key: Input, index: Int): ArgumentType<*, *> = valueType
 
@@ -291,7 +292,7 @@ class PairArgumentType<A, B>(
     override val possibilities: Possibilities = PairPossibilities(this)
 
     override fun hasType(index: Int): Boolean = true
-    override fun getListType(index: Int): ArgumentType<*, *> = aPairType
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> = aPairType
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> = aPairType
     override fun getMapValueType(key: Input, index: Int): ArgumentType<*, *> = bPairType
 }
@@ -335,7 +336,7 @@ class ComplexMapArgumentType<K, V>(
     override fun hasType(index: Int): Boolean =
             index < this.types.size
 
-    override fun getListType(index: Int): ArgumentType<*, *> =
+    override fun getListType(parsedInputs: Inputs, index: Int): ArgumentType<*, *> =
             types.getOrNull(index) ?: AnyArgumentType
 
     override fun getMapKeyType(parsedPairs: Pairs, index: Int): ArgumentType<*, *> =

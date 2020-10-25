@@ -114,9 +114,9 @@ class DefaultAutoCompleter : AutoCompleter {
                 argumentType
             }
             is ListInputType -> {
-                val last = (input as? MapInput)?.input?.size ?: 0
+                val last = (input as? ListInput)?.input?.size ?: 0
 
-                argumentType.getListType(last)
+                argumentType.getListType((input as? ListInput)?.input.orEmpty(), last)
             }
             is MapInputType -> {
                 val last = (input as? MapInput)?.input?.size ?: 0
