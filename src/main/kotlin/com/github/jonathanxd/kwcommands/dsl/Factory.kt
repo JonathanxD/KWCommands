@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -41,10 +41,7 @@ import com.github.jonathanxd.kwcommands.command.Handler
 import com.github.jonathanxd.kwcommands.information.Information
 import com.github.jonathanxd.kwcommands.information.InformationProviders
 import com.github.jonathanxd.kwcommands.information.RequiredInformation
-import com.github.jonathanxd.kwcommands.parser.ArgumentParser
-import com.github.jonathanxd.kwcommands.parser.Input
-import com.github.jonathanxd.kwcommands.parser.ListInput
-import com.github.jonathanxd.kwcommands.parser.SingleInput
+import com.github.jonathanxd.kwcommands.parser.*
 import com.github.jonathanxd.kwcommands.processor.ResultHandler
 import com.github.jonathanxd.kwcommands.requirement.*
 import com.github.jonathanxd.kwcommands.util.*
@@ -409,6 +406,44 @@ inline fun <reified T> listArg(
         requiredInfo { +base.requiredInfo }
         f(this)
     }
+
+inline fun <reified K, reified V> mapArg(base: Argument<*>,
+                                         key: ArgumentType<*, K>,
+                                        value: ArgumentType<*, V>,
+                                         f: BuildingArgument<MapInput, Map<K, V>>.() -> Unit
+): Argument<Map<K, V>> =
+        argument<MapInput, Map<K, V>> {
+            alias { +base.alias }
+            name = base.name
+            isOptional = base.isOptional
+            isMultiple = true
+            type = MapArgumentType(
+                    key,
+                    value,
+                    TypeInfo.builderOf(Map::class.java).of(key.type, value.type).buildGeneric()
+            )
+            requirements { +base.requirements }
+            requiredInfo { +base.requiredInfo }
+            f(this)
+        }
+
+inline fun <reified K, reified V> mapArg(keyToValue: Pair<ArgumentType<*, K>, ArgumentType<*, V>>,
+                                         f: BuildingArgument<MapInput, Map<K, V>>.() -> Unit
+): Argument<Map<K, V>> = mapArg(keyToValue.first, keyToValue.second, f)
+
+inline fun <reified K, reified V> mapArg(key: ArgumentType<*, K>,
+                                         value: ArgumentType<*, V>,
+                                         f: BuildingArgument<MapInput, Map<K, V>>.() -> Unit
+): Argument<Map<K, V>> =
+        argument<MapInput, Map<K, V>> {
+            isMultiple = true
+            type = MapArgumentType(
+                    key,
+                    value,
+                    TypeInfo.builderOf(Map::class.java).of(key.type, value.type).buildGeneric()
+            )
+            f(this)
+        }
 
 // Command
 

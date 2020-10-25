@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -39,6 +39,7 @@ class NoInputForArgumentFail(
     val command: Command,
     val parsedArgs: List<ArgumentContainer<*>>,
     val arg: Argument<*>,
+    val isArgumentNameProvided: Boolean,
     parsedCommands: List<CommandContainer>,
     manager: CommandManager,
     source: String,

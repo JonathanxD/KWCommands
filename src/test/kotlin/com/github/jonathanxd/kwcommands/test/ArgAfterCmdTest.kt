@@ -29,22 +29,21 @@ package com.github.jonathanxd.kwcommands.test
 
 import com.github.jonathanxd.iutils.kt.ifLeftSide
 import com.github.jonathanxd.iutils.kt.textOf
-import com.github.jonathanxd.kwcommands.dsl.command
-import com.github.jonathanxd.kwcommands.dsl.intArg
-import com.github.jonathanxd.kwcommands.dsl.staticListArguments
-import com.github.jonathanxd.kwcommands.dsl.stringArg
+import com.github.jonathanxd.kwcommands.dsl.*
 import com.github.jonathanxd.kwcommands.help.CommonHelpInfoHandler
-import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.information.InformationProvidersImpl
+import com.github.jonathanxd.kwcommands.manager.CommandManagerImpl
 import com.github.jonathanxd.kwcommands.printer.CommonPrinter
 import com.github.jonathanxd.kwcommands.processor.Processors
 import com.github.jonathanxd.kwcommands.util.KLocale
+import com.github.jonathanxd.kwcommands.util.stringArgumentType
+import org.junit.Assert
 import org.junit.Test
 
-class ArgParseTest {
+class ArgAfterCmdTest {
 
     @Test
-    fun test() {
+    fun testSimpleCommandWithMapArgument() {
         val printer = CommonPrinter(KLocale.localizer, ::println)
         val handler = CommonHelpInfoHandler()
 
@@ -53,20 +52,17 @@ class ArgParseTest {
             description { textOf("Test command") }
             arguments {
                 staticListArguments {
-                    +intArg {
-                        name { "value" }
+                    +mapArg(stringArgumentType() to stringArgumentType()) {
+                        name { "kv" }
+                        description { textOf("Map argument") }
                     }
-                    +stringArg {
-                        name { "name" }
-                        description { textOf("String argument") }
-                    }
+
                 }
             }
             handlerWithContext {
-                val value: Int = it.getArg("value")
-                val name: String = it.getArg("name")
+                val value: Map<String, String> = it.getArg("kv")
 
-                println("Int = $value. String = $name")
+                println("Value = $value")
             }
         }
 
@@ -76,9 +72,10 @@ class ArgParseTest {
 
         manager.registerCommand(cmd, this)
 
-        processor.parseAndDispatch("example Hello 9", this, infoManager).ifLeftSide {
+        processor.parseAndDispatch("example {a=a}", this, infoManager).ifLeftSide {
             handler.handleFail(it, printer)
+            Assert.fail("Command must not fail")
         }
-
     }
+
 }

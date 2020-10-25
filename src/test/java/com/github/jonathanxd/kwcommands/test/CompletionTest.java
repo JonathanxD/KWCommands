@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -252,8 +252,9 @@ public class CompletionTest {
         complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
-                Collections3.listOf(" "),
+                Collections3.listOf(" ", "="),
                 complete);
+
 
         x = "testE --value ";
         complete = completion.complete(x, null, informationProviders);
@@ -294,7 +295,7 @@ public class CompletionTest {
         complete = completion.complete(x, null, informationProviders);
 
         Assert.assertEquals(
-                Collections3.listOf(" "),
+                Collections3.listOf(" ", "="),
                 complete);
 
         x = "testEOpt --value ";

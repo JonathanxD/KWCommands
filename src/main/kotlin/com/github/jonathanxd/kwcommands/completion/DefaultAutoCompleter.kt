@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -71,12 +71,13 @@ class DefaultAutoCompleter : AutoCompleter {
         arguments: List<ArgumentContainer<*>>,
         completions: Completions,
         informationProviders: InformationProviders,
-        localizer: Localizer?
+        localizer: Localizer?,
+        appendArgPrefix: Boolean
     ) {
         completions.addAll(command.arguments.getRemainingArguments(arguments)
             .flatMap {
                 it.completions(localizer)
-            })
+            }.map { if (appendArgPrefix) "--$it" else it })
     }
 
     private fun NamedAndAliased.completions(localizer: Localizer?): List<String> {

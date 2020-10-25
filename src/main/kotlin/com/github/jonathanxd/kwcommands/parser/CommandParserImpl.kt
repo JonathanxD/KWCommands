@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -121,6 +121,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             if (command.isLeft)
                 return left(command.left)
 
+            val commandParseFail = !command.right
+
             if (!command.right || !inputIter.hasNext()) {
                 val last = lastCommand.value
 
@@ -133,6 +135,18 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                         return left(args.left)
 
                     containers += CommandContainer(last, args.right, last.handler)
+                } else if (commandParseFail && inputIter.hasNext()) {
+                    val input = inputIter.next().rightOrNull()
+
+                    if (!inputIter.hasNext()) {
+                        inputIter.previous()
+
+                        return left(createFailCNF(
+                                input ?: EmptyInput(sourceString),
+                                containers,
+                                inputIter
+                        ))
+                    }
                 }
             }
         }
@@ -153,7 +167,12 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
         val input = inputIter.next()
         val last = lastCommand.getOrElse(null)
 
-        val commandInput = input.rightOrNull() as? SingleInput ?: return right(false)
+        val commandInput = input.rightOrNull() as? SingleInput
+
+        if (commandInput == null) {
+            inputIter.restore(state)
+            return right(false)
+        }
 
         if (commandInput.content == "&") {
             val remain = last.arguments.getRemainingArguments()
@@ -402,7 +421,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                 return leftBooleanObj(
                         createFailNIFAE(
                                 command, argument, args,
-                                parsedCommands, source, inputsIter
+                                parsedCommands, source, inputsIter,
+                                isArgumentNameProvided = isNamed
                         )
                 )
             peek.isLeft -> return leftBooleanObj(
@@ -414,7 +434,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             else -> return leftBooleanObj(
                     createFailNIFAE(
                             command, argument, args,
-                            parsedCommands, source, inputsIter
+                            parsedCommands, source, inputsIter,
+                            isArgumentNameProvided = isNamed
                     )
             )
         }
@@ -424,7 +445,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                         ?: return EitherObjBoolean.left(createFailNIFAE(
                                 command, argument,
                                 args, parsedCommands, source,
-                                inputsIter
+                                inputsIter,
+                                isArgumentNameProvided = isNamed
                         ))
         )
 
@@ -501,7 +523,8 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
                             args,
                             parsedCommands,
                             source,
-                            inputsIter
+                            inputsIter,
+                            isArgumentNameProvided = isNamed
                     )
             )
         }
@@ -926,12 +949,14 @@ class CommandParserImpl(override val commandManager: CommandManager) : CommandPa
             args: List<ArgumentContainer<*>>,
             parsedCommands: List<CommandContainer>,
             source: String,
-            iter: StatedIterator<Input>
+            iter: StatedIterator<Input>,
+            isArgumentNameProvided: Boolean
     ): ParseFail =
             NoInputForArgumentFail(
                     command,
                     args,
                     argument,
+                    isArgumentNameProvided,
                     parsedCommands,
                     this.commandManager,
                     source,

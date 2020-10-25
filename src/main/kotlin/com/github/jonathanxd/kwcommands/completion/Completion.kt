@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -158,7 +158,8 @@ interface AutoCompleter {
         arguments: List<ArgumentContainer<*>>,
         completions: Completions,
         informationProviders: InformationProviders,
-        localizer: Localizer?
+        localizer: Localizer?,
+        appendArgPrefix: Boolean
     ) = Unit
 
     /**

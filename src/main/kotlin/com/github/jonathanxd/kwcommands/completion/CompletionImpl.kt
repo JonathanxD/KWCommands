@@ -3,7 +3,7 @@
  *
  *         The MIT License (MIT)
  *
- *      Copyright (c) 2018 JonathanxD
+ *      Copyright (c) 2020 JonathanxD
  *      Copyright (c) contributors
  *
  *
@@ -161,7 +161,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                 parsedArgs,
                 completions2,
                 informationProviders,
-                localizer
+                localizer,
+                false
             )
 
             completions2.retainIfAnyMatch { parsedArgs.none { arg -> arg.argument.name == it } }
@@ -278,7 +279,8 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     parsedArgs,
                     completions,
                     informationProviders,
-                    localizer
+                    localizer,
+                    false
                 )
 
                 completions.retainIfAnyMatch { it.startsWith(input.content) }
@@ -311,6 +313,31 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     suggestion += " "
                     suggestion += "="
                 } else {
+                    if (parsedArgs.isEmpty()
+                            || parsedArgs.size >= command.arguments.getRemainingArguments(parsedArgs)
+                                    .count { !it.isOptional }
+                    ) {
+                        this.autoCompleters.completeCommand(
+                                command,
+                                parseFail.parsedCommands,
+                                completions,
+                                parseFail.manager,
+                                informationProviders,
+                                localizer
+                        )
+                    }
+
+                    if (!parseFail.isArgumentNameProvided) {
+                        this.autoCompleters.completeArgumentName(
+                                command,
+                                parsedArgs,
+                                completions,
+                                informationProviders,
+                                localizer,
+                                true
+                        )
+                    }
+
                     this.autoCompleters.completeArgumentInput(
                         command,
                         parsedArgs,
