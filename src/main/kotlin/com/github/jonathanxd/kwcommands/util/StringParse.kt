@@ -816,7 +816,7 @@ class TokenOrElementExpectedFail(
     input: Input
 ) : InputParseFail(input) {
     override fun toString(): String =
-        "InvalidInputForArgumentTypeFail[tokens=$tokens, currentToken=$currentToken, input=$input]"
+        "TokenOrElementExpectedFail[tokens=$tokens, currentToken=$currentToken, input=$input]"
 }
 
 /**

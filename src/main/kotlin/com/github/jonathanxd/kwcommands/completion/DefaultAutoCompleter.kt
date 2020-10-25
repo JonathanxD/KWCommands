@@ -125,7 +125,7 @@ class DefaultAutoCompleter : AutoCompleter {
                         && input.input.isNotEmpty()
                         && input.input.last().second is EmptyInput
                 ) {
-                    argumentType.getMapValueType(last)
+                    argumentType.getMapValueType(input.input.last().first, last)
                 } else {
                     argumentType.getMapKeyType(last)
                 }
