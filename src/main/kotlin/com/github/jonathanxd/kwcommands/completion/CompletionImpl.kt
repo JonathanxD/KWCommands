@@ -455,7 +455,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                                     if (second is EmptyInput)
                                         argument.argumentType.getMapValueType(currentInput.first, current.input.size)
                                     else
-                                        argument.argumentType.getMapKeyType(current.input.size)
+                                        argument.argumentType.getMapKeyType(current.input, current.input.size)
                                 }
                                 else -> argument.argumentType
                             }
@@ -544,7 +544,7 @@ class CompletionImpl(override val parser: CommandParser) : Completion {
                     if (!argumentType.hasType(i))
                         return null
 
-                    val k = argumentType.getMapKeyType(i)
+                    val k = argumentType.getMapKeyType(currentInput.input, i)
                     val v = argumentType.getMapValueType(pair.first, i)
 
                     if (i == currentInput.input.size - 1) {

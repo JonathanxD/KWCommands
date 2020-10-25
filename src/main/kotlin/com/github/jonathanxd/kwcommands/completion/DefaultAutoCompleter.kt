@@ -127,7 +127,7 @@ class DefaultAutoCompleter : AutoCompleter {
                 ) {
                     argumentType.getMapValueType(input.input.last().first, last)
                 } else {
-                    argumentType.getMapKeyType(last)
+                    argumentType.getMapKeyType((input as? MapInput)?.input.orEmpty(), last)
                 }
             }
             else -> null

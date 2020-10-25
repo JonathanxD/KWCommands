@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.github.jonathanxd'
-version '1.6.20'
+version '1.6.21'
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
